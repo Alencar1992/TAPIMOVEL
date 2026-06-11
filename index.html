@@ -528,52 +528,41 @@
             <h3 style="text-align:center; color: var(--primary); margin-top:0;">📊 Fechamento do Mês</h3>
             <p id="mesReferenciaPDF" style="text-align:center; color: var(--text-muted); margin-top: -10px; font-weight: bold;"></p>
 
-            <div class="liq-box" style="border-color: var(--primary); background: rgba(255,107,107,0.05);">
-                <div class="liq-row" style="border:none;">
-                    <span>💰 Faturamento Bruto</span>
-                    <strong id="liqTotalGeralTxt">R$ 0,00</strong>
-                </div>
-                <div class="liq-row" style="border:none;">
-                    <span>🌮 Tapiocas Vendidas</span>
-                    <strong id="liqQtdTapiocasTxt">0 un</strong>
-                </div>
-                <div class="liq-row" style="border:none; color: var(--primary);">
-                    <span>📦 Material (60%)</span>
-                    <strong id="liqMaterialTxt">- R$ 0,00</strong>
-                </div>
-            </div>
+            <div class="card p-3 mb-3" style="border-color: var(--warning);">
+    <h6 style="color: var(--warning); text-transform: uppercase; font-size: 0.8rem;">
+        ⛽ Custos Operacionais
+    </h6>
+    
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <span style="font-size: 0.85rem; color: var(--text-muted);">Taxas (Maquininha)</span>
+        <strong id="liqTaxasTxt" style="color: var(--danger); font-size: 0.95rem;">- R$ 0,00</strong>
+    </div>
 
-            <div class="liq-box" style="border-color: #f59f00;">
-                <p style="margin:0 0 10px 0; font-size:0.8rem; color:#f59f00; font-weight:bold;">⛽ CUSTOS OPERACIONAIS</p>
-                <div class="liq-row" style="border:none;">
-                    <span>Combustível (Auto)</span>
-                    <strong id="liqCombustivelTxt" style="color: var(--danger);">R$ 0,00</strong>
-                </div>
-                <div style="margin-top:10px;">
-                    <label style="font-size:0.85rem;">Salário Cozinha (R$):</label>
-                    <input type="text" id="inpSalCozinha" class="input-obs" placeholder="0,00" oninput="maskCurrency(event); recalcularLiquidez()" style="margin-bottom:8px;">
-                    
-                    <label style="font-size:0.85rem;">Salário Aux. Carro (R$):</label>
-                    <input type="text" id="inpSalCarro" class="input-obs" placeholder="0,00" oninput="maskCurrency(event); recalcularLiquidez()">
-                </div>
-            </div>
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <span style="font-size: 0.85rem; color: var(--text-muted);">Fixos (Equipe + Manut. + Trailer)</span>
+        <strong id="liqFixosTxt" style="color: var(--danger); font-size: 0.95rem;">- R$ 1.350,00</strong>
+    </div>
+</div>
 
-            <div style="text-align:center; margin: 15px 0;">
-                <span style="font-size:0.85rem; color:var(--text-muted);">Sobra Líquida (Base Sócios)</span>
-                <div id="liqSobraLiquida" style="font-size:1.8rem; font-weight:bold; color:var(--success);">R$ 0,00</div>
-            </div>
+<div class="text-center mb-3">
+    <span style="font-size: 0.8rem; color: var(--text-muted);">Sobra Líquida (Base Sócios)</span><br>
+    <strong id="liqSobraLiquida" style="font-size: 1.8rem; color: var(--success);">R$ 0,00</strong>
+</div>
 
-            <div class="liq-box" style="border-color: #339af0;">
-                <div class="liq-row">
-                    <span>👤 Lucas (90%) <span style="font-size:0.8rem; cursor:pointer;" onclick="toggleVis('liqLucas')"> <span id="icon-liqLucas">👁️</span></span></span>
-                    <strong id="liqLucas" class="ocultavel" data-valor="0" style="color: #339af0;">R$ ****</strong>
-                </div>
-                <div class="liq-row" style="border:none;">
-                    <span>👤 Eliel (10%) <span style="font-size:0.8rem; cursor:pointer;" onclick="toggleVis('liqEliel')"> <span id="icon-liqEliel">👁️</span></span></span>
-                    <strong id="liqEliel" class="ocultavel" data-valor="0" style="color: var(--edit);">R$ ****</strong>
-                </div>
-            </div>
-        </div>
+<div class="card p-3" style="border-color: var(--info);">
+    <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
+        <span style="color: var(--info); font-weight: 500;">
+            👤 Lucas (25%) <i class="bi bi-eye ms-1" id="icon-liqLucas" style="cursor: pointer;" onclick="toggleVisibility('liqLucas')"></i>
+        </span>
+        <strong id="liqLucas" style="color: var(--info); font-size: 1.1rem;" data-valor="0">R$ ****</strong>
+    </div>
+    <div class="d-flex justify-content-between align-items-center">
+        <span style="color: var(--purple); font-weight: 500;">
+            👤 Eliel (5%) <i class="bi bi-eye ms-1" id="icon-liqEliel" style="cursor: pointer;" onclick="toggleVisibility('liqEliel')"></i>
+        </span>
+        <strong id="liqEliel" style="color: var(--purple); font-size: 1.1rem;" data-valor="0">R$ ****</strong>
+    </div>
+</div>
 
         <button class="btn-acao" style="background: var(--danger); margin-top: 10px;" onclick="confirmarFechamentoMes()">🚨 Finalizar e Fechar Mês</button>
         <button class="btn-acao btn-limpar" onclick="fecharModais()">Voltar</button>
