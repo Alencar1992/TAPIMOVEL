@@ -240,7 +240,7 @@
     <div class="menu-grupo">
         <button class="btn-categoria" onclick="toggleSubmenu('sub-planilhas')">📑 Planilhas <span class="seta">▼</span></button>
         <div id="sub-planilhas" class="submenu">
-            <button onclick="window.open('https://docs.google.com/spreadsheets/d/1_XkhvERb8BrJCFGau7djN0A_0MBEgLZhgmvnzv4Zmz0/edit', '_blank');">📈 Abrir Planilha Real</button>
+            <button onclick="window.open('https://docs.google.com/spreadsheets/d/16LojKYyWZOXWeXA72hC44SQ35uC7lxR2rpUGldhHj5w/edit', '_blank');">📈 Abrir Planilha Real</button>
             <button onclick="abrirRestrito('espelho')">🪞 Abrir planilha (App)</button>
         </div>
     </div>
@@ -1361,25 +1361,70 @@ function abrirModalLiquidez(isMesPassado = false) {
 }
 
 function recalcularLiquidez() {
-    let faturamento = faturamentoMesGlobal; let combustivelTotal = combustivelMesGlobal;
-    let taxasMaquininha = (globaisPagamentosLiquidez.cred * 0.05) + (globaisPagamentosLiquidez.deb * 0.02) + (globaisPagamentosLiquidez.vr * 0.0559);
-    let combustivelTrailer = combustivelTotal * 0.20;
-    let priscila = 300.00; let neide = 750.00; let manutencaoCarro = 200.00;
-    let totalCustosFixos = taxasMaquininha + combustivelTrailer + priscila + neide + manutencaoCarro;
+    let faturamento = faturamentoMesGlobal;
     
+    // 1. CÁLCULO DAS TAXAS DA MAQUININHA (Pix e Dinheiro não têm taxa)
+    let taxasMaquininha = (globaisPagamentosLiquidez.cred * 0.05) + 
+                          (globaisPagamentosLiquidez.deb * 0.02) + 
+                          (globaisPagamentosLiquidez.vr * 0.0559);
+                          
+    // 2. CUSTOS FIXOS OPERACIONAIS E FUNCIONÁRIOS
+    let priscila = 300.00;
+    let neide = 750.00;
+    let manutencaoCarro = 200.00;
+    let fixoTrailerLucas = 100.00; // Os 100 fixos do Lucas pelo trabalho do trailer
+    
+    // Somamos todos os custos fixos (incluindo o fixo do trailer do Lucas)
+    let totalCustosFixos = taxasMaquininha + priscila + neide + manutencaoCarro + fixoTrailerLucas;
+    
+    // ATUALIZA A TELA COM OS DADOS INICIAIS
     document.getElementById('liqTotalGeralTxt').textContent = formatarMoeda(faturamento);
-    document.getElementById('liqCombustivelTxt').textContent = "- " + formatarMoeda(combustivelTrailer) + " (20% Trailer)";
+    
+    // Atualiza a linha de custos na tela
+    let elCustosFixos = document.getElementById('liqCombustivelTxt');
+    if (elCustosFixos) {
+        elCustosFixos.textContent = "- " + formatarMoeda(totalCustosFixos) + " (Taxas + Fixos + Trailer)";
+    }
 
-    let faturamentoLiquido = faturamento - totalCustosFixos;
-    let baseParaPorcentagem = Math.max(0, faturamentoLiquido - 100); 
-    let custoMaterial = baseParaPorcentagem * 0.70; let lucroLucas = (baseParaPorcentagem * 0.25) + 100; let lucroEliel = baseParaPorcentagem * 0.05;
+    // 3. MATEMÁTICA DO RATEIO
+    // A base para calcular as porcentagens é o que sobra APÓS tirar todos os custos fixos
+    // Usamos Math.max para garantir que a base não fique negativa caso haja prejuízo
+    let baseParaPorcentagem = Math.max(0, faturamento - totalCustosFixos); 
+    
+    // 4. DIVISÃO DAS PORCENTAGENS (70% + 25% + 5%)
+    let custoMaterial = baseParaPorcentagem * 0.70;
+    let lucroEliel = baseParaPorcentagem * 0.05;
+    
+    // O Lucas recebe os 25% da base de lucro + os R$ 100,00 fixos do trailer
+    let lucroLucas = (baseParaPorcentagem * 0.25) + fixoTrailerLucas; 
 
-    document.getElementById('liqMaterialTxt').parentElement.innerHTML = `<span style="font-size: 0.8rem; color: var(--text-muted);">Custo Material (70%)</span> <strong id="liqMaterialTxt" style="color: var(--danger); font-size: 1.1rem;">- ${formatarMoeda(custoMaterial)}</strong>`;
-    document.getElementById('liqSobraLiquida').textContent = formatarMoeda(baseParaPorcentagem);
-    document.getElementById('liqSobraLiquida').style.color = baseParaPorcentagem >= 0 ? "var(--success)" : "var(--danger)";
-    document.getElementById('liqLucas').setAttribute('data-valor', lucroLucas); document.getElementById('liqEliel').setAttribute('data-valor', lucroEliel);
-    document.getElementById('liqLucas').textContent = 'R$ ****'; document.getElementById('liqEliel').textContent = 'R$ ****';
-    document.getElementById('icon-liqLucas').textContent = '👁️'; document.getElementById('icon-liqEliel').textContent = '👁️';
+    // 5. ATUALIZAR A INTERFACE
+    let elMaterial = document.getElementById('liqMaterialTxt');
+    if (elMaterial && elMaterial.parentElement) {
+        elMaterial.parentElement.innerHTML = `<span style="font-size: 0.8rem; color: var(--text-muted);">Custo Material (70%)</span> <strong id="liqMaterialTxt" style="color: var(--danger); font-size: 1.1rem;">- ${formatarMoeda(custoMaterial)}</strong>`;
+    }
+    
+    let elSobra = document.getElementById('liqSobraLiquida');
+    if (elSobra) {
+        // A sobra líquida total distribuída entre os sócios (Lucas já com os 100 + Eliel)
+        let totalSocios = lucroLucas + lucroEliel;
+        elSobra.textContent = formatarMoeda(totalSocios);
+        elSobra.style.color = totalSocios >= 0 ? "var(--success)" : "var(--danger)";
+    }
+
+    // Atualiza os valores ocultos com os lucros finais
+    let elLucas = document.getElementById('liqLucas');
+    let elEliel = document.getElementById('liqEliel');
+    
+    if (elLucas && elEliel) {
+        elLucas.setAttribute('data-valor', lucroLucas);
+        elEliel.setAttribute('data-valor', lucroEliel);
+        
+        elLucas.textContent = 'R$ ****';
+        elEliel.textContent = 'R$ ****';
+        document.getElementById('icon-liqLucas').textContent = '👁️';
+        document.getElementById('icon-liqEliel').textContent = '👁️';
+    }
 }
 
 function carregarHistoricoLiquidez() {
