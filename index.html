@@ -3,282 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PDV -TAPIMOMEL</title> 
+    <title>PDV - TAPIMOMEL</title> 
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#ffc107">
-    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
-    <meta name="theme-color" content="#ff6b6b">
-
     <link rel="icon" type="image/png" href="https://drive.google.com/thumbnail?id=1vvxg2bM392Ct-JeXnAN38mKU2RTClnFA&sz=w512">
     <link rel="apple-touch-icon" href="https://drive.google.com/thumbnail?id=1vvxg2bM392Ct-JeXnAN38mKU2RTClnFA&sz=w512">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
     <style>
-       /* =========================================
-   ESTILOS MODERNOS (MOBILE-FIRST)
-   ========================================= */
-:root {
-    --bg-dark: #121212;
-    --card-bg: #1e1e1e;
-    --primary: #ffc107; 
-    --primary-hover: #e0a800;
-    --text-main: #f8f9fa;
-    --text-muted: #adb5bd;
-}
+        /* =========================================
+           ESTILOS MODERNOS E DO CAIXA
+           ========================================= */
+        :root {
+            --bg-dark: #121212;
+            --card-bg: #1e1e1e;
+            --primary: #ffc107; 
+            --primary-hover: #e0a800;
+            --text-main: #f8f9fa;
+            --text-muted: #adb5bd;
+            --success: #198754;
+            --danger: #dc3545;
+            --info: #0dcaf0;
+            --purple: #1d9bf0;
+            --panel-bg: #1a1a1a;
+            --border: #333;
+            --stat-bg: #222;
+            --tab-active: #ffc107;
+            --edit: #0d6efd;
+            --input-bg: #2a2a2a;
+            --troco-bg: rgba(25, 135, 84, 0.2);
+        }
 
-body {
-    background-color: var(--bg-dark);
-    color: var(--text-main);
-    font-family: 'Inter', 'Segoe UI', sans-serif;
-    -webkit-tap-highlight-color: transparent; 
-}
-
-.card {
-    background-color: var(--card-bg);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
-
-/* Botões maiores para toque no celular */
-.btn {
-    border-radius: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    min-height: 48px; 
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    border: none;
-    transition: all 0.2s ease;
-}
-
-.btn-warning {
-    background-color: var(--primary);
-    color: #000;
-    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
-}
-
-.btn-warning:active {
-    transform: scale(0.96);
-}
-
-@media (min-width: 768px) {
-    .container { max-width: 800px; margin: 0 auto; }
-}
-
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        body { font-family: 'Inter', 'Segoe UI', sans-serif; background-color: var(--bg-dark); color: var(--text-main); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; -webkit-tap-highlight-color: transparent; }
         header { background: var(--panel-bg); display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; border-bottom: 2px solid var(--border); flex-shrink: 0; }
         .menu-btn { background: none; border: none; color: var(--primary); font-size: 1.8rem; cursor: pointer; padding: 0 10px 0 0; }
         .header-title { font-size: 1.1rem; font-weight: bold; color: var(--primary); flex: 1; text-align: left; margin: 0; }
         .top-counters { display: flex; gap: 8px; }
-        .btn-top { background: var(--stat-bg); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; gap: 5px; cursor: pointer; transition: 0.2s;}
-        
+        .btn-top { background: var(--stat-bg); border: 1px solid var(--border); color: var(--text-main); padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; gap: 5px; cursor: pointer; transition: 0.2s;}
         .btn-top.active-nav { background: var(--success); color: white; border-color: var(--success); }
         .btn-top.btn-tapioca { border-color: var(--primary); color: var(--primary); }
         .btn-top.btn-tapioca.active-nav { color: white; border-color: var(--success); }
 
-        @keyframes piscarVerde {
-            0% { background-color: var(--stat-bg); border-color: var(--border); color: var(--text); }
-            50% { background-color: var(--success); border-color: var(--success); color: white; box-shadow: 0 0 15px rgba(64, 192, 87, 0.6); transform: scale(1.05); }
-            100% { background-color: var(--stat-bg); border-color: var(--border); color: var(--text); }
-        }
-        .piscar-alerta { animation: piscarVerde 1.2s infinite !important; }
+        .card { background-color: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); }
 
+        /* Botões padronizados */
+        .btn-acao, .btn-warning { border-radius: 12px; font-weight: 600; text-transform: uppercase; min-height: 48px; display: flex; justify-content: center; align-items: center; gap: 8px; border: none; transition: all 0.2s ease; width: 100%; box-sizing: border-box; }
+        .btn-warning { background-color: var(--primary); color: #000; box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3); }
+        .btn-acao { background: var(--primary); color: white; padding: 15px; font-size: 1.1rem; cursor: pointer; }
+        .btn-acao:hover, .btn-warning:active { transform: scale(0.96); opacity: 0.9; }
+        .btn-limpar { background: var(--border); color: var(--text-main); margin-top: 10px; }
+
+        /* Sidebar e Menus */
         .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; }
         .sidebar { position: fixed; top: 0; left: -280px; width: 250px; height: 100%; background: var(--panel-bg); z-index: 2001; transition: 0.3s; box-shadow: 2px 0 10px rgba(0,0,0,0.5); padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 15px; overflow-y: auto;}
         .sidebar.open { left: 0; }
-        .sidebar h2 { margin-top: 0; color: var(--primary); border-bottom: 1px solid var(--border); padding-bottom: 10px; }
-        .sidebar button { background: var(--stat-bg); border: 1px solid var(--border); color: var(--text); padding: 15px; border-radius: 6px; font-size: 1.1rem; font-weight: bold; cursor: pointer; text-align: left; transition: 0.2s; display: flex; align-items: center; gap: 10px;}
-        .sidebar button:hover { background: var(--primary); color: white; border-color: var(--primary); transform: translateX(5px); }
         .fechar-sidebar { background: var(--danger) !important; color: white !important; margin-top: auto; justify-content: center;}
         
+        .menu-grupo { margin-bottom: 10px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+        .btn-categoria { width: 100%; background: var(--card-bg); border: none; padding: 15px; display: flex; justify-content: space-between; align-items: center; font-size: 1rem; color: white; cursor: pointer;}
+        .submenu { display: none; background: #252525; flex-direction: column; padding: 5px 0; }
+        .submenu button { background: transparent; border: none; padding: 12px 20px; font-size: 0.9rem; color: white; text-align: left; border-bottom: 1px solid #333; cursor: pointer;}
+        .seta { font-size: 0.8rem; transition: 0.3s; }
+        .aberto .seta { transform: rotate(180deg); }
+
+        /* Vistas do App */
         .app-view { display: none; flex: 1; overflow-y: auto; padding: 15px; box-sizing: border-box; flex-direction: column;}
         .app-view.active { display: flex; }
-        .nav-voltar { background: var(--stat-bg); border: 1px solid var(--border); color: var(--text); padding: 12px; border-radius: 6px; font-weight: bold; font-size: 1rem; cursor: pointer; display: flex; align-items: center; gap: 10px; margin-bottom: 15px; transition: 0.2s;}
+        .nav-voltar { background: var(--stat-bg); border: 1px solid var(--border); color: var(--text-main); padding: 12px; border-radius: 6px; font-weight: bold; font-size: 1rem; cursor: pointer; display: flex; align-items: center; gap: 10px; margin-bottom: 15px; transition: 0.2s;}
+
         .tabs-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 15px; }
-        .tab-btn { background: var(--stat-bg); border: 1px solid var(--border); color: var(--text); padding: 10px 12px; border-radius: 20px; font-weight: bold; cursor: pointer; white-space: nowrap; font-size: 0.95rem; flex-grow: 1; text-align: center; transition: 0.2s;}
-        .tab-btn.active { background: var(--tab-active); color: #000; border-color: var(--tab-active); box-shadow: 0 0 10px rgba(57, 255, 20, 0.4);}
+        .tab-btn { background: var(--stat-bg); border: 1px solid var(--border); color: var(--text-main); padding: 10px 12px; border-radius: 20px; font-weight: bold; cursor: pointer; white-space: nowrap; font-size: 0.95rem; flex-grow: 1; text-align: center;}
+        .tab-btn.active { background: var(--tab-active); color: #000; border-color: var(--tab-active); box-shadow: 0 0 10px rgba(255, 193, 7, 0.4);}
         
-        .barra-pesquisa { width: 100%; padding: 12px; font-size: 1rem; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--text); box-sizing: border-box; margin-bottom: 15px; transition: 0.2s; }
-        .barra-pesquisa:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 8px rgba(255,107,107,0.3); }
+        .barra-pesquisa, .input-obs { width: 100%; padding: 12px; font-size: 1rem; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--text-main); box-sizing: border-box; margin-bottom: 15px;}
+        .barra-pesquisa:focus, .input-obs:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 8px rgba(255,193,7,0.3); }
 
         .grid-produtos { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
-        .produto-btn { background: var(--bg); border: 2px solid var(--border); padding: 10px 5px; border-radius: 6px; cursor: pointer; display: flex; flex-direction: column; align-items: center; text-align: center; color: var(--text); min-height: 80px; justify-content: center; position: relative; transition: all 0.15s ease-in-out; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; outline: none; }
+        .produto-btn { background: var(--bg-dark); border: 2px solid var(--border); padding: 10px 5px; border-radius: 6px; cursor: pointer; display: flex; flex-direction: column; align-items: center; text-align: center; color: var(--text-main); min-height: 80px; justify-content: center; position: relative; user-select: none; }
         .produto-btn:active { transform: scale(0.95); } 
-        .produto-nome, .produto-preco { pointer-events: none;}
-        .produto-nome { font-weight: bold; margin-bottom: 5px; font-size: 0.85rem; line-height: 1.2; }
-        .produto-preco { font-size: 0.9rem; color: var(--text-muted); }
-        .produto-btn.esgotado { opacity: 0.3; filter: grayscale(100%); }
-        .produto-btn.esgotado .produto-preco { text-decoration: line-through; color: var(--danger); }
-        .produto-btn.esgotado::after { content: "ESGOTADO"; position: absolute; background: var(--danger); color: white; padding: 2px 5px; font-size: 0.7rem; font-weight: bold; border-radius: 3px; transform: rotate(-10deg); pointer-events: none; }
-
-        .btn-acao { background: var(--primary); color: white; border: none; padding: 15px; font-size: 1.1rem; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; transition: 0.2s; box-sizing: border-box;}
-        .btn-acao:hover { opacity: 0.9; transform: translateY(-2px); }
-        .btn-acao:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-        .btn-limpar { background: var(--border); color: var(--text); margin-top: 10px; }
-        .produto-btn.selecionado { border-color: var(--success); background: #1a3320; }
-        .badge-qtd { position: absolute; top: -8px; right: -8px; background: var(--success); color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem; border: 2px solid var(--bg); box-shadow: 0 2px 4px rgba(0,0,0,0.5);}
-        .painel-carrinho { background: var(--panel-bg); border: 2px solid var(--primary); border-radius: 8px; padding: 15px; margin-top: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .produto-nome { font-weight: bold; margin-bottom: 5px; font-size: 0.85rem; line-height: 1.2; pointer-events: none;}
+        .produto-preco { font-size: 0.9rem; color: var(--text-muted); pointer-events: none;}
+        .produto-btn.esgotado { opacity: 0.3; filter: grayscale(100%); pointer-events: none; }
+        
+        .painel-carrinho { background: var(--panel-bg); border: 2px solid var(--primary); border-radius: 8px; padding: 15px; margin-top: 15px; }
         .lista-carrinho { max-height: 200px; overflow-y: auto; margin-bottom: 15px; }
-        .item-carrinho { display: flex; flex-direction: column; padding: 10px 0; border-bottom: 1px dashed var(--border); gap: 5px; animation: fadeIn 0.3s;}
-        .input-obs { width: 100%; padding: 10px 8px; font-size: 0.9rem; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); box-sizing: border-box; }
+        .item-carrinho { display: flex; flex-direction: column; padding: 10px 0; border-bottom: 1px dashed var(--border); gap: 5px; }
+
+        /* Modais */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; z-index: 3000; }
+        .modal-content { background: var(--panel-bg); padding: 20px; border-radius: 8px; width: 95%; max-width: 500px; max-height: 95vh; overflow-y: auto; box-sizing: border-box; box-shadow: 0 10px 30px rgba(0,0,0,0.5); color: white; border: 1px solid var(--border);}
         
-        .card-producao { background: var(--bg); border-left: 5px solid var(--danger); padding: 15px; border-radius: 6px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
-        .card-producao h3 { margin: 0 0 10px 0; color: var(--primary); font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 5px; display: flex; justify-content: space-between;}
-        .badge-status-cozinha { font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; color: white; }
-        .badge-pago { background: var(--success); }
-        .badge-pendente { background: var(--danger); }
-        .item-producao { background: var(--stat-bg); padding: 10px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border);}
-        .info-prod { flex: 1; }
-        .ingredientes { display: block; font-size: 0.9rem; color: var(--success); margin-top: 3px; font-weight: bold; }
-        .btn-check-item { background: var(--success); color: white; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.2s;}
-        .btn-forcar-baixa { background: var(--danger); color: white; border: none; padding: 8px 10px; border-radius: 4px; font-size: 0.85rem; cursor: pointer; margin-top: 10px; width: 100%; font-weight: bold;}
-        
-        .card-painel { background: var(--panel-bg); border: 1px solid var(--border); padding: 15px; border-radius: 6px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px;}
-        .card-painel-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 5px;}
-        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
-        .status-preparo { background: var(--danger); color: white; }
-        .status-pronto { background: var(--success); color: white; }
-        .acoes-painel { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 5px; }
-        .btn-painel { padding: 12px; font-weight: bold; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 0.95rem; transition: 0.2s;}
-        .btn-painel:hover { opacity: 0.8; }
-        .btn-p-pagar { background: var(--success); grid-column: span 2; font-size: 1.1rem; }
-        .btn-p-editar { background: var(--edit); color: white;}
-        .btn-p-cancelar { background: var(--danger); color: white;}
-        
-        .card-historico { background: var(--bg); border-left: 5px solid var(--success); padding: 12px; border-radius: 6px; margin-bottom: 10px; }
-        
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; z-index: 3000; animation: fadeIn 0.2s; }
-        .modal-content { background: var(--panel-bg); padding: 20px; border-radius: 8px; width: 95%; max-width: 500px; max-height: 95vh; overflow-y: auto; box-sizing: border-box; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .liq-box { background: var(--panel-bg); border: 1px solid var(--border); border-radius: 8px; padding: 15px; margin-bottom: 15px; }
-        .liq-row { display: flex; justify-content: space-between; font-size: 1.1rem; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px dashed var(--border); align-items: center;}
-        .liq-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        .liq-total { font-size: 1.4rem; font-weight: bold; color: var(--success); text-align: center; margin-bottom: 15px; }
-        .ocultavel { transition: all 0.3s; font-family: monospace; font-size: 1.2rem; }
-        
-        #loadingScreen { display: flex; flex-direction: column; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18,18,18,0.85); backdrop-filter: blur(4px); z-index: 9999; justify-content: center; align-items: center; color: var(--primary); }
-        .spinner { border: 5px solid var(--border); border-top: 5px solid var(--primary); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; box-shadow: 0 0 15px rgba(255,107,107,0.4); }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        
+        /* Torradas (Toasts) */
         #toast-container { position: fixed; top: 70px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none;}
-        .toast { background: var(--success); color: white; padding: 10px 20px; border-radius: 6px; font-weight: bold; font-size: 0.95rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); animation: slideIn 0.3s ease-out forwards; opacity: 0; transform: translateX(100%); display: flex; align-items: center; gap: 8px;}
+        .toast { background: var(--success); color: white; padding: 10px 20px; border-radius: 6px; font-weight: bold; font-size: 0.95rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); animation: slideIn 0.3s ease-out forwards; opacity: 0; transform: translateX(100%); }
         @keyframes slideIn { to { opacity: 1; transform: translateX(0); } }
-        @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
 
-        .tabela-filtros { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
-        .tabela-filtros th, .tabela-filtros td { padding: 8px; text-align: left; border-bottom: 1px solid var(--border); }
-        .tabela-filtros th { color: var(--primary); }
-
-        .tabela-espelho { width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left; white-space: nowrap; }
-        .tabela-espelho th { background: var(--stat-bg); padding: 10px; color: #20c997; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
-        .tabela-espelho td { padding: 8px 10px; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
-        
         @media (max-width: 768px) { .grid-produtos { grid-template-columns: 1fr 1fr; } }
-        @media print { body * { visibility: hidden; } #areaPrintRelatorio, #areaPrintRelatorio * { visibility: visible; } #areaPrintRelatorio { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; background: white; color: black; padding: 20px; box-sizing: border-box; z-index: 99999; } .modal-overlay { background: none; position: static; display: block !important; } .modal-content { box-shadow: none; border: none; padding: 0; background: transparent; } .btn-acao { display: none !important; } }
-
-        /* Estilos para o Menu Agrupado */
-.menu-grupo {
-    margin-bottom: 10px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.btn-categoria {
-    width: 100% !important;
-    background: var(--card-bg) !important;
-    border: none !important;
-    padding: 15px !important;
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    font-size: 1rem !important;
-    border-radius: 0 !important;
-}
-
-.submenu {
-    display: none; /* Começa escondido */
-    background: #252525;
-    flex-direction: column;
-    padding: 5px 0;
-}
-
-.submenu button {
-    background: transparent !important;
-    border: none !important;
-    padding: 12px 20px !important;
-    font-size: 0.9rem !important;
-    font-weight: normal !important;
-    border-radius: 0 !important;
-    border-bottom: 1px solid #333 !important;
-}
-
-.submenu button:last-child { border-bottom: none !important; }
-
-.seta { font-size: 0.8rem; transition: 0.3s; }
-.aberto .seta { transform: rotate(180deg); }
+        
+        @keyframes encolherBarra { from { width: 100%; } to { width: 0%; } }
+        .animar-barra { animation: encolherBarra 3s linear forwards; }
     </style>
 </head>
 <body>
-      <div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18, 18, 18, 0.95); z-index: 9999; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
-    <div class="spinner-border text-warning mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
-    <h5 id="loadingTexto" style="color: var(--warning); font-weight: 500;">Sincronizando...</h5>
-    <div class="progress mt-3" style="width: 70%; max-width: 300px; height: 8px; background-color: #333; border-radius: 10px;">
-        <div id="loadingBarra" class="progress-bar bg-warning" role="progressbar" style="width: 0%; transition: width 0.4s ease;"></div>
-    </div>
-    <span id="loadingPorcentagem" class="mt-2" style="color: #fff; font-size: 0.9rem; font-weight: bold;">0%</span>
-</div>
 
-    
-   <div id="loadingScreen"><div class="spinner"></div><h2 id="loadingText">Sincronizando...</h2></div>
-   <div id="toast-container"></div> 
-
-    <div id="modalAlerta" class="modal-overlay" style="z-index: 4000;">
-        <div class="modal-content" style="max-width: 350px; text-align: center; border-top: 5px solid var(--primary);">
-            <div style="font-size: 3rem; margin-bottom: 10px;">🔔</div>
-            <h3 id="tituloAlerta" style="margin-top: 0; color: var(--text);">Aviso</h3>
-            <p id="textoAlerta" style="font-size: 1.1rem; margin-bottom: 20px; color: var(--text-muted);"></p>
-            <button id="btnOkAlerta" class="btn-acao" style="background: var(--primary);">OK, Entendi</button>
+    <div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18, 18, 18, 0.95); z-index: 9999; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
+        <div class="spinner-border text-warning mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
+        <h5 id="loadingTexto" style="color: var(--primary); font-weight: 500;">Sincronizando...</h5>
+        <div class="progress mt-3" style="width: 70%; max-width: 300px; height: 8px; background-color: #333; border-radius: 10px;">
+            <div id="loadingBarra" class="progress-bar bg-warning" role="progressbar" style="width: 0%; transition: width 0.4s ease;"></div>
         </div>
+        <span id="loadingPorcentagem" class="mt-2" style="color: #fff; font-size: 0.9rem; font-weight: bold;">0%</span>
     </div>
 
-    <div id="modalAcessoDev" class="modal-overlay" style="z-index: 5000;">
-        <div class="modal-content" style="max-width: 350px; text-align: center; border-top: 5px solid #1c7ed6;">
-            <div style="font-size: 3rem; margin-bottom: 10px;">🚧</div>
-            <h3 style="margin-top: 0; color: var(--text);">Área em Construção / DEV</h3>
-            <p style="font-size: 0.95rem; margin-bottom: 15px; color: var(--text-muted);">
-                Esta funcionalidade está em desenvolvimento. Insira a senha de programador para continuar desenvolvendo:
-            </p>
-            <input type="password" id="inputSenhaDev" class="input-obs" placeholder="****" style="text-align: center; font-size: 1.5rem; margin-bottom: 15px; letter-spacing: 5px;">
-            <button class="btn-acao" style="background: #1c7ed6; margin-bottom: 10px;" onclick="validarSenhaDev()">🔓 Desbloquear Acesso</button>
-            <button class="btn-acao btn-limpar" onclick="fecharModais()" style="margin-top: 0;">Cancelar</button>
-        </div>
-    </div>
-    
-    <div id="modalConfirm" class="modal-overlay" style="z-index: 4000;">
-        <div class="modal-content" style="max-width: 380px; text-align: center; border-top: 5px solid var(--edit);">
-            <div style="font-size: 3rem; margin-bottom: 10px;">❓</div>
-            <h3 style="margin-top: 0; color: var(--text);">Atenção!</h3>
-            <p id="textoConfirm" style="font-size: 1.1rem; margin-bottom: 25px; color: var(--text-muted);"></p>
-            <div style="display: flex; gap: 10px;">
-                <button id="btnCancelarConfirm" class="btn-acao btn-limpar" style="margin: 0;">Cancelar</button>
-                <button id="btnOkConfirm" class="btn-acao" style="background: var(--edit);">Sim, Confirmar</button>
-            </div>
-        </div>
-    </div>
+    <div id="toast-container"></div> 
 
     <audio id="somCampainha" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" preload="auto"></audio>
     <audio id="somCaixa" src="https://www.soundjay.com/misc/sounds/cash-register-01.mp3" preload="auto"></audio>
 
     <header>
         <button class="menu-btn" onclick="abrirMenuLateral()">☰</button>
-        <h1 class="header-title">LABORATIRIO 🧪💻</h1>
+        <h1 class="header-title">TAPIMOMEL 🧪💻</h1>
         <div class="top-counters">
             <button class="btn-top" id="btnTopoProd" onclick="mudarTela('view-producao')">👨‍🍳 Prod.</button>
             <button class="btn-top" id="btnTopoCaixa" onclick="mudarTela('view-painel')">📝 Caixa</button>
@@ -288,57 +139,43 @@ body {
 
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="fecharMenuLateral()"></div>
     <div class="sidebar" id="sidebar">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2 style="margin: 0; color: var(--primary);">⚙️ Menu</h2>
-        <button onclick="fecharMenuLateral()" style="background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer;">✖</button>
-    </div>
-
-    <div class="menu-grupo">
-        <button class="btn-categoria" onclick="toggleSubmenu('sub-planilhas')">📑 Planilhas <span class="seta">▼</span></button>
-        <div id="sub-planilhas" class="submenu">
-            <button onclick="window.open('https://docs.google.com/spreadsheets/d/16LojKYyWZOXWeXA72hC44SQ35uC7lxR2rpUGldhHj5w/edit', '_blank');">📈 Abrir Planilha Real</button>
-            <button onclick="abrirRestrito('espelho')">🪞 Abrir planilha (App)</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin: 0; color: var(--primary);">⚙️ Menu</h2>
+            <button onclick="fecharMenuLateral()" style="background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer;">✖</button>
         </div>
-    </div>
 
-    <div class="menu-grupo">
-        <button class="btn-categoria" onclick="toggleSubmenu('sub-fechamentos')">💰 Fechamentos <span class="seta">▼</span></button>
-        <div id="sub-fechamentos" class="submenu">
-            <button onclick="abrirModalRelatorio(); fecharMenuLateral();">📊 Fechar o Dia</button>
-            <button onclick="abrirRestrito('liquidez')">💧 Liquidez Mensal</button>
-            <button onclick="confirmarFechamentoMes(); fecharMenuLateral();" style="color:var(--danger);">🚨 Fechar Mês (Drive)</button>
+        <div class="menu-grupo">
+            <button class="btn-categoria" onclick="toggleSubmenu('sub-planilhas')">📑 Planilhas <span class="seta">▼</span></button>
+            <div id="sub-planilhas" class="submenu">
+                <button onclick="window.open('https://docs.google.com/spreadsheets/d/16LojKYyWZOXWeXA72hC44SQ35uC7lxR2rpUGldhHj5w/edit', '_blank');">📈 Abrir Planilha Real</button>
+                <button onclick="abrirRestrito('espelho')">🪞 Abrir planilha (App)</button>
+            </div>
         </div>
-    </div>
 
-    <div class="menu-grupo">
-        <button class="btn-categoria" onclick="toggleSubmenu('sub-gestao')">🚀 Gestão O.P <span class="seta">▼</span></button>
-        <div id="sub-gestao" class="submenu">
-            <button onclick="abrirRestrito('estimativa')">💵 Projeção Salário</button>
-            <button onclick="abrirRestrito('dias')">💤 Dias não Trabalho</button>
-            <button onclick="abrirRestrito('combustivel')">⛽ Controle Combustível</button>
+        <div class="menu-grupo">
+            <button class="btn-categoria" onclick="toggleSubmenu('sub-fechamentos')">💰 Fechamentos <span class="seta">▼</span></button>
+            <div id="sub-fechamentos" class="submenu">
+                <button onclick="abrirModalRelatorio(); fecharMenuLateral();">📊 Fechar o Dia</button>
+                <button onclick="abrirModalSenhaLiquidez(); fecharMenuLateral();">💧 Liquidez Mensal</button>
+                <button onclick="confirmarFechamentoMes(); fecharMenuLateral();" style="color:var(--danger);">🚨 Fechar Mês (Drive)</button>
+            </div>
         </div>
-    </div>
 
-    <div class="menu-grupo">
-        <button class="btn-categoria" onclick="abrirRestrito('rankings')">🏅 Rankings de Vendas</button>
+        <button class="fechar-sidebar" onclick="fecharMenuLateral()" style="margin-top: auto; padding: 15px; border:none; border-radius:8px; cursor:pointer;">⬅️ Voltar ao App</button>
     </div>
-    
-    <button class="fechar-sidebar" onclick="fecharMenuLateral()" style="margin-top: auto;">⬅️ Voltar ao App</button>
-</div>
 
     <div id="view-catalogo" class="app-view active">
         <div style="position: relative; width: 100%; margin-bottom: 15px;">
-            <input type="text" id="inputPesquisa" class="barra-pesquisa" placeholder="🔍 Buscar produto (Ex: Morango, Calabresa...)" oninput="pesquisarProdutos()" style="margin-bottom: 0; padding-right: 40px;">
-            <button id="btnLimparPesquisa" onclick="limparPesquisa()" style="display: none; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; padding: 5px;">✖ Limpar</button>
+            <input type="text" id="inputPesquisa" class="barra-pesquisa" placeholder="🔍 Buscar produto..." oninput="pesquisarProdutos()">
         </div>
         <div class="tabs-container" id="containerAbas">
             <button class="tab-btn" onclick="trocarAba('salgadas', this)">Salgadas</button>
             <button class="tab-btn" onclick="trocarAba('especiais', this)">Especiais</button>
             <button class="tab-btn" onclick="trocarAba('doces', this)">Doces</button>
-            <button class="tab-btn" onclick="trocarAba('monte', this)">Monte Sua</button>
             <button class="tab-btn" onclick="trocarAba('bebidas', this)">Bebidas</button>
         </div>
         <div class="grid-produtos" id="gridProdutos"></div>
+        
         <div class="painel-carrinho" id="boxCarrinho" style="display: none;">
             <h2 id="tituloCarrinho" style="margin-top:0;">Pedido em Andamento</h2>
             <div class="lista-carrinho" id="listaCarrinho"></div>
@@ -350,524 +187,501 @@ body {
         </div>
     </div>
 
-    <div id="view-producao" class="app-view">
-        <button class="nav-voltar" onclick="mudarTela('view-catalogo')">⬅️ Voltar para o Catálogo</button>
-        <h2 style="color: var(--primary);">👨‍🍳 Fila de Produção</h2>
-        <div id="listaProducao"></div>
-    </div>
-    
     <div id="view-painel" class="app-view">
-        <button class="nav-voltar" onclick="mudarTela('view-catalogo')">⬅️ Voltar para o Catálogo</button>
+        <button class="nav-voltar" onclick="mudarTela('view-catalogo')">⬅️ Voltar</button>
         <h2 style="color: var(--primary);">📝 Painel de Pedidos (Caixa)</h2>
         <div id="listaPainelPedidos"></div>
     </div>
-    
-    <div id="view-historico" class="app-view">
-        <button class="nav-voltar" onclick="mudarTela('view-catalogo')">⬅️ Voltar para o Catálogo</button>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 8px;">
-            <h2 style="color: var(--success); margin: 0; flex: 1;">✅ Vendas Hoje</h2>
-            <button onclick="zerarContadorPlanilha()" style="background: var(--edit); color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.85rem;">🗑️ Apagar Cont.</button>
-            <button onclick="limparHistoricoVendasHoje()" style="background: var(--danger); color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.85rem;">🧹 Limpar Tela</button>
-        </div>
-        <div id="listaHistoricoHoje"></div>
-    </div>
 
-    <div id="view-espelho" class="app-view">
-        <button class="nav-voltar" onclick="mudarTela('view-catalogo')">⬅️ Voltar para o Catálogo</button>
-        <h2 style="color: #20c997; margin-top: 0; margin-bottom: 5px;">🪞 Espelho da Planilha</h2>
-        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0; margin-bottom: 15px;">Visualização dos dados brutos em tempo real (Somente Leitura).</p>
-
-         <select id="selectAbaEspelho" class="input-obs" style="margin-bottom: 15px;" onchange="mudarAbaEspelho()">
-    <option value="Fechamentos_Diarios">Fechamentos Diários</option>
-    <option value="Tapiocas Diária">Tapiocas Diária</option>
-    <option value="Base de Vendas">Base de Vendas</option>
-    <option value="Historico_Diario">Histórico de Pedidos</option>
-    <option value="Combustivel">Combustível</option>
-    <option value="Dias_Nao_Trabalhados">Dias Não Trabalhados</option>
-    <option value="Fechamentos_Mensais">Fechamentos Mensais</option>
-    <option value="Vendas_hoje">Vendas Hoje</option>
-    <option value="Resumo Semanal">Resumo Semanal</option>
-    <option value="Liquidez Mensal">Liquidez Mensal</option>
-    <option value="Pedidos Cancelados">Pedidos Cancelados</option>
-</select>
-
-        <button class="btn-acao" style="background: #20c997; color: #000; margin-bottom: 15px;" onclick="carregarEspelhoPlanilha()">🔄 Sincronizar Dados Agora</button>
-
-        <div id="loadingEspelho" style="text-align:center; display:none; margin: 20px 0;">
-            <div class="spinner" style="width:30px; height:30px; margin: 0 auto; border-top-color: #20c997;"></div>
-            <p>Puxando dados do Google Sheets...</p>
-        </div>
-
-        <div id="containerTabelaEspelho" style="overflow-x: auto; max-height: 50vh; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; display: none; background: var(--bg);">
-            <table class="tabela-espelho">
-                <thead id="headEspelho"></thead>
-                <tbody id="bodyEspelho"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <div id="view-combustivel" class="app-view">
-        <button class="nav-voltar" onclick="mudarTela('view-catalogo')">⬅️ Voltar para o Catálogo</button>
-        <h2 style="color: #ff922b; margin-top: 0;">⛽ Controle de Combustível</h2>
-        
-        <div style="background: var(--panel-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px;">
-            <label>Data do Abastecimento:</label>
-            <input type="date" id="inputDataCombustivel" class="input-obs" style="margin-bottom: 10px;">
+    <div id="modalSenhaLiquidez" class="modal-overlay">
+        <div class="modal-content" style="max-width: 350px; text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 10px;">🔒</div>
+            <h3 style="margin-top: 0;">Área Restrita</h3>
+            <p style="color: var(--text-muted);">Digite a senha do administrador.</p>
+            <input type="password" id="inputSenhaAdmin" class="input-obs" placeholder="****" style="text-align: center; font-size: 1.5rem; letter-spacing: 5px;">
             
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
-                <div>
-                    <label>Valor Pago (R$):</label>
-                    <input type="text" inputmode="numeric" id="inputValorCombustivel" class="input-obs" placeholder="0,00" oninput="maskCurrency(event)">
-                </div>
-                <div>
-                    <label>Litros:</label>
-                    <input type="number" id="inputLitrosCombustivel" class="input-obs" placeholder="Ex: 10.5" step="0.1">
-                </div>
-            </div>
-            <button class="btn-acao" style="background: #ff922b;" onclick="registrarCombustivel()">💾 Salvar Abastecimento</button>
-        </div>
-
-        <h3 style="color: var(--text-muted); border-bottom: 1px solid var(--border); padding-bottom: 5px;">📋 Histórico do Mês Atual</h3>
-        
-        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-            <div style="flex: 1; background: var(--stat-bg); padding: 10px; border-radius: 6px; text-align: center;">
-                <div style="font-size: 0.8rem; color: var(--text-muted);">Total Gasto</div>
-                <strong id="combResumoGasto" style="color: var(--danger); font-size: 1.2rem;">R$ 0,00</strong>
-            </div>
-            <div style="flex: 1; background: var(--stat-bg); padding: 10px; border-radius: 6px; text-align: center;">
-                <div style="font-size: 0.8rem; color: var(--text-muted);">Total Litros</div>
-                <strong id="combResumoLitros" style="color: #339af0; font-size: 1.2rem;">0 L</strong>
-            </div>
-        </div>
-
-        <button class="btn-acao btn-limpar" style="margin-bottom: 10px;" onclick="carregarHistoricoCombustivel()">🔄 Atualizar Histórico</button>
-        <div id="listaCombustivel" style="max-height: 300px; overflow-y: auto;"></div>
-    </div>
-
-    <div id="view-rankings" class="app-view">
-        <button class="nav-voltar" onclick="mudarTela('view-catalogo')">⬅️ Voltar para o Catálogo</button>
-        <h2 style="color: #e599f7; margin-top: 0; text-align: center;">🏅 Central de Rankings</h2>
-        <p style="color: var(--text-muted); text-align: center; font-size: 0.9rem; margin-top: -10px;">Analise os campeões de vendas e as melhores rotas.</p>
-        
-        <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 15px;">
-            <button id="btnAbaTop" class="btn-acao" style="background: #ff6b6b; margin:0; padding: 10px; font-size: 0.95rem; border-radius: 6px;" onclick="mudarAbaRanking('top')">🌟 Top Produtos</button>
-            <button id="btnAbaRotas" class="btn-acao btn-limpar" style="margin:0; padding: 10px; font-size: 0.95rem; border-radius: 6px;" onclick="mudarAbaRanking('rotas')">🏆 Rotas Campeãs</button>
-            <button id="btnAbaInsights" class="tab-btn btn-limpar" onclick="mudarAbaRanking('insights')">💡 Insights</button>
-            </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
-            <select id="filtroMesRankings" class="input-obs">
-                <option value="01">Janeiro</option><option value="02">Fevereiro</option><option value="03">Março</option>
-                <option value="04">Abril</option><option value="05">Maio</option><option value="06">Junho</option>
-                <option value="07">Julho</option><option value="08">Agosto</option><option value="09">Setembro</option>
-                <option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
-            </select>
-            <select id="filtroAnoRankings" class="input-obs"></select>
-        </div>
-        
-        <button class="btn-acao" id="btnGerarRanking" style="background: #ff6b6b; color: white; margin-bottom: 20px;" onclick="gerarRankingAtual()">📊 Gerar Top Produtos</button>
-
-        <div id="loadingRankings" style="text-align:center; display:none; margin: 20px 0;">
-            <div class="spinner" id="spinnerRankings" style="width:30px; height:30px; margin: 0 auto; border-top-color: #ff6b6b;"></div>
-            <p id="textoLoadingRankings">Analisando dados...</p>
-        </div>
-        
-        <div id="resultadoRankings" style="display: flex; flex-direction: column; gap: 10px;"></div>
-    </div>
-
-    <div id="modalAvulso" class="modal-overlay">
-        <div class="modal-content">
-            <h3>➕ Lançar Item Avulso</h3>
-            <label>Nome do Item:</label>
-            <input type="text" id="inputNomeAvulso" placeholder="Ex: Massa Extra, Queijo Solto..." style="width:100%; padding:10px; margin-bottom:10px; box-sizing:border-box;">
-            <label>Valor (R$):</label>
-            <input type="text" inputmode="numeric" id="inputPrecoAvulso" placeholder="Ex: 5,00" style="width:100%; padding:10px; margin-bottom:15px; box-sizing:border-box;">
-            <button class="btn-acao" style="background: var(--success);" onclick="lancarAvulsoCarrinho()">Adicionar ao Pedido</button>
+            <button class="btn-acao" style="background: var(--primary); color: #000; margin-top: 10px;" onclick="dispararVerificacaoSenha()">🔓 Autenticar</button>
             <button class="btn-acao btn-limpar" onclick="fecharModais()">Cancelar</button>
-        </div>
-    </div>
-    
-    <div id="modalAdicional" class="modal-overlay">
-        <div class="modal-content">
-            <h3 style="color: var(--primary); margin-top: 0;">➕ Adicional (R$ 4,00)</h3>
-            <label>Qual é o adicional?</label>
-            <input type="text" id="inputDescAdicional" class="input-obs" placeholder="Ex: Cheddar, Bacon, Queijo..." style="width:100%; padding:12px; margin-top:8px; margin-bottom:15px; box-sizing:border-box; font-size: 1.1rem;">
-            <button class="btn-acao" style="background: var(--success);" onclick="confirmarAdicional()">Adicionar ao Pedido</button>
-            <button class="btn-acao btn-limpar" onclick="fecharModais()">Cancelar</button>
-        </div>
-    </div>
-    
-    <div id="modalPrecoSemQueijo" class="modal-overlay">
-        <div class="modal-content">
-            <h3>🚫 <span id="tituloCarneSemQueijo"></span> (Sem Queijo)</h3>
-            <label>Digite o valor cobrado (R$):</label>
-            <input type="text" inputmode="numeric" id="inputPrecoSemQueijo" placeholder="0,00" style="width:100%; padding:15px; font-size:1.5rem; margin-top:5px; margin-bottom:15px; box-sizing:border-box;" oninput="maskCurrency(event)">
-            <div style="display:flex; gap:10px;">
-                <button class="btn-acao btn-limpar" style="margin:0;" onclick="fecharModais()">Cancelar</button>
-                <button class="btn-acao" style="background: var(--success);" onclick="confirmarMonteSemQueijo()">✓ Adicionar</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modalRelatorio" class="modal-overlay">
-        <div class="modal-content">
-            <div id="areaPrintRelatorio" style="border-radius: 8px; padding: 20px; background: var(--panel-bg); color: var(--text); margin-bottom: 15px;">
-                <h3 style="color:var(--text); text-align:center; margin-top:0;">📊 Fechamento do Dia</h3>
-                
-                <p style="text-align:center; font-size: 0.9rem;">Vendas registradas em <b id="dataFechamentoPrint">hoje</b> e sincronizadas.</p>
-                
-                <h2 id="relFaturamento" style="color: var(--success); text-align:center; font-size: 1.8rem;">R$ 0,00</h2>
-                <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Dinheiro:</span> <strong id="relDin">R$ 0,00</strong></div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>PIX:</span> <strong id="relPix">R$ 0,00</strong></div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Crédito:</span> <strong id="relCred">R$ 0,00</strong></div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Débito:</span> <strong id="relDeb">R$ 0,00</strong></div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:15px; border-bottom:1px dashed var(--border); padding-bottom:10px;"><span>VR:</span> <strong id="relVR">R$ 0,00</strong></div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-weight:bold; font-size:1.1rem;"><span>🌮 Tapiocas Hoje:</span> <strong id="relQtdTapiocas">0 un</strong></div>
-            </div>
-            <button id="btnSalvarPrint" class="btn-acao" style="background: var(--edit); margin-bottom: 10px;" onclick="baixarPrintFechamento()">📸 Print</button>
-            <button class="btn-acao" style="background: var(--success); margin-bottom: 10px;" onclick="registrarFechamentoDia()">✓ Registrar e Zerar Dia</button>
-            <button class="btn-acao btn-limpar" onclick="fecharModais()" style="margin-top: 0;">Apenas Fechar Tela</button>
-        </div>
-    </div>
-
-    <div id="modalDiaSemTrabalho" class="modal-overlay">
-        <div class="modal-content" style="max-width: 450px; text-align: center;">
-            <h3 style="color: #ced4da; margin-top:0;">💤 Dias Sem Trabalho</h3>
-            
-            <div style="display: flex; gap: 8px; margin-bottom: 15px; justify-content: center;">
-                <button id="btnAbaRegFolga" class="btn-acao" style="background: var(--edit); margin:0; padding: 10px; font-size: 0.95rem; border-radius: 6px;" onclick="mudarAbaFolga('registrar')">✏️ Registrar</button>
-                <button id="btnAbaHistFolga" class="btn-acao btn-limpar" style="margin:0; padding: 10px; font-size: 0.95rem; border-radius: 6px;" onclick="mudarAbaFolga('historico')">🔍 Ver Histórico</button>
-            </div>
-
-            <div id="viewRegistrarFolga">
-                <p style="color: var(--text-muted); font-size: 0.9rem;">Registre aqui se vocês não abriram a tapiocaria hoje.</p>
-                <div style="text-align: left; margin-bottom: 15px;">
-                    <label>Data:</label>
-                    <input type="date" id="inputDataSemTrabalho" class="input-obs" style="margin-bottom: 10px;">
-                    <label>Motivo:</label>
-                    <input type="text" id="inputMotivoSemTrabalho" class="input-obs" placeholder="Ex: Feriado, Doença, Folga..." maxlength="100">
-                </div>
-                <button class="btn-acao" style="background: var(--edit); margin-bottom: 10px;" onclick="registrarDiaSemTrabalho()">💾 Salvar Registro</button>
-            </div>
-
-            <div id="viewHistoricoFolga" style="display: none; text-align: left;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                    <select id="filtroMesFolga" class="input-obs">
-                        <option value="01">Janeiro</option><option value="02">Fevereiro</option><option value="03">Março</option>
-                        <option value="04">Abril</option><option value="05">Maio</option><option value="06">Junho</option>
-                        <option value="07">Julho</option><option value="08">Agosto</option><option value="09">Setembro</option>
-                        <option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
-                    </select>
-                    <select id="filtroAnoFolga" class="input-obs"></select>
-                </div>
-                <button class="btn-acao" style="background: #ced4da; color: #000; margin-bottom: 15px;" onclick="buscarHistoricoFolgas()">🔎 Buscar na Planilha</button>
-                
-                <div id="loadingFolgas" style="text-align:center; display:none; margin: 20px 0;">
-                    <div class="spinner" style="width:30px; height:30px; margin: 0 auto; border-top-color: #ced4da;"></div>
-                    <p>Buscando histórico...</p>
-                </div>
-                <div id="resultadoFolgas" style="max-height: 250px; overflow-y: auto; display: none; border: 1px solid var(--border); border-radius: 6px;"></div>
-            </div>
-
-            <button class="btn-acao btn-limpar" onclick="fecharModais()" style="margin-top: 0;">Cancelar / Fechar</button>
         </div>
     </div>
 
     <div id="modalLiquidez" class="modal-overlay">
-    <div class="modal-content" style="max-width: 480px;">
-        <div id="loadingLiquidez" style="text-align:center; padding: 20px; display: none;">
-            <div class="spinner" style="width:30px; height:30px; margin: 0 auto 10px auto;"></div>
-            <p>Calculando dados da planilha...</p>
-        </div>
-        
-        <div id="conteudoLiquidez">
+        <div class="modal-content" style="max-width: 480px;">
             <h3 style="text-align:center; color: var(--primary); margin-top:0;">📊 Fechamento do Mês</h3>
-            <p id="mesReferenciaPDF" style="text-align:center; color: var(--text-muted); margin-top: -10px; font-weight: bold;"></p>
-
-            <div class="card p-3 mb-3" style="border-color: var(--warning);">
-    <h6 style="color: var(--warning); text-transform: uppercase; font-size: 0.8rem;">⛽ Custos Operacionais</h6>
-    
-    <div class="d-flex justify-content-between align-items-center mb-2">
-        <span style="font-size: 0.85rem; color: var(--text-muted);">Taxas (Maquininha)</span>
-        <strong id="liqTaxasTxt" style="color: var(--danger); font-size: 0.95rem;">- R$ 0,00</strong>
-    </div>
-
-    <div class="d-flex justify-content-between align-items-center mb-2">
-        <span style="font-size: 0.85rem; color: var(--text-muted);">Fixos (Equipe + Manut. + Trailer)</span>
-        <strong id="liqFixosTxt" style="color: var(--danger); font-size: 0.95rem;">- R$ 1.350,00</strong>
-    </div>
-</div>
-
-<div class="text-center mb-3">
-    <span style="font-size: 0.8rem; color: var(--text-muted);">Sobra Líquida (Base Sócios)</span><br>
-    <strong id="liqSobraLiquida" style="font-size: 1.8rem; color: var(--success);">R$ 0,00</strong>
-</div>
-
-<div class="card p-3" style="border-color: var(--info);">
-    <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
-        <span style="color: var(--info); font-weight: 500;">
-            👤 Lucas (25% + R$100) <i class="bi bi-eye ms-1" id="icon-liqLucas" style="cursor: pointer;" onclick="toggleVisibility('liqLucas')"></i>
-        </span>
-        <strong id="liqLucas" style="color: var(--info); font-size: 1.1rem;" data-valor="0">R$ ****</strong>
-    </div>
-    <div class="d-flex justify-content-between align-items-center">
-        <span style="color: var(--purple); font-weight: 500;">
-            👤 Eliel (5%) <i class="bi bi-eye ms-1" id="icon-liqEliel" style="cursor: pointer;" onclick="toggleVisibility('liqEliel')"></i>
-        </span>
-        <strong id="liqEliel" style="color: var(--purple); font-size: 1.1rem;" data-valor="0">R$ ****</strong>
-    </div>
-</div>
-
-        <button class="btn-acao" style="background: var(--danger); margin-top: 10px;" onclick="confirmarFechamentoMes()">🚨 Finalizar e Fechar Mês</button>
-        <button class="btn-acao btn-limpar" onclick="fecharModais()">Voltar</button>
-    </div>
-</div>
-
-    
-    <div id="modalSenhaEstimativa" class="modal-overlay">
-        <div class="modal-content" style="max-width: 350px; text-align: center; border-top: 5px solid #339af0;">
-            <div style="font-size: 3rem; margin-bottom: 10px;">🔒</div>
-            <h3 style="margin-top: 0; color: var(--text);">Área Restrita</h3>
-            <p style="font-size: 0.95rem; margin-bottom: 15px; color: var(--text-muted);">Digite a senha para acessar a projeção salarial.</p>
-            <input type="password" id="inputSenhaEstimativa" class="input-obs" placeholder="****" style="text-align: center; font-size: 1.2rem; margin-bottom: 15px;">
-            <button class="btn-acao" style="background: #339af0; margin-bottom: 10px;" onclick="verificarSenhaEstimativa()">🔓 Acessar</button>
-            <button class="btn-acao btn-limpar" onclick="fecharModais()" style="margin-top: 0;">Cancelar</button>
-        </div>
-    </div>
-
-    <div id="modalEstimativa" class="modal-overlay">
-        <div class="modal-content" style="max-width: 450px;">
-            <h3 style="color: #339af0; margin-top:0; text-align:center;">💰 Inteligência Salarial</h3>
             
-            <div id="loadingEstimativa" style="text-align:center; padding: 20px; display: none;">
-                <div class="spinner" style="width:30px; height:30px; margin: 0 auto 10px auto; border-top-color: #339af0;"></div>
-                <p>Processando dias reais de trabalho...</p>
-            </div>
-
-            <div id="conteudoEstimativa" style="display: none;">
-                <p style="text-align:center; color: var(--text-muted); margin-bottom: 20px;">Projeção para <b><span id="estMes"></span></b> baseada nas vendas reais.</p>
-                
-                <div class="liq-box" style="border-color: #339af0;">
-                    <div class="liq-row" style="font-size: 0.95rem; color: var(--text-muted);">
-                        <span>Dias Úteis no Mês (Seg-Sex)</span><strong id="estTotalDias">0</strong>
-                    </div>
-                    <div class="liq-row" style="font-size: 0.95rem; color: var(--text-muted);">
-                        <span>Dias Reais Trabalhados / Restantes</span><strong><span id="estPassados">0</span> / <span id="estRestantes">0</span></strong>
-                    </div>
-                    <div class="liq-row" style="border:none;">
-                        <span>Média Real por Dia Trabalhado</span><strong id="estMedia" style="color: var(--edit);">R$ 0,00</strong>
-                    </div>
+            <div class="card p-3 mb-3" style="border-color: var(--warning);">
+                <h6 style="color: var(--warning); text-transform: uppercase; font-size: 0.8rem;">⛽ Custos Operacionais</h6>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">Taxas (Maquininha)</span>
+                    <strong id="liqTaxasTxt" style="color: var(--danger); font-size: 0.95rem;">- R$ 0,00</strong>
                 </div>
-
-                <div style="background: var(--stat-bg); padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: center; border: 1px solid var(--border);">
-                    <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 5px;">Salário Lucas (Acumulado Real até hoje)</div>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: var(--text);" id="estLucasAtual">R$ 0,00</div>
-                </div>
-
-                <div style="background: rgba(51, 154, 240, 0.1); padding: 15px; border-radius: 8px; text-align: center; border: 2px dashed #339af0;">
-                    <div style="font-size: 0.9rem; color: #339af0; margin-bottom: 5px; font-weight: bold;">Projeção de Salário Final (25% + R$ 100)</div>
-                    <div style="font-size: 2rem; font-weight: bold; color: var(--success);" id="estLucasProjetado">R$ 0,00</div>
-                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 5px;">*Se a média atual se mantiver nos dias restantes.</div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">Fixos (Equipe + Manut. + Trailer)</span>
+                    <strong id="liqFixosTxt" style="color: var(--danger); font-size: 0.95rem;">- R$ 1.350,00</strong>
                 </div>
             </div>
-            <button class="btn-acao btn-limpar" style="margin-top: 20px;" onclick="fecharModais()">Voltar</button>
-        </div>
-    </div>
 
-    <div id="modalPagamento" class="modal-overlay">
-        <div class="modal-content">
-            <h3>Pagar Pedido #<span id="numeroPedidoPagamento"></span></h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
-                <button class="btn-acao" style="background:var(--bg); border:2px solid var(--border); color:var(--text);" onclick="processarPagamento('PIX')">PIX</button>
-                <button class="btn-acao" style="background:var(--bg); border:2px solid var(--border); color:var(--text);" onclick="processarPagamento('Dinheiro')">Dinheiro</button>
-                <button class="btn-acao" style="background:var(--bg); border:2px solid var(--border); color:var(--text);" onclick="processarPagamento('Cartão de Crédito')">Crédito</button>
-                <button class="btn-acao" style="background:var(--bg); border:2px solid var(--border); color:var(--text);" onclick="processarPagamento('Cartão de Débito')">Débito</button>
-                <button class="btn-acao" style="background:var(--bg); border:2px solid var(--border); color:var(--text); grid-column: span 2;" onclick="processarPagamento('VR')">VR (Vale Refeição)</button>
-                <button class="btn-acao" style="background:var(--edit); grid-column: span 2;" onclick="abrirModalMisto()">⚖️ Pagamento Dividido</button>
+            <div class="text-center mb-3">
+                <span style="font-size: 0.8rem; color: var(--text-muted);">Sobra Líquida (Base Sócios)</span><br>
+                <strong id="liqSobraLiquida" style="font-size: 1.8rem; color: var(--success);">R$ 0,00</strong>
             </div>
-            <button class="btn-acao btn-limpar" onclick="fecharModais()">Cancelar</button>
-        </div>
-    </div>
 
-    <div id="modalTroco" class="modal-overlay">
-        <div class="modal-content">
-            <h3>💵 Pagamento em Dinheiro</h3>
-            <p style="font-size: 1.2rem; display: flex; justify-content: space-between;"><span>Total:</span> <strong id="trocoTotalPedido">R$ 0,00</strong></p>
-            <label>Valor Recebido do Cliente (R$):</label>
-            <input type="text" inputmode="numeric" id="inputValorRecebido" placeholder="0,00" style="width:100%; padding:15px; font-size:1.5rem; margin-top:5px; box-sizing:border-box;" oninput="maskCurrency(event)">
-            <button class="btn-acao" style="background: var(--stat-bg); border: 1px solid var(--border); color: var(--text); padding: 10px; margin-top: 10px; font-size: 1rem;" onclick="preencherValorExato()">Exato (Sem Troco)</button>
-            <div class="valor-troco" id="caixaTroco" style="padding:15px; font-size:1.3rem; margin: 15px 0; background: var(--troco-bg); border-radius: 6px; text-align:center;">Troco: <strong id="valorDoTroco">R$ 0,00</strong></div>
-            <div style="display:flex; gap:10px;">
-                <button class="btn-acao btn-limpar" style="margin:0;" onclick="fecharModais()">Voltar</button>
-                <button id="btnConfirmarDinheiro" class="btn-acao" style="background: var(--success);" onclick="finalizarVenda('Dinheiro')" disabled>✓ Finalizar</button>
+            <div class="card p-3" style="border-color: var(--info);">
+                <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
+                    <span style="color: var(--info); font-weight: 500;">
+                        👤 Lucas <small>(25% + R$100)</small> 
+                        <i class="bi bi-eye ms-1" id="icon-liqLucas" style="cursor: pointer;" onclick="toggleVisibility('liqLucas')"></i>
+                    </span>
+                    <strong id="liqLucas" style="color: var(--info); font-size: 1.1rem;" data-valor="0">R$ ****</strong>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span style="color: var(--purple); font-weight: 500;">
+                        👤 Eliel <small>(5%)</small> 
+                        <i class="bi bi-eye ms-1" id="icon-liqEliel" style="cursor: pointer;" onclick="toggleVisibility('liqEliel')"></i>
+                    </span>
+                    <strong id="liqEliel" style="color: var(--purple); font-size: 1.1rem;" data-valor="0">R$ ****</strong>
+                </div>
             </div>
-        </div>
-    </div>
-    
-    <div id="modalMisto" class="modal-overlay">
-        <div class="modal-content">
-            <h3>⚖️ Dividir Pagamento</h3>
-            <p style="font-size: 1.1rem; text-align: center;">Total a Pagar: <strong id="totalMistoSpan" style="color:var(--success);">R$ 0,00</strong></p>
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-                <label>PIX:</label> <input type="text" inputmode="numeric" id="mistoPix" class="input-obs" placeholder="0,00" oninput="maskCurrency(event)">
-                <label>Dinheiro:</label> <input type="text" inputmode="numeric" id="mistoDinheiro" class="input-obs" placeholder="0,00" oninput="maskCurrency(event)">
-                <label>Débito:</label> <input type="text" inputmode="numeric" id="mistoDebito" class="input-obs" placeholder="0,00" oninput="maskCurrency(event)">
-                <label>Crédito:</label> <input type="text" inputmode="numeric" id="mistoCredito" class="input-obs" placeholder="0,00" oninput="maskCurrency(event)">
-                <label>VR (Vale Refeição):</label> <input type="text" inputmode="numeric" id="mistoVR" class="input-obs" placeholder="0,00" oninput="maskCurrency(event)">
-            </div>
-            <div style="margin-top: 15px; font-size: 1.1rem; text-align: center;">Falta: <strong id="faltaMistoSpan" style="color:var(--danger);">R$ 0,00</strong></div>
-            <button id="btnConfirmarMisto" class="btn-acao" style="background: var(--success); margin-top: 15px;" onclick="finalizarPagamentoMisto()" disabled>✓ Finalizar Misto</button>
-            <button class="btn-acao btn-limpar" onclick="fecharModais()">Cancelar</button>
+
+            <button class="btn-acao" style="background: var(--danger); margin-top: 10px;" onclick="confirmarFechamentoMes()">🚨 Salvar no Google Drive</button>
+            <button class="btn-acao btn-limpar" onclick="fecharModais()">Voltar</button>
         </div>
     </div>
 
-    <script>
-     // =========================================
-// LÓGICA DE CARREGAMENTO (PROGRESS BAR)
-// =========================================
-let intervaloCarregamento;
 
-function mostrarCarregamento(mostrar, texto = "Sincronizando...") {
-    const overlay = document.getElementById('loadingOverlay');
-    const barra = document.getElementById('loadingBarra');
-    const textoEl = document.getElementById('loadingTexto');
-    const porcentagemEl = document.getElementById('loadingPorcentagem');
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    if (mostrar) {
-        textoEl.textContent = texto;
-        overlay.style.display = 'flex';
-        barra.style.width = '0%';
-        porcentagemEl.textContent = '0%';
-        
-        let progresso = 0;
-        clearInterval(intervaloCarregamento);
-        
-        intervaloCarregamento = setInterval(() => {
-            if (progresso < 85) {
-                progresso += Math.floor(Math.random() * 10) + 5; 
-                if (progresso > 85) progresso = 85; 
-                barra.style.width = progresso + '%';
-                porcentagemEl.textContent = progresso + '%';
-            }
-        }, 300);
-    } else {
-        clearInterval(intervaloCarregamento);
-        barra.style.width = '100%';
-        porcentagemEl.textContent = '100%';
-        setTimeout(() => { overlay.style.display = 'none'; }, 400); 
-    }
-}
+           <script>
+    // 🚨 CONFIGURAÇÃO MASTER: Cole aqui a URL gerada na "Nova Implantação" do seu Google Apps Script
+    const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbybzTccYrnhypQaZJtykpMEawYCDORISO1U67g-aLTbmD_E5NF3jSdkq27Tvm011pA/exec";
 
-// =========================================
-// LÓGICA DE SEGURANÇA (VERIFICAR SENHA)
-// =========================================
-const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycby2DuazBttqdnnAzeLbFytIt71PoceQarEPlxtXjTHNpRq0jGuZBd6sPBJzoO4oaCO7HA/exec"; // <-- ATENÇÃO AQUI
+    // ==========================================
+    // 📦 1. ESTADO GLOBAL DO APLICATIVO (CACHE)
+    // ==========================================
+    let carrinho = [];
+    let faturamentoMesGlobal = 0;
+    let totalTapiocasMesGlobal = 0;
+    let globaisPagamentosLiquidez = { cred: 0, deb: 0, vr: 0, pix: 0, dinheiro: 0 };
+    let pedidoSelecionadoParaPagamento = null;
+    let categoriaAtual = 'salgadas';
+    let intervaloCarregamento;
 
-async function verificarSenha(senhaDigitada) {
-    mostrarCarregamento(true, "Validando credenciais..."); 
-    
-    try {
-        let response = await fetch(URL_GOOGLE_SCRIPT, {
-            method: 'POST',
-            body: JSON.stringify({ acao: "validarSenha", senha: senhaDigitada })
-        });
-        
-        let resultado = await response.json();
-        
-        if (resultado.status === "sucesso") {
-            abrirModalFechamento(); // Função que abre seu modal mensal
-        } else {
-            alert("❌ " + resultado.mensagem); 
+    // Catálogo de Produtos Base (Caso sua planilha fique offline, o sistema não para)
+    const PRODUTOS_BASE = [
+        { id: 1, nome: "Frango com Catupiry", preco: 18.00, tipo: "salgadas" },
+        { id: 2, nome: "Calabresa com Queijo", preco: 17.00, tipo: "salgadas" },
+        { id: 3, nome: "Carne Seca Especial", preco: 22.00, tipo: "especiais" },
+        { id: 4, nome: "Morango com Nutella", preco: 19.00, tipo: "doces" },
+        { id: 5, nome: "Suco Natural Laranja", preco: 8.00, tipo: "bebidas" },
+        { id: 6, nome: "Refrigerante Lata", preco: 6.00, tipo: "bebidas" }
+    ];
+
+    // Inicialização automática do sistema
+    document.addEventListener("DOMContentLoaded", function() {
+        renderizarProdutos(categoriaAtual);
+        configurarAnosFiltro();
+    });
+
+    // ==========================================
+    // 🖥️ 2. CONTROLE DE NAVEGAÇÃO E INTERFACE (UX)
+    // ==========================================
+    function mudarTela(idView) {
+        document.querySelectorAll('.app-view').forEach(view => view.classList.remove('active'));
+        const telaAlvo = document.getElementById(idView);
+        if (telaAlvo) {
+            telaAlvo.classList.add('active');
         }
-    } catch (erro) {
-        alert("Erro de conexão ao validar a senha.");
-    } finally {
+        fecharMenuLateral();
+    }
+
+    function abrirMenuLateral() {
+        document.getElementById('sidebar').classList.add('open');
+        document.getElementById('sidebarOverlay').style.display = 'block';
+    }
+
+    function fecharMenuLateral() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('sidebarOverlay').style.display = 'none';
+    }
+
+    function toggleSubmenu(id) {
+        let el = document.getElementById(id);
+        if (!el) return;
+        if (el.style.display === "flex") {
+            el.style.display = "none";
+            el.parentElement.classList.remove('aberto');
+        } else {
+            el.style.display = "flex";
+            el.parentElement.classList.add('aberto');
+        }
+    }
+
+    function fecharModais() {
+        document.querySelectorAll('.modal-overlay').forEach(el => el.style.display = 'none');
+    }
+
+    function mostrarToast(mensagem, tipo = "success") {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.style.background = tipo === "success" ? "var(--success)" : "var(--danger)";
+        toast.textContent = mensagem;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.style.animation = "fadeOut 0.4s ease-out forwards";
+            setTimeout(() => toast.remove(), 400);
+        }, 3000);
+    }
+
+    function mostrarCarregamento(mostrar, texto = "Sincronizando...") {
+        const overlay = document.getElementById('loadingOverlay');
+        const barra = document.getElementById('loadingBarra');
+        const textoEl = document.getElementById('loadingTexto');
+        const porcentagemEl = document.getElementById('loadingPorcentagem');
+
+        if (!overlay) return;
+
+        if (mostrar) {
+            textoEl.textContent = texto;
+            overlay.style.display = 'flex';
+            barra.style.width = '0%';
+            porcentagemEl.textContent = '0%';
+            let progresso = 0;
+            clearInterval(intervaloCarregamento);
+            intervaloCarregamento = setInterval(() => {
+                if (progresso < 85) {
+                    progresso += Math.floor(Math.random() * 12) + 4;
+                    if (progresso > 85) progresso = 85;
+                    barra.style.width = progresso + '%';
+                    porcentagemEl.textContent = progresso + '%';
+                }
+            }, 250);
+        } else {
+            clearInterval(intervaloCarregamento);
+            barra.style.width = '100%';
+            porcentagemEl.textContent = '100%';
+            setTimeout(() => { overlay.style.display = 'none'; }, 400);
+        }
+    }
+
+    // ==========================================
+    // 🌉 3. PONTE DE TRANSMISSÃO API (FETCH POST)
+    // ==========================================
+    async function executarRequisicaoServidor(acao, payload = null) {
+        try {
+            let response = await fetch(URL_GOOGLE_SCRIPT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({ acao: acao, payload: payload })
+            });
+            if (!response.ok) throw new Error("Link de comunicação HTTP falhou.");
+            return await response.json();
+        } catch (erro) {
+            console.error("Erro na Ponte Operacional:", erro);
+            return { status: "erro", mensagem: erro.message };
+        }
+    }
+
+    // ==========================================
+    // 🌮 4. MOTOR DO CARDÁPIO, CARRINHO E PEDIDOS
+    // ==========================================
+    function renderizarProdutos(categoria, filtroFiltro = "") {
+        const grid = document.getElementById('gridProdutos');
+        if (!grid) return;
+        grid.innerHTML = "";
+
+        let filtrados = PRODUTOS_BASE.filter(p => p.tipo === categoryMatch(categoria));
+        if (filtroFiltro) {
+            filtrados = PRODUTOS_BASE.filter(p => p.nome.toLowerCase().includes(filtroFiltro.toLowerCase()));
+        }
+
+        filtrados.forEach(p => {
+            const btn = document.createElement('button');
+            btn.className = 'produto-btn card';
+            btn.onclick = () => adicionarAoCarrinho(p.id);
+            
+            // Verifica se o item já está no carrinho para mostrar badge de quantidade
+            let itemNoCarrinho = carrinho.find(c => c.id === p.id);
+            let badge = itemNoCarrinho ? `<span class="badge-qtd">${itemNoCarrinho.quantidade}</span>` : "";
+
+            btn.innerHTML = `
+                ${badge}
+                <div class="produto-nome">${p.nome}</div>
+                <div class="produto-preco">${formatarMoeda(p.preco)}</div>
+            `;
+            grid.appendChild(btn);
+        });
+    }
+
+    function categoryMatch(cat) {
+        // Normalização simples de abas
+        if(cat === 'salgadas') return 'salgadas';
+        if(cat === 'especiais') return 'especiais';
+        if(cat === 'doces') return 'doces';
+        return 'bebidas';
+    }
+
+    function trocarAba(categoria, elemento) {
+        categoriaAtual = categoria;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        if (elemento) elemento.classList.add('active');
+        renderizarProdutos(categoria);
+    }
+
+    function pesquisarProdutos() {
+        let texto = document.getElementById('inputPesquisa').value;
+        renderizarProdutos(categoriaAtual, texto);
+    }
+
+    function adicionarAoCarrinho(idProduto) {
+        let produto = PRODUTOS_BASE.find(p => p.id === idProduto);
+        if (!produto) return;
+
+        let existente = carrinho.find(item => item.id === idProduto);
+        if (existente) {
+            existente.quantidade++;
+        } else {
+            carrinho.push({ ...produto, quantidade: 1, obs: "" });
+        }
+        
+        atualizarCarrinhoUI();
+        renderizarProdutos(categoriaAtual);
+    }
+
+    function atualizarCarrinhoUI() {
+        const box = document.getElementById('boxCarrinho');
+        const lista = document.getElementById('listaCarrinho');
+        const totalTxt = document.getElementById('valorTotal');
+        
+        if (!box || !lista) return;
+
+        if (carrinho.length === 0) {
+            box.style.display = 'none';
+            return;
+        }
+
+        box.style.display = 'block';
+        lista.innerHTML = "";
+        let somaTotal = 0;
+
+        carrinho.forEach((item, index) => {
+            somaTotal += (item.preco * item.quantidade);
+            const div = document.createElement('div');
+            div.className = 'item-carrinho';
+            div.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <strong>${item.quantidade}x ${item.nome}</strong>
+                    <span>${formatarMoeda(item.preco * item.quantidade)}</span>
+                </div>
+                <input type="text" class="input-obs" placeholder="Observações (Ex: Sem cebola)" value="${item.obs}" onchange="salvarObsCarrinho(${index}, this.value)">
+            `;
+            lista.appendChild(div);
+        });
+
+        totalTxt.textContent = formatarMoeda(somaTotal);
+    }
+
+    function salvarObsCarrinho(index, valor) {
+        if(carrinho[index]) carrinho[index].obs = valor;
+    }
+
+    function limparCarrinho() {
+        carrinho = [];
+        atualizarCarrinhoUI();
+        renderizarProdutos(categoriaAtual);
+        mostrarToast("Carrinho limpo!", "danger");
+    }
+
+    // ==========================================
+    // 👨‍🍳 5. ENVIO PARA PRODUÇÃO E COZINHA
+    // ==========================================
+    async function lancarPedido() {
+        if (carrinho.length === 0) return;
+        mostrarCarregamento(true, "Lançando pedido para a cozinha...");
+
+        let numeroPedido = Math.floor(1000 + Math.random() * 9000);
+        let dataAgora = new Date();
+        let horaStr = ("0" + dataAgora.getHours()).slice(-2) + ":" + ("0" + dataAgora.getMinutes()).slice(-2);
+
+        let pacotePedido = {
+            numero: numeroPedido,
+            hora: horaStr,
+            dataExibicao: dataAgora.toLocaleDateString('pt-BR'),
+            itens: carrinho
+        };
+
+        let resultado = await executarRequisicaoServidor("lancarPedidoPlanilha", JSON.stringify(pacotePedido));
+
         mostrarCarregamento(false);
-    }
-}
-
-// =========================================
-// LÓGICA DE MATEMÁTICA E TAXAS
-// =========================================
-function calcularTaxasMaquininha(credito, debito, vr) {
-    // 5% Crédito | 2% Débito | 5.59% VR (Pix e Dinheiro = 0)
-    return (credito * 0.05) + (debito * 0.02) + (vr * 0.0559);
-}
-
-function recalcularLiquidez() {
-    // Previne erros se a variável ainda não existir ao carregar
-    let faturamento = typeof faturamentoMesGlobal !== 'undefined' ? faturamentoMesGlobal : 0;
-    
-    let taxasMaquininha = calcularTaxasMaquininha(
-        globaisPagamentosLiquidez.cred || 0, 
-        globaisPagamentosLiquidez.deb || 0, 
-        globaisPagamentosLiquidez.vr || 0
-    );
-                          
-    // Custos Fixos Operacionais (Priscila 300 + Neide 750 + Manut. 200 + Trailer Lucas 100)
-    let fixoTrailerLucas = 100.00;
-    let totalFixos = 1250.00 + fixoTrailerLucas; // 1350.00
-    let totalCustos = taxasMaquininha + totalFixos;
-    
-    // Atualiza Faturamento e Custos na interface
-    if(document.getElementById('liqTotalGeralTxt')) document.getElementById('liqTotalGeralTxt').textContent = formatarMoeda(faturamento);
-    if(document.getElementById('liqTaxasTxt')) document.getElementById('liqTaxasTxt').textContent = "- " + formatarMoeda(taxasMaquininha);
-
-    // Matemática do Rateio (Subtrai custos primeiro)
-    let baseParaPorcentagem = Math.max(0, faturamento - totalCustos); 
-    
-    let custoMaterial = baseParaPorcentagem * 0.70;
-    let lucroEliel = baseParaPorcentagem * 0.05;
-    let lucroLucas = (baseParaPorcentagem * 0.25) + fixoTrailerLucas; // 25% + os R$ 100
-
-    // Atualiza Valores na Interface
-    if(document.getElementById('liqMaterialTxt')) document.getElementById('liqMaterialTxt').textContent = "- " + formatarMoeda(custoMaterial);
-    
-    let elSobra = document.getElementById('liqSobraLiquida');
-    if (elSobra) {
-        let totalSocios = lucroLucas + lucroEliel;
-        elSobra.textContent = formatarMoeda(totalSocios);
-        elSobra.style.color = totalSocios >= 0 ? "var(--success)" : "var(--danger)";
+        if (resultado.status === "sucesso") {
+            try { document.getElementById('somCampainha').play(); } catch(e){}
+            mostrarToast(`Pedido #${numeroPedido} enviado para produção!`);
+            limparCarrinho();
+        } else {
+            alert("Erro ao salvar pedido na planilha: " + resultado.mensagem);
+        }
     }
 
-    // Atualiza Valores Ocultos Sócios
-    let elLucas = document.getElementById('liqLucas');
-    let elEliel = document.getElementById('liqEliel');
-    
-    if (elLucas && elEliel) {
-        elLucas.setAttribute('data-valor', lucroLucas);
-        elEliel.setAttribute('data-valor', lucroEliel);
-        elLucas.textContent = 'R$ ****';
-        elEliel.textContent = 'R$ ****';
-        document.getElementById('icon-liqLucas').textContent = '👁️';
-        document.getElementById('icon-liqEliel').textContent = '👁️';
+    // ==========================================
+    // 💰 6. FLUXO DE PAGAMENTO, DINHEIRO E TROCO
+    // ==========================================
+    function abrirModalSenhaLiquidez() {
+        document.getElementById('inputSenhaAdmin').value = "";
+        document.getElementById('modalSenhaLiquidez').style.display = "flex";
     }
-}
-    </script>
-   <div id="avisoPagamento" onclick="this.style.display='none'" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 10000; justify-content: center; align-items: center; backdrop-filter: blur(2px);">
-    <div style="background: var(--success); color: white; padding: 30px; border-radius: 15px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; overflow: hidden;">
+
+    function dispararVerificacaoSenha() {
+        let senha = document.getElementById('inputSenhaAdmin').value;
+        fecharModais();
+        verificarSenha(senha);
+    }
+
+    async function verificarSenha(senhaDigitada) {
+        mostrarCarregamento(true, "Verificando permissão...");
+        let resultado = await executarRequisicaoServidor("validarSenha", senhaDigitada);
+        if (resultado.status === "sucesso") {
+            document.getElementById('modalLiquidez').style.display = "flex";
+            await carregarDadosFechamentoMensal();
+        } else {
+            mostrarCarregamento(false);
+            alert("❌ Senha incorreta!");
+        }
+    }
+
+    // ==========================================
+    // 🧮 7. ENGINE FINANCEIRA DE LIQUIDEZ MENSAL
+    // ==========================================
+    async function carregarDadosFechamentoMensal() {
+        let resultado = await executarRequisicaoServidor("obterResumoMesPlanilha");
+        if (resultado.status === "sucesso") {
+            let dados = typeof resultado.dados === 'string' ? JSON.parse(resultado.dados) : resultado.dados;
+            faturamentoMesGlobal = Number(dados.total) || 0;
+            totalTapiocasMesGlobal = Number(dados.qtdTapiocas) || 0;
+            globaisPagamentosLiquidez = dados.pagamentos || { cred: 0, deb: 0, vr: 0, pix: 0, dinheiro: 0 };
+            recalcularLiquidez();
+            mostrarCarregamento(false);
+        } else {
+            mostrarCarregamento(false);
+            alert("Erro ao buscar dados do mês: " + resultado.mensagem);
+        }
+    }
+
+    function calcularTaxasMaquininha(credito, debito, vr) {
+        return (Number(credito || 0) * 0.05) + (Number(debito || 0) * 0.02) + (Number(vr || 0) * 0.0559);
+    }
+
+    function recalcularLiquidez() {
+        let faturamento = Number(faturamentoMesGlobal) || 0;
+        let taxasMaquininha = calcularTaxasMaquininha(
+            globaisPagamentosLiquidez.cred, 
+            globaisPagamentosLiquidez.deb, 
+            globaisPagamentosLiquidez.vr
+        );
+                              
+        let fixoTrailerLucas = 100.00;
+        let totalFixos = 1250.00 + fixoTrailerLucas; // Neide + Priscila + Manut + Trailer Lucas (1350)
+        let totalCustos = taxasMaquininha + totalFixos;
         
-        <div style="font-size: 4rem; margin-bottom: 10px;">✅</div>
-        <h2 style="margin: 0; font-size: 1.8rem;">Pagamento Realizado!</h2>
-        <p id="textoAvisoPedido" style="margin: 10px 0 0 0; opacity: 0.9; font-size: 1.1rem;"></p>
-        <small style="display: block; margin-top: 20px; margin-bottom: 10px; opacity: 0.7;">Clique em qualquer lugar para fechar</small>
+        if(document.getElementById('liqTotalGeralTxt')) document.getElementById('liqTotalGeralTxt').textContent = formatarMoeda(faturamento);
+        if(document.getElementById('liqTaxasTxt')) document.getElementById('liqTaxasTxt').textContent = "- " + formatarMoeda(taxasMaquininha);
 
-        <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 6px; background: rgba(0,0,0,0.2);">
-            <div id="barraProgressoPagamento" style="height: 100%; background: white; width: 100%;"></div>
-        </div>
+        let baseParaPorcentagem = Math.max(0, faturamento - totalCustos); 
+        let custoMaterial = baseParaPorcentagem * 0.70;
+        let lucroEliel = baseParaPorcentagem * 0.05;
+        let lucroLucas = (baseParaPorcentagem * 0.25) + fixoTrailerLucas; 
+
+        if(document.getElementById('liqMaterialTxt')) document.getElementById('liqMaterialTxt').textContent = "- " + formatarMoeda(custoMaterial);
         
-    </div>
-</div>
+        let elSobra = document.getElementById('liqSobraLiquida');
+        if (elSobra) {
+            let totalSocios = lucroLucas + lucroEliel;
+            elSobra.textContent = formatarMoeda(totalSocios);
+            elSobra.style.color = totalSocios >= 0 ? "var(--success)" : "var(--danger)";
+        }
 
-<style>
-@keyframes encolherBarra {
-    from { width: 100%; }
-    to { width: 0%; }
-}
+        let elLucas = document.getElementById('liqLucas');
+        let elEliel = document.getElementById('liqEliel');
+        
+        if (elLucas && elEliel) {
+            elLucas.setAttribute('data-valor', lucroLucas);
+            elEliel.setAttribute('data-valor', lucroEliel);
+            elLucas.textContent = 'R$ ****';
+            elEliel.textContent = 'R$ ****';
+            document.getElementById('icon-liqLucas').className = 'bi bi-eye ms-1';
+            document.getElementById('icon-liqEliel').className = 'bi bi-eye ms-1';
+        }
+    }
 
-.animar-barra {
-    animation: encolherBarra 3s linear forwards;
-}
-</style>
-    </body>
+    async function confirmarFechamentoMes() {
+        if (!confirm("Tem certeza que deseja consolidar as porcentagens e salvar o encerramento do mês atual?")) return;
+        mostrarCarregamento(true, "Gravando histórico consolidado...");
+        
+        let data = new Date();
+        let mesRefStr = ("0" + (data.getMonth() + 1)).slice(-2) + "/" + data.getFullYear();
+        let elLucas = document.getElementById('liqLucas');
+        let elEliel = document.getElementById('liqEliel');
+
+        let pacote = {
+            mesReferencia: mesRefStr,
+            totalGeral: faturamentoMesGlobal,
+            qtdTapiocas: totalTapiocasMesGlobal,
+            material: (Math.max(0, faturamentoMesGlobal - (calcularTaxasMaquininha(globaisPagamentosLiquidez.cred, globaisPagamentosLiquidez.deb, globaisPagamentosLiquidez.vr) + 1350))) * 0.70,
+            lucroLucas: parseFloat(elLucas.getAttribute('data-valor')) || 0,
+            lucroEliel: parseFloat(elEliel.getAttribute('data-valor')) || 0
+        };
+
+        let resultado = await executarRequisicaoServidor("fecharMesESalvarDrive", JSON.stringify(pacote));
+        mostrarCarregamento(false);
+        fecharModais();
+        
+        if (resultado.status === "sucesso" && resultado.dados === "OK") {
+            alert("🎉 Mês consolidado com absoluto sucesso na folha Fechamentos_Mensais!");
+        } else {
+            alert("Erro ao consolidar mês: " + resultado.mensagem);
+        }
+    }
+
+    function toggleVisibility(idElemento) {
+        let el = document.getElementById(idElemento);
+        let icon = document.getElementById('icon-' + idElemento);
+        if (!el || !icon) return;
+
+        if (el.textContent === 'R$ ****') {
+            el.textContent = formatarMoeda(el.getAttribute('data-valor'));
+            icon.classList.replace('bi-eye', 'bi-eye-slash');
+        } else {
+            el.textContent = 'R$ ****';
+            icon.classList.replace('bi-eye-slash', 'bi-eye');
+        }
+    }
+
+    // ==========================================
+    // 🛠️ 8. MÁSCARAS E AUXILIARES MONETÁRIOS
+    // ==========================================
+    function formatarMoeda(valor) {
+        return Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function maskCurrency(event) {
+        let value = event.target.value.replace(/\D/g, "");
+        value = (value / 100).toFixed(2) + "";
+        value = value.replace(".", ",");
+        value = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+        event.target.value = value === "0,00" ? "" : "R$ " + value;
+    }
+
+    function configurarAnosFiltro() {
+        const selects = ['filtroAnoRankings', 'filtroAnoFolga'];
+        let anoAtual = new Date().getFullYear();
+        selects.forEach(id => {
+            let el = document.getElementById(id);
+            if(el) {
+                el.innerHTML = `<option value="${anoAtual}">${anoAtual}</option><option value="${anoAtual-1}">${anoAtual-1}</option>`;
+            }
+        });
+    }
+</script>
+
+</body>
 </html>
