@@ -282,7 +282,7 @@
         </div>
     </div>
 
-    <!-- Demais Telas do App (Omitido o HTML repetido da UI, mantendo a estrutura exata do original para não quebrar a lógica) -->
+    <!-- Demais Telas do App -->
     <div id="view-producao" class="app-view">
         <button class="nav-voltar" onclick="mudarTela('view-catalogo')">⬅️ Voltar para o Catálogo</button>
         <h2 style="color: var(--primary);">👨‍🍳 Fila de Produção</h2>
@@ -303,6 +303,40 @@
             <button onclick="limparHistoricoVendasHoje()" style="background: var(--danger); color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.85rem;">🧹 Limpar Tela</button>
         </div>
         <div id="listaHistoricoHoje"></div>
+    </div>
+
+    <div id="view-espelho" class="app-view">
+        <button class="nav-voltar" onclick="mudarTela('view-catalogo')">⬅️ Voltar para o Catálogo</button>
+        <h2 style="color: #20c997; margin-top: 0; margin-bottom: 5px;">🪞 Espelho da Planilha</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0; margin-bottom: 15px;">Visualização dos dados brutos em tempo real (Somente Leitura).</p>
+
+        <select id="selectAbaEspelho" class="input-obs" style="margin-bottom: 15px;" onchange="mudarAbaEspelho()">
+            <option value="Fechamentos_Diarios">Fechamentos Diários</option>
+            <option value="Tapiocas Diária">Tapiocas Diária</option>
+            <option value="Base de Vendas">Base de Vendas</option>
+            <option value="Historico_Diario">Histórico de Pedidos</option>
+            <option value="Combustivel">Combustível</option>
+            <option value="Dias_Nao_Trabalhados">Dias Não Trabalhados</option>
+            <option value="Fechamentos_Mensais">Fechamentos Mensais</option>
+            <option value="Vendas_hoje">Vendas Hoje</option>
+            <option value="Resumo Semanal">Resumo Semanal</option>
+            <option value="Liquidez Mensal">Liquidez Mensal</option>
+            <option value="Pedidos Cancelados">Pedidos Cancelados</option>
+        </select>
+
+        <button class="btn-acao" style="background: #20c997; color: #000; margin-bottom: 15px;" onclick="carregarEspelhoPlanilha()">🔄 Sincronizar Dados Agora</button>
+
+        <div id="loadingEspelho" style="text-align:center; display:none; margin: 20px 0;">
+            <div class="spinner" style="width:30px; height:30px; margin: 0 auto; border-top-color: #20c997;"></div>
+            <p>Puxando dados do Google Sheets...</p>
+        </div>
+
+        <div id="containerTabelaEspelho" style="overflow-x: auto; max-height: 50vh; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; display: none; background: var(--bg);">
+            <table class="tabela-espelho">
+                <thead id="headEspelho"></thead>
+                <tbody id="bodyEspelho"></tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Modais de Lançamentos Extras -->
@@ -340,6 +374,36 @@
         </div>
     </div>
 
+    <div id="modalPagamento" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Pagar Pedido #<span id="numeroPedidoPagamento"></span></h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                <button class="btn-acao" style="background:var(--bg); border:2px solid var(--border); color:var(--text);" onclick="processarPagamento('PIX')">PIX</button>
+                <button class="btn-acao" style="background:var(--bg); border:2px solid var(--border); color:var(--text);" onclick="processarPagamento('Dinheiro')">Dinheiro</button>
+                <button class="btn-acao" style="background:var(--bg); border:2px solid var(--border); color:var(--text);" onclick="processarPagamento('Cartão de Crédito')">Crédito</button>
+                <button class="btn-acao" style="background:var(--bg); border:2px solid var(--border); color:var(--text);" onclick="processarPagamento('Cartão de Débito')">Débito</button>
+                <button class="btn-acao" style="background:var(--bg); border:2px solid var(--border); color:var(--text); grid-column: span 2;" onclick="processarPagamento('VR')">VR (Vale Refeição)</button>
+                <button class="btn-acao" style="background:var(--edit); grid-column: span 2;" onclick="abrirModalMisto()">⚖️ Pagamento Dividido</button>
+            </div>
+            <button class="btn-acao btn-limpar" onclick="fecharModais()">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="modalTroco" class="modal-overlay">
+        <div class="modal-content">
+            <h3>💵 Pagamento em Dinheiro</h3>
+            <p style="font-size: 1.2rem; display: flex; justify-content: space-between;"><span>Total:</span> <strong id="trocoTotalPedido">R$ 0,00</strong></p>
+            <label>Valor Recebido do Cliente (R$):</label>
+            <input type="text" inputmode="numeric" id="inputValorRecebido" placeholder="0,00" style="width:100%; padding:15px; font-size:1.5rem; margin-top:5px; box-sizing:border-box;" oninput="maskCurrency(event)">
+            <button class="btn-acao" style="background: var(--stat-bg); border: 1px solid var(--border); color: var(--text); padding: 10px; margin-top: 10px; font-size: 1rem;" onclick="preencherValorExato()">Exato (Sem Troco)</button>
+            <div class="valor-troco" id="caixaTroco" style="padding:15px; font-size:1.3rem; margin: 15px 0; background: var(--troco-bg); border-radius: 6px; text-align:center;">Troco: <strong id="valorDoTroco">R$ 0,00</strong></div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-acao btn-limpar" style="margin:0;" onclick="fecharModais()">Voltar</button>
+                <button id="btnConfirmarDinheiro" class="btn-acao" style="background: var(--success);" onclick="finalizarVenda('Dinheiro')" disabled>✓ Finalizar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Lógica JavaScript Principal -->
     <script>
         // ====================================================================
@@ -348,7 +412,7 @@
         // ====================================================================
         
         // ⚠️ COLOQUE AQUI A URL GERADA NO SEU GOOGLE APPS SCRIPT ⚠️
-        const API_URL = "https://script.google.com/macros/s/AKfycbweCn7s4GjVqem7sOAjp5UAfrMHUbCRSjOzNaNEsidNS3YOy2plyAnRvogAlegBsawy9g/exec"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbweCn7s4GjVqem7sOAjp5UAfrMHUbCRSjOzNaNEsidNS3YOy2plyAnRvogAlegBsawy9g/exec; 
 
         /**
          * Criação do objeto falso (Polyfill) para simular o comportamento
@@ -413,29 +477,6 @@
         let itensIndisponiveis = []; let termoPesquisa = ""; let pausarSync = false; 
         let devModeUnlocked = false; let acaoPendenteDev = null;
 
-        /**
-         * Exibe a confirmação visual de pagamento concluído
-         */
-        function mostrarConfirmacaoPagamento(numero) {
-            const aviso = document.getElementById('avisoPagamento');
-            const texto = document.getElementById('textoAvisoPedido');
-            const barra = document.getElementById('barraProgressoPagamento');
-            
-            texto.textContent = `Pedido #${numero} finalizado com sucesso.`;
-            
-            if (barra) {
-                barra.classList.remove('animar-barra');
-                void barra.offsetWidth; 
-                barra.classList.add('animar-barra');
-            }
-
-            aviso.style.display = 'flex';
-
-            const timerAutoFechar = setTimeout(() => { aviso.style.display = 'none'; }, 3000);
-            const fecharNoClique = () => { aviso.style.display = 'none'; window.removeEventListener('click', fecharNoClique); clearTimeout(timerAutoFechar); };
-            setTimeout(() => { window.addEventListener('click', fecharNoClique); }, 100);
-        }
-
         // ====================================================================
         // BANCO DE DADOS (CATÁLOGO DO CARRO DA TAPIOCA)
         // ====================================================================
@@ -471,8 +512,42 @@
             doces_tradicionais: [ 
                 { nome: "Canelinha", preco: 10.00, tipo: "tapioca", ing: "Coco, leite cond e canela" }, 
                 { nome: "Beijinho", preco: 10.00, tipo: "tapioca", ing: "Coco e leite condensado" }, 
-                { nome: "SÓ COCO", preco: 10.00, tipo: "tapioca", ing: "SÓ COCO" }
-                // Lista encurtada por legibilidade no código, mas base original deve ser copiada
+                { nome: "SÓ COCO", preco: 10.00, tipo: "tapioca", ing: "SÓ COCO" },
+                { nome: "Banana Leite Cond. e Canela", preco: 12.00, tipo: "tapioca", ing: "Banana, Leite cond. e Canela" }, 
+                { nome: "Banana Chocolate ao Leite", preco: 13.00, tipo: "tapioca", ing: "Banana Chocolate ao Leite" }, 
+                { nome: "Brigadeiro", preco: 13.00, tipo: "tapioca", ing: "Chocolate ao Leite e granulado" }, 
+                { nome: "BRIGADEIRO C/ CHOCOLATE BRANCO", preco: 13.00, tipo: "tapioca", ing: "CHOCOLATE BRANCO E GRANULADO" },
+                { nome: "Prestígio", preco: 13.00, tipo: "tapioca", ing: "Coco e chocolate ao Leite" }, 
+                { nome: "Romeu e Julieta", preco: 14.00, tipo: "tapioca", ing: "Muçarela c/ Goiabada" }, 
+                { nome: "Coco c/ Doce de Leite", preco: 13.00, tipo: "tapioca", ing: "Coco c/ Doce de Leite" }, 
+                { nome: "Coco c/ Choc. e Leite Cond.", preco: 14.00, tipo: "tapioca", ing: "Coco c/ Choc. e Leite Cond." }, 
+                { nome: "Morango c/ Leite Cond.", preco: 13.00, tipo: "tapioca", ing: "Morango c/ Leite Cond." }, 
+                { nome: "Morango c/ Chocolate", preco: 13.00, tipo: "tapioca", ing: "Morango c/ Chocolate ao Leite" }, 
+                { nome: "Morango c/ Coco e Leite Cond.", preco: 14.00, tipo: "tapioca", ing: "Morango c/ Coco e Leite Cond." }, 
+                { nome: "Paçoca c/ Doce de Leite", preco: 14.00, tipo: "tapioca", ing: "Paçoca c/ Doce de Leite" }, 
+                { nome: "Paçoca c/ Chocolate", preco: 14.00, tipo: "tapioca", ing: "Paçoca c/ Chocolate ao Leite" }, 
+                { nome: "Queijadinha", preco: 14.00, tipo: "tapioca", ing: "Coco, muçarela e leite cond." }, 
+                { nome: "Castanha De Amendoim c/ Chocolate ao Leite", preco: 13.00, tipo: "tapioca", ing: "Castanha De Amendoim c/ Chocolate ao Leite" } 
+            ],
+            doces_avela: [ 
+                { nome: "Banana Chocolate Avelã", preco: 13.00, tipo: "tapioca", ing: "Banana Chocolate Avelã" }, 
+                { nome: "Brigadeiro c/ Avelã e Granulado", preco: 13.00, tipo: "tapioca", ing: "Brigadeiro c/ Avelã e Granulado" }, 
+                { nome: "Prestígio de Avelã", preco: 14.00, tipo: "tapioca", ing: "Coco e chocolate avelã" }, 
+                { nome: "Paçoquinha I", preco: 14.00, tipo: "tapioca", ing: "Paçoca e chocolate avelã" }, 
+                { nome: "Paçoquinha II", preco: 14.00, tipo: "tapioca", ing: "Paçoca e chocolate branco" }, 
+                { nome: "Sensação (Morango/Avelã)", preco: 14.00, tipo: "tapioca", ing: "Morango c/ Avelã" }, 
+                { nome: "Morango c/ Chocolate Branco", preco: 14.00, tipo: "tapioca", ing: "Morango c/ Chocolate Branco" }, 
+                { nome: "Bombom Sonho de Valsa c/ Avelã", preco: 16.00, tipo: "tapioca", ing: "Bombom Sonho de Valsa c/ Avelã" }, 
+                { nome: "Bombom Sonho de Valsa c/ Branco", preco: 16.00, tipo: "tapioca", ing: "Bombom Sonho de Valsa c/ Branco" }
+            ],
+            doces_nutella: [ 
+                { nome: "NUTELLA", preco: 16.00, tipo: "tapioca", ing: "SÓ NUTELLA" },
+                { nome: "Ninho com Nutella", preco: 18.00, tipo: "tapioca", ing: "Ninho com Nutella" }, 
+                { nome: "Nutella com Coco", preco: 18.00, tipo: "tapioca", ing: "Nutella com Coco" }, 
+                { nome: "Nutella com M&M", preco: 19.00, tipo: "tapioca", ing: "Nutella com M&M" }, 
+                { nome: "Nutella com Morango", preco: 18.00, tipo: "tapioca", ing: "Nutella com Morango" }, 
+                { nome: "Nutella com Banana", preco: 18.00, tipo: "tapioca", ing: "Nutella com Banana" }, 
+                { nome: "Bombom S. de Valsa c/ Nutella", preco: 19.00, tipo: "tapioca", ing: "Bombom S. de Valsa c/ Nutella" } 
             ],
             bebidas: [ 
                 { nome: "🥤 Refri / Suco - LATA", preco: 6.00, tipo: "bebida", ing: "" }, 
@@ -481,8 +556,544 @@
             ]
         };
 
+        const precosMonteSua = {
+            'Calabresa': { 'Catupiry (Orig.)': 14.00, 'Cheddar': 14.00, 'Cream Cheese': 14.00, 'Muçarela': 14.00, 'Queijo Branco': 14.00 },
+            'Frango': { 'Catupiry (Orig.)': 14.00, 'Cheddar': 14.00, 'Cream Cheese': 14.00, 'Muçarela': 14.00, 'Queijo Branco': 14.00 },
+            'Carne Seca': { 'Catupiry (Orig.)': 15.00, 'Cheddar': 15.00, 'Cream Cheese': 15.00, 'Muçarela': 15.00, 'Queijo Branco': 15.00 },
+            'Salame': { 'Catupiry (Orig.)': 15.00, 'Cheddar': 15.00, 'Cream Cheese': 15.00, 'Muçarela': 15.00, 'Queijo Branco': 15.00 },
+            'Bacon': { 'Catupiry (Orig.)': 16.00, 'Cheddar': 15.00, 'Cream Cheese': 15.00, 'Muçarela': 15.00, 'Queijo Branco': 16.00 },
+            'Peito de Peru': { 'Catupiry (Orig.)': 16.00, 'Cheddar': 15.00, 'Cream Cheese': 15.00, 'Muçarela': 15.00, 'Queijo Branco': 16.00 }
+        };
+
+        // ====================================================================
+        // FUNÇÕES UTILITÁRIAS
+        // ====================================================================
         const formatarMoeda = (valor) => valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         const ehHoje = (timestamp) => { if (!timestamp) return false; const d = new Date(timestamp), h = new Date(); return d.getDate()===h.getDate() && d.getMonth()===h.getMonth() && d.getFullYear()===h.getFullYear(); };
+
+        function mostrarToast(mensagem) {
+            let container = document.getElementById('toast-container'); let toast = document.createElement('div');
+            toast.className = 'toast'; toast.innerHTML = mensagem; container.appendChild(toast);
+            setTimeout(() => { toast.style.animation = 'fadeOut 0.3s ease-out forwards'; setTimeout(() => toast.remove(), 300); }, 2000);
+        }
+
+        function mostrarAlerta(mensagem, callback) { document.getElementById('textoAlerta').innerHTML = mensagem; document.getElementById('modalAlerta').style.display = 'flex'; let btn = document.getElementById('btnOkAlerta'); let novoBtn = btn.cloneNode(true); btn.parentNode.replaceChild(novoBtn, btn); novoBtn.onclick = function() { document.getElementById('modalAlerta').style.display = 'none'; if(callback) callback(); }; }
+        function mostrarConfirmacao(mensagem, callbackSim) { document.getElementById('textoConfirm').innerHTML = mensagem; document.getElementById('modalConfirm').style.display = 'flex'; let btnSim = document.getElementById('btnOkConfirm'); let novoBtnSim = btnSim.cloneNode(true); btnSim.parentNode.replaceChild(novoBtnSim, btnSim); document.getElementById('btnCancelarConfirm').onclick = function() { document.getElementById('modalConfirm').style.display = 'none'; }; novoBtnSim.onclick = function() { document.getElementById('modalConfirm').style.display = 'none'; if(callbackSim) callbackSim(); }; }
+        function travarSyncTemporariamente() { pausarSync = true; setTimeout(() => { pausarSync = false; }, 4000); }
+
+        function maskCurrency(e) { let value = e.target.value.replace(/\D/g, ''); if (value === '') { e.target.value = ''; if(e.target.id === 'inputValorRecebido') calcularTroco(); else calcularTotalMisto(); return; } value = (parseInt(value, 10) / 100).toFixed(2); value = value.replace('.', ','); value = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.'); e.target.value = value; if(e.target.id === 'inputValorRecebido') calcularTroco(); else calcularTotalMisto(); }
+        function parseDinheiro(val) { if (!val) return 0; return parseFloat(String(val).replace(/\./g, '').replace(',', '.')) || 0; }
+
+        // ====================================================================
+        // NAVEGAÇÃO E MODAIS
+        // ====================================================================
+        function fecharModais() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); pedidoAguardandoPagamento = null; }
+        function abrirMenuLateral() { document.querySelectorAll('.submenu').forEach(sub => { sub.style.display = 'none'; }); document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebarOverlay').style.display = 'block'; }
+        function fecharMenuLateral() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').style.display = 'none'; }
+        
+        function toggleSubmenu(id) {
+            const submenu = document.getElementById(id);
+            const btn = submenu.previousElementSibling;
+            document.querySelectorAll('.submenu').forEach(s => { if(s.id !== id) s.style.display = 'none'; });
+            if (submenu.style.display === "flex") { submenu.style.display = "none"; btn.classList.remove('aberto'); } 
+            else { submenu.style.display = "flex"; btn.classList.add('aberto'); }
+        }
+
+        function abrirRestrito(acao) {
+            fecharMenuLateral();
+            if (devModeUnlocked) {
+                executarAcaoRestrita(acao);
+            } else {
+                acaoPendenteDev = acao;
+                document.getElementById('inputSenhaDev').value = '';
+                document.getElementById('modalAcessoDev').style.display = 'flex';
+                setTimeout(() => document.getElementById('inputSenhaDev').focus(), 100);
+            }
+        }
+
+        function validarSenhaDev() {
+            let senha = document.getElementById('inputSenhaDev').value;
+            if (senha === "5986") {
+                devModeUnlocked = true;
+                fecharModais();
+                mostrarToast("🔓 Modo Desenvolvedor Ativado!");
+                if (acaoPendenteDev) { executarAcaoRestrita(acaoPendenteDev); acaoPendenteDev = null; }
+            } else {
+                mostrarAlerta("❌ Senha incorreta! Esta área é exclusiva para manutenção.");
+                document.getElementById('inputSenhaDev').value = '';
+            }
+        }
+
+        function executarAcaoRestrita(acao) {
+            if(acao === 'espelho') mudarTela('view-espelho');
+            else if(acao === 'rankings') mudarTela('view-rankings');
+            else if(acao === 'liquidez') abrirModalLiquidez();
+            else if(acao === 'estimativa') abrirModalEstimativa();
+            else if(acao === 'dias') abrirModalDiaSemTrabalho();
+            else if(acao === 'combustivel') mudarTela('view-combustivel');
+        }
+
+        /**
+         * Gerencia a troca das abas principais do aplicativo
+         */
+        function mudarTela(idTela) { 
+            document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active')); 
+            document.getElementById(idTela).classList.add('active'); 
+            
+            let btnProd = document.getElementById('btnTopoProd');
+            let btnCaixa = document.getElementById('btnTopoCaixa');
+            
+            btnProd.classList.remove('active-nav'); 
+            btnCaixa.classList.remove('active-nav'); 
+            document.getElementById('btnTopoTapiocas').classList.remove('active-nav');
+            
+            if(idTela === 'view-catalogo') renderizarCatalogo(abaAtivaCatalogo); 
+            if(idTela === 'view-producao') { 
+                renderizarProducao(); 
+                btnProd.classList.add('active-nav'); 
+                btnProd.classList.remove('piscar-alerta'); 
+            } 
+            if(idTela === 'view-painel') { 
+                renderizarPainelPedidos(); 
+                btnCaixa.classList.add('active-nav'); 
+            } 
+            if(idTela === 'view-historico') { 
+                renderizarHistorico(); 
+                document.getElementById('btnTopoTapiocas').classList.add('active-nav'); 
+            } 
+            if(idTela === 'view-combustivel') { carregarHistoricoCombustivel(); }
+            if(idTela === 'view-rankings') { gerarRankingAtual(); }
+            if(idTela === 'view-espelho') { carregarEspelhoPlanilha(); }
+        }
+
+        // ====================================================================
+        // CATÁLOGO E CARRINHO
+        // ====================================================================
+        function trocarAba(categoria, elementoBtn) { 
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active')); 
+            if(elementoBtn) elementoBtn.classList.add('active'); 
+            abaAtivaCatalogo = categoria; baseSelecionadaMonte = null; 
+            let inputPesq = document.getElementById('inputPesquisa'); 
+            if(inputPesq.value !== '') { inputPesq.value = ''; termoPesquisa = ''; document.getElementById('containerAbas').style.display = 'flex'; } 
+            renderizarCatalogo(categoria); 
+        }
+
+        function pesquisarProdutos() { 
+            termoPesquisa = document.getElementById('inputPesquisa').value.trim().toLowerCase(); 
+            const tabs = document.getElementById('containerAbas'); 
+            const btnLimpar = document.getElementById('btnLimparPesquisa'); 
+            
+            if (termoPesquisa.length > 0) { 
+                tabs.style.display = 'none'; 
+                if (btnLimpar) btnLimpar.style.display = 'block'; 
+                renderizarPesquisa();
+            } else { 
+                tabs.style.display = 'flex'; 
+                if (btnLimpar) btnLimpar.style.display = 'none'; 
+                renderizarCatalogo(abaAtivaCatalogo); 
+            } 
+        }
+
+        function limparPesquisa() {
+            let input = document.getElementById('inputPesquisa');
+            input.value = ''; 
+            pesquisarProdutos(); 
+            input.focus(); 
+        }
+
+        function renderizarPesquisa() { 
+            const grid = document.getElementById('gridProdutos'); 
+            grid.innerHTML = ''; 
+            let todos = [].concat(bdCatalogo.salgadas, bdCatalogo.especiais, bdCatalogo.doces_tradicionais, bdCatalogo.doces_avela, bdCatalogo.doces_nutella, bdCatalogo.bebidas); 
+            let filtrados = todos.filter(p => p.nome.toLowerCase().includes(termoPesquisa) || (p.ing && p.ing.toLowerCase().includes(termoPesquisa))); 
+            
+            if (filtrados.length === 0) { 
+                grid.innerHTML = `<p style="color:var(--text-muted); grid-column: 1/-1; text-align:center; margin-top: 20px;">Não encontrei nada com "<b>${termoPesquisa}</b>".</p>`; 
+                return; 
+            } 
+            grid.innerHTML = filtrados.map(gerarHtmlProduto).join(''); 
+        }
+
+        let timerPressao; let tocouLongo = false;
+        function iniciarPressao(e, nome) { if (e.type === 'mousedown' && e.button !== 0) return; tocouLongo = false; timerPressao = setTimeout(() => { tocouLongo = true; if(navigator.vibrate) navigator.vibrate(50); alternarEsgotadoMenuTracker(nome); }, 550); }
+        function cancelarPressao() { clearTimeout(timerPressao); }
+        function alternarEsgotadoMenuTracker(nome) { if (itensIndisponiveis.includes(nome)) { itensIndisponiveis = itensIndisponiveis.filter(n => n !== nome); } else { itensIndisponiveis.push(nome); } if(termoPesquisa.length > 0) renderizarPesquisa(); else renderizarCatalogo(abaAtivaCatalogo); }
+        function alternarEsgotado(evento, nome) { evento.preventDefault(); alternarEsgotadoMenuTracker(nome); }
+        function clickProduto(prod) { if (tocouLongo) return; if (itensIndisponiveis.includes(prod.nome)) return; adicionarAoCarrinho(prod); }
+
+        const gerarHtmlProduto = (prod) => {
+            let esgotado = itensIndisponiveis.includes(prod.nome); let classeEsgotada = esgotado ? 'esgotado' : '';
+            let qtdNoCarrinho = carrinho.filter(i => i.nome === prod.nome).reduce((acc, obj) => acc + obj.quantidade, 0); let classeAtiva = qtdNoCarrinho > 0 && !esgotado ? 'selecionado' : ''; let badge = qtdNoCarrinho > 0 && !esgotado ? `<div class="badge-qtd">${qtdNoCarrinho}</div>` : ''; let estiloExtra = prod.tipo === 'extra' ? 'border: 2px dashed var(--primary);' : '';
+            return `<div class="produto-btn ${classeAtiva} ${classeEsgotada}" style="${estiloExtra}" onclick='clickProduto(${JSON.stringify(prod)})' oncontextmenu="alternarEsgotado(event, '${prod.nome}')" ontouchstart="iniciarPressao(event, '${prod.nome}')" ontouchend="cancelarPressao()" ontouchmove="cancelarPressao()" onmousedown="iniciarPressao(event, '${prod.nome}')" onmouseup="cancelarPressao()" onmouseleave="cancelarPressao()">${badge}<span class="produto-nome">${prod.nome}</span><span class="produto-preco">${formatarMoeda(prod.preco)}</span></div>`;
+        };
+
+        function renderizarCatalogo(categoria) {
+            if (termoPesquisa.length > 0) return; 
+            const grid = document.getElementById('gridProdutos'); 
+            grid.innerHTML = '';
+            
+            if (!categoria) {
+                grid.innerHTML = '<p style="text-align:center; color:var(--text-muted); grid-column: 1/-1; margin-top: 20px; font-size: 1.1rem;">👆 Selecione uma categoria acima para iniciar as vendas.</p>';
+                return;
+            }
+
+            const btnAdicionalHtml = `<button class="produto-btn" style="border: 2px dashed var(--primary);" onclick="lancarAdicionalComNome()"><span class="produto-nome">+ Adicional</span><span class="produto-preco">R$ 4,00</span></button>`;
+            const btnAvulsoHtml = `<button class="produto-btn" style="border: 2px dashed var(--edit);" onclick="abrirModalAvulso()"><span class="produto-nome" style="color: var(--edit);">➕ Item Avulso</span><span class="produto-preco" style="font-size:0.75rem;">(Massa, etc)</span></button>`;
+            const processarLista = (lista, comAdicional = false) => { let html = lista.map(gerarHtmlProduto).join(''); if (comAdicional) html += btnAdicionalHtml; html += btnAvulsoHtml; return html; };
+
+            if (categoria === 'salgadas') { 
+                grid.innerHTML = processarLista(bdCatalogo.salgadas, true); 
+            } else if (categoria === 'especiais') { 
+                grid.innerHTML = processarLista(bdCatalogo.especiais, true); 
+            } else if (categoria === 'doces') { 
+                grid.innerHTML = `<div class="sub-categoria-titulo" style="grid-column: 1 / -1; font-weight: bold; color: var(--primary); margin-top: 5px;">Doces Tradicionais</div>${bdCatalogo.doces_tradicionais.map(gerarHtmlProduto).join('')}<div class="sub-categoria-titulo" style="grid-column: 1 / -1; font-weight: bold; color: var(--primary); margin-top: 10px;">Linha Avelã</div>${bdCatalogo.doces_avela.map(gerarHtmlProduto).join('')}<div class="sub-categoria-titulo" style="grid-column: 1 / -1; font-weight: bold; color: var(--primary); margin-top: 10px;">Linha Nutella</div>${bdCatalogo.doces_nutella.map(gerarHtmlProduto).join('')}` + btnAdicionalHtml + btnAvulsoHtml; 
+            } else if (categoria === 'bebidas') { 
+                grid.innerHTML = processarLista(bdCatalogo.bebidas, false); 
+            } else if (categoria === 'monte') { 
+                if (!baseSelecionadaMonte) { 
+                    grid.innerHTML = `<div class="sub-categoria-titulo" style="grid-column: 1 / -1; text-align:center;">Passo 1: Escolha a Carne</div>` + ['Calabresa', 'Frango', 'Carne Seca', 'Salame', 'Bacon', 'Peito de Peru'].map(carne => `<button class="produto-btn" onclick="selecionarBaseMonteUI('${carne}')"><span class="produto-nome" style="font-size: 1.1rem;">${carne}</span></button>`).join(''); 
+                } else { 
+                    let htmlQueijos = `<div class="sub-categoria-titulo" style="grid-column: 1 / -1; text-align:center;">Passo 2: Escolha o Queijo para ${baseSelecionadaMonte}</div>`; 
+                    ['Catupiry (Orig.)', 'Cheddar', 'Cream Cheese', 'Muçarela', 'Queijo Branco'].forEach(queijo => { 
+                        let precoFinal = precosMonteSua[baseSelecionadaMonte][queijo]; 
+                        htmlQueijos += `<button class="produto-btn" onclick="lancarMonte('${queijo}', ${precoFinal})"><span class="produto-nome" style="color:var(--success); font-weight:normal;">${queijo}</span><span class="produto-preco">${formatarMoeda(precoFinal)}</span></button>`; 
+                    }); 
+                    htmlQueijos += `<button class="produto-btn" style="border: 2px dashed var(--edit);" onclick="lancarMonteSemQueijo()"><span class="produto-nome" style="color:var(--edit); font-weight:bold;">🚫 Sem Queijo</span><span class="produto-preco" style="font-size:0.75rem;">(Digitar Preço)</span></button>`; 
+                    htmlQueijos += `<button class="btn-acao btn-limpar" style="grid-column: 1 / -1;" onclick="baseSelecionadaMonte=null; renderizarCatalogo('monte');">⬅️ Voltar para Carnes</button>`; 
+                    grid.innerHTML = htmlQueijos; 
+                } 
+            }
+        }
+
+        function selecionarBaseMonteUI(carne) { baseSelecionadaMonte = carne; renderizarCatalogo('monte'); }
+        function lancarMonte(queijo, preco) { adicionarAoCarrinho({ nome: `Monte Sua: ${baseSelecionadaMonte} c/ ${queijo}`, preco: preco, tipo: 'tapioca', ing: `${baseSelecionadaMonte} e ${queijo}` }); baseSelecionadaMonte = null; renderizarCatalogo('monte'); }
+        function lancarMonteSemQueijo() { document.getElementById('tituloCarneSemQueijo').textContent = baseSelecionadaMonte; document.getElementById('inputPrecoSemQueijo').value = ''; document.getElementById('modalPrecoSemQueijo').style.display = 'flex'; setTimeout(() => document.getElementById('inputPrecoSemQueijo').focus(), 100); }
+        function confirmarMonteSemQueijo() { let precoNum = parseDinheiro(document.getElementById('inputPrecoSemQueijo').value); if (precoNum <= 0) { mostrarAlerta("Valor inválido! Digite um valor maior que zero."); return; } adicionarAoCarrinho({ nome: `Monte Sua: ${baseSelecionadaMonte} 🚫 (Sem Queijo)`, preco: precoNum, tipo: 'tapioca', ing: `${baseSelecionadaMonte} (Sem Queijo)` }); baseSelecionadaMonte = null; fecharModais(); renderizarCatalogo('monte'); }
+        
+        function abrirModalAvulso() { document.getElementById('inputNomeAvulso').value = ''; document.getElementById('inputPrecoAvulso').value = ''; document.getElementById('modalAvulso').style.display = 'flex'; }
+        function lancarAvulsoCarrinho() { let nome = document.getElementById('inputNomeAvulso').value.trim(); let precoStr = document.getElementById('inputPrecoAvulso').value.trim().replace(',', '.'); let preco = parseFloat(precoStr); if(!nome || isNaN(preco)) { mostrarAlerta("Preencha o nome e um valor numérico válido."); return; } adicionarAoCarrinho({ nome: `Avulso: ${nome}`, preco: preco, tipo: 'tapioca', ing: '' }); fecharModais(); }
+        
+        function lancarAdicionalComNome() { document.getElementById('inputDescAdicional').value = ''; document.getElementById('modalAdicional').style.display = 'flex'; setTimeout(() => document.getElementById('inputDescAdicional').focus(), 100); }
+        function confirmarAdicional() { let desc = document.getElementById('inputDescAdicional').value.trim(); if (desc === '') desc = "Adicional Genérico"; adicionarAoCarrinho({ nome: "+ Adicional", preco: 4.00, tipo: "extra", ing: "", obs: desc }); fecharModais(); }
+
+        /**
+         * Adiciona um item ao carrinho atualizando a visualização
+         */
+        function adicionarAoCarrinho(produto) {
+            let index = carrinho.findIndex(item => item.nome === produto.nome && item.obs === (produto.obs || ''));
+            if (index !== -1) {
+                carrinho[index].quantidade += 1;
+            } else {
+                let novoItem = JSON.parse(JSON.stringify(produto));
+                novoItem.quantidade = 1;
+                if (!novoItem.obs) novoItem.obs = '';
+                carrinho.push(novoItem);
+            }
+            atualizarCarrinho();
+            mostrarToast(`✅ ${produto.nome} adicionado!`);
+        }
+
+        function atualizarObs(index, valor) { carrinho[index].obs = valor; }
+        function removerItemCarrinho(index) { carrinho.splice(index, 1); atualizarCarrinho(); }
+        function mudarQtd(index, delta) { carrinho[index].quantidade += delta; if (carrinho[index].quantidade <= 0) { removerItemCarrinho(index); } else { atualizarCarrinho(); } }
+
+        function atualizarCarrinho() {
+            const boxCarrinho = document.getElementById('boxCarrinho');
+            const lista = document.getElementById('listaCarrinho');
+            const spanTotal = document.getElementById('valorTotal');
+            
+            lista.innerHTML = '';
+            if (carrinho.length === 0) {
+                boxCarrinho.style.display = 'none';
+                spanTotal.textContent = 'R$ 0,00';
+                renderizarCatalogo(abaAtivaCatalogo); 
+                return;
+            }
+            
+            boxCarrinho.style.display = 'block';
+            let total = 0;
+            
+            carrinho.forEach((item, index) => {
+                total += item.preco * item.quantidade;
+                let btnMenos = `<button style="background:var(--danger); color:white; border:none; padding:5px 10px; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="mudarQtd(${index}, -1)">-</button>`;
+                let btnMais = `<button style="background:var(--success); color:white; border:none; padding:5px 10px; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="mudarQtd(${index}, 1)">+</button>`;
+                
+                lista.innerHTML += `
+                <div class="item-carrinho">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <strong style="color:var(--primary);">${item.nome}</strong>
+                        <span style="font-weight:bold;">${formatarMoeda(item.preco * item.quantidade)}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            ${btnMenos} <span style="font-size:1.1rem; font-weight:bold;">${item.quantidade}</span> ${btnMais}
+                        </div>
+                        <button style="background:transparent; color:var(--text-muted); border:1px solid var(--border); padding:4px 8px; border-radius:4px; cursor:pointer;" onclick="removerItemCarrinho(${index})">🗑️ Remover</button>
+                    </div>
+                    <input type="text" class="input-obs" placeholder="Observações (ex: sem cebola)" value="${item.obs || ''}" onchange="atualizarObs(${index}, this.value)" style="margin-top:5px;">
+                </div>`;
+            });
+            
+            spanTotal.textContent = formatarMoeda(total);
+            renderizarCatalogo(abaAtivaCatalogo); 
+        }
+
+        function limparCarrinho() {
+            carrinho = [];
+            pedidoEmEdicao = null;
+            document.getElementById('tituloCarrinho').textContent = "Pedido em Andamento";
+            let btnLancar = document.getElementById('btnLancar');
+            if(btnLancar) { btnLancar.textContent = "Lançar para Produção"; btnLancar.disabled = false; }
+            atualizarCarrinho();
+        }
+
+        // ====================================================================
+        // FLUXO DE PEDIDOS E SINCRONIZAÇÃO
+        // ====================================================================
+        function carregarParaEdicao(numero) { 
+            const pedido = historicoNuvem.find(p => p.numero == numero); 
+            if (!pedido) return; 
+            carrinho = JSON.parse(JSON.stringify(pedido.itens)); 
+            pedidoEmEdicao = numero; 
+            document.getElementById('tituloCarrinho').textContent = `✏️ Editando Pedido #${numero}`; 
+            document.getElementById('btnLancar').textContent = 'Salvar Alteração'; 
+            mudarTela('view-catalogo'); 
+            atualizarCarrinho(); 
+        }
+
+        function lancarPedido() {
+            if (carrinho.length === 0) return alert("Carrinho vazio!");
+
+            let audioCampainha = document.getElementById('somCampainha');
+            if(audioCampainha) audioCampainha.play().catch(e => console.log(e));
+
+            let btnProdSync = document.getElementById('btnTopoProd');
+            if (btnProdSync) {
+                btnProdSync.classList.remove('piscar-alerta');
+                void btnProdSync.offsetWidth; 
+                btnProdSync.classList.add('piscar-alerta');
+            }
+
+            const totalCarrinho = carrinho.reduce((acc, item) => acc + (item.preco * item.quantidade), 0);
+            const isPronto = carrinho.every(item => item.pronto === true);
+
+            let btnLancar = document.getElementById('btnLancar');
+            if(btnLancar) { btnLancar.disabled = true; btnLancar.textContent = "Lançando..."; }
+
+            if (pedidoEmEdicao !== null) {
+                const index = historicoNuvem.findIndex(p => p.numero == pedidoEmEdicao);
+                if (index !== -1) {
+                    historicoNuvem[index].itens = JSON.parse(JSON.stringify(carrinho));
+                    historicoNuvem[index].total = totalCarrinho;
+                    historicoNuvem[index].produzido = isPronto;
+                    
+                    if(typeof google !== 'undefined') {
+                        google.script.run
+                        .withSuccessHandler(function() { limparCarrinho(); atualizarTudo(); })
+                        .withFailureHandler(function(erro) {
+                            alert("Erro ao atualizar pedido na nuvem: " + erro.message);
+                            if(btnLancar) { btnLancar.disabled = false; btnLancar.textContent = "Lançar para Produção"; }
+                        })
+                        .atualizarVendaRealTime(JSON.stringify(historicoNuvem[index]));
+                    }
+                }
+            } else {
+                let novoPedido = { 
+                    numero: contadorPedidos++, 
+                    origem: "PDV", 
+                    itens: JSON.parse(JSON.stringify(carrinho)), 
+                    total: totalCarrinho, 
+                    hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), 
+                    produzido: isPronto, 
+                    timestampCriacao: new Date().getTime() 
+                };
+                
+                historicoNuvem.push(novoPedido);
+                
+                if(typeof google !== 'undefined') {
+                    google.script.run.withFailureHandler(function(erro) { alert("Erro ao lançar na Base de Vendas: " + erro.message); }).lancarPedidoPlanilha(JSON.stringify(novoPedido));
+                    google.script.run
+                    .withSuccessHandler(function() { limparCarrinho(); atualizarTudo(); })
+                    .withFailureHandler(function(erro) {
+                        alert("Erro ao sincronizar com a nuvem: " + erro.message);
+                        if(btnLancar) { btnLancar.disabled = false; btnLancar.textContent = "Lançar para Produção"; }
+                    })
+                    .salvarVendaRealTime(JSON.stringify(novoPedido));
+                } else {
+                    limparCarrinho(); atualizarTudo();
+                }
+            }
+        }
+
+        function excluirPedidoDeVez(numero) { mostrarConfirmacao("Deseja EXCLUIR DEFINITIVAMENTE o pedido #" + numero + " do sistema e da tela?", function() { travarSyncTemporariamente(); historicoNuvem = historicoNuvem.filter(p => p.numero != numero); atualizarTudo(); if(typeof google !== 'undefined') { google.script.run.excluirVendaRealTime(numero); google.script.run.removerDaBaseDeVendasBackend(numero); } }); }
+
+        function cancelarPedido(numero) { mostrarConfirmacao("Deseja CANCELAR o pedido #" + numero + "?", function() { travarSyncTemporariamente(); const index = historicoNuvem.findIndex(p => p.numero == numero); if(index !== -1) { const pedido = historicoNuvem[index]; pedido.status = "Cancelado"; pedido.dataExibicao = new Date().toLocaleString('pt-BR'); historicoNuvem.splice(index, 1); atualizarTudo(); if(typeof google !== 'undefined') { google.script.run.moverParaCancelados(JSON.stringify(pedido)); google.script.run.excluirVendaRealTime(pedido.numero); google.script.run.removerDaBaseDeVendasBackend(pedido.numero); } } }); }
+
+        function reabrirPedido(numero) {
+            mostrarConfirmacao("Deseja ESTORNAR e REABRIR o pedido #" + numero + "? Ele voltará para o Caixa.", function() {
+                travarSyncTemporariamente(); 
+                const index = historicoNuvem.findIndex(p => p.numero == numero);
+                if(index !== -1) {
+                    const pedido = historicoNuvem[index]; delete pedido.timestamp; delete pedido.formaPagamento; delete pedido.dataExibicao; delete pedido.pagamentosMistos; delete pedido.troco; atualizarTudo();
+                    if(typeof google !== 'undefined') { google.script.run.reabrirPedidoBackend(JSON.stringify(pedido)); google.script.run.atualizarVendaRealTime(JSON.stringify(pedido)); }
+                    mostrarAlerta("✅ Pedido #" + numero + " reaberto! Ele voltou para a tela de Caixa."); mudarTela('view-painel'); 
+                }
+            });
+        }
+
+        // ====================================================================
+        // RENDERIZAÇÃO DAS TELAS DE COZINHA E CAIXA
+        // ====================================================================
+        function renderizarProducao() {
+            const lista = document.getElementById('listaProducao'); lista.innerHTML = ''; let fila = historicoNuvem.filter(p => !p.produzido && (ehHoje(p.timestamp) || ehHoje(p.timestampCriacao))); fila.sort((a,b) => a.numero - b.numero);
+            if(fila.length === 0) { lista.innerHTML = '<p style="color:var(--text-muted);">Nenhum pedido na fila. Ufa! 😅</p>'; return; }
+            fila.forEach(pedido => {
+                let htmlItens = ''; let indicesAgrupados = new Set(); 
+                pedido.itens.forEach((item, idx) => {
+                    if (item.tipo === 'bebida') return; if (indicesAgrupados.has(idx)) return; if (item.pronto) return; 
+                    let ingredientesHtml = item.ing ? `<span class="ingredientes">${item.ing}</span>` : ''; let obsHtml = item.obs ? `<span class="ingredientes" style="color:#ffc107; font-weight:bold; font-size: 0.95rem;">↳ OBS: ${item.obs}</span>` : ''; let extrasHtml = '';
+                    for (let i = idx + 1; i < pedido.itens.length; i++) { let proximoItem = pedido.itens[i]; if (proximoItem.tipo === 'extra') { if(!proximoItem.pronto) { let nomeDoExtra = (proximoItem.nome === '+ Adicional' && proximoItem.obs) ? proximoItem.obs : proximoItem.nome; let obsDoExtra = (proximoItem.nome !== '+ Adicional' && proximoItem.obs) ? ` - ${proximoItem.obs}` : ''; extrasHtml += `<div style="color: #ffc107; font-weight: bold; font-size: 0.95rem; margin-top: 6px; padding-left: 10px; border-left: 3px solid #ffc107;">➕ Adicional: ${nomeDoExtra}${obsDoExtra}</div>`; } indicesAgrupados.add(i); } else if (proximoItem.tipo !== 'bebida') { break; } }
+                    let nomeExibicao = item.tipo === 'extra' ? `⚠️ Adicional Avulso: ${item.obs || item.nome}` : item.nome;
+                    htmlItens += `<div class="item-producao"><div class="info-prod"><strong>${item.quantidade}x ${nomeExibicao}</strong>${ingredientesHtml}${obsHtml}${extrasHtml}</div><button class="btn-check-item" onclick="marcarItemEExtrasPronto('${pedido.numero}', ${idx})">✅ Concluir</button></div>`;
+                });
+                if(htmlItens !== '') { let badgePagamento = pedido.timestamp ? `<span class="badge-status-cozinha badge-pago">PAGO</span>` : `<span class="badge-status-cozinha badge-pendente">PENDENTE</span>`; let badgeOrigem = pedido.origem === 'Online' ? `<span class="badge-status-cozinha" style="background: #339af0; margin-right: 5px; font-size: 0.85rem; padding: 3px 8px;">📲 APP</span> ` : ''; lista.innerHTML += `<div class="card-producao"><h3><span style="display:flex; align-items:center;">${badgeOrigem}Pedido #${pedido.numero} <small style="color:var(--text-muted); font-size:0.8rem; margin-left:5px;">(${pedido.hora})</small></span>${badgePagamento}</h3>${htmlItens}<button class="btn-forcar-baixa" onclick="excluirPedidoDeVez('${pedido.numero}')">🗑️ Excluir Pedido Travado</button></div>`; } else { pedido.produzido = true; checarBaixaCache(pedido); }
+            });
+        }
+
+        function marcarItemEExtrasPronto(numeroPedido, idxPrincipal) { 
+            travarSyncTemporariamente(); 
+            let p = historicoNuvem.find(x => x.numero == numeroPedido); 
+            if(p) { 
+                p.itens[idxPrincipal].pronto = true; 
+                for (let i = idxPrincipal + 1; i < p.itens.length; i++) { 
+                    if (p.itens[i].tipo === 'extra') { p.itens[i].pronto = true; } else if (p.itens[i].tipo !== 'bebida') { break; } 
+                } 
+                p.produzido = p.itens.filter(i => i.tipo !== 'bebida').every(i => i.pronto === true); 
+                
+                if(typeof google !== 'undefined') google.script.run.atualizarVendaRealTime(JSON.stringify(p)); 
+                checarBaixaCache(p); 
+                atualizarTudo(); 
+            } 
+        }
+
+        function renderizarPainelPedidos() { const lista = document.getElementById('listaPainelPedidos'); lista.innerHTML = ''; let pendentesPainel = historicoNuvem.filter(p => !p.timestamp && ehHoje(p.timestampCriacao)); pendentesPainel.sort((a,b) => b.numero - a.numero); if(pendentesPainel.length === 0) { lista.innerHTML = '<p style="color:var(--text-muted);">Nenhum pedido aguardando pagamento.</p>'; return; } pendentesPainel.forEach(pedido => { const statusHtml = pedido.produzido ? '<span class="status-badge status-pronto">✓ PRONTO</span>' : '<span class="status-badge status-preparo">⏳ COZINHA</span>'; const itensTxt = pedido.itens.map(i => `${i.quantidade}x ${i.nome}`).join(', '); lista.innerHTML += `<div class="card-painel"><div class="card-painel-header"><span>#${pedido.numero} - ${statusHtml}</span><span>${formatarMoeda(pedido.total)}</span></div><div style="font-size:0.9rem; color:var(--text-muted);">${itensTxt}</div><div class="acoes-painel"><button class="btn-painel btn-p-editar" onclick="carregarParaEdicao('${pedido.numero}')">✏️ Editar</button><button class="btn-painel btn-p-cancelar" onclick="cancelarPedido('${pedido.numero}')">🗑️ Cancelar</button><button class="btn-painel btn-p-pagar" onclick="abrirModalPagamento('${pedido.numero}')">💳 Pagar</button></div></div>`; }); }
+
+        function renderizarHistorico() { const lista = document.getElementById('listaHistoricoHoje'); lista.innerHTML = ''; const vendasHoje = historicoNuvem.filter(v => v.timestamp && ehHoje(v.timestamp) && !v.ocultoVisualmente).reverse(); if(vendasHoje.length === 0) { lista.innerHTML = '<p style="color:var(--text-muted);">Nenhuma venda na lista.</p>'; return; } vendasHoje.forEach(v => { const itensTxt = v.itens.map(i => `${i.quantidade}x ${i.nome}`).join(', '); lista.innerHTML += `<div class="card-historico"><div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom: 4px;"><span>Pedido #${v.numero} - ✅</span><span>${formatarMoeda(v.total)}</span></div><div style="font-size:0.85rem; color:#e0e0e0; margin-bottom: 6px; line-height: 1.3;">${itensTxt}</div><div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:0.8rem; color:var(--text-muted);">Pago no ${v.formaPagamento} às ${new Date(v.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span><button onclick="reabrirPedido('${v.numero}')" style="background: var(--edit); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.8rem;">🔄 Reabrir / Editar</button></div></div>`; }); }
+
+        // ====================================================================
+        // FLUXO DE CAIXA E PAGAMENTOS
+        // ====================================================================
+        function abrirModalPagamento(numero) { pedidoAguardandoPagamento = numero; document.getElementById('numeroPedidoPagamento').textContent = numero; document.getElementById('modalPagamento').style.display = 'flex'; }
+        
+        function processarPagamento(forma) { const num = pedidoAguardandoPagamento; const ped = historicoNuvem.find(p => p.numero == num); if (!ped) return; if (forma === 'Dinheiro') { fecharModais(); pedidoAguardandoPagamento = num; document.getElementById('trocoTotalPedido').textContent = formatarMoeda(ped.total); document.getElementById('inputValorRecebido').value = ''; document.getElementById('valorDoTroco').textContent = 'R$ 0,00'; document.getElementById('btnConfirmarDinheiro').disabled = true; document.getElementById('modalTroco').style.display = 'flex'; } else { finalizarVenda(forma); } }
+
+        function preencherValorExato() { const pedido = historicoNuvem.find(p => p.numero == pedidoAguardandoPagamento); if (!pedido) return; document.getElementById('inputValorRecebido').value = pedido.total.toFixed(2).replace('.', ','); calcularTroco(); }
+        function calcularTroco() { const pedido = historicoNuvem.find(p => p.numero == pedidoAguardandoPagamento); if (!pedido) return; let recebido = parseDinheiro(document.getElementById('inputValorRecebido').value); const spanTroco = document.getElementById('valorDoTroco'); const btn = document.getElementById('btnConfirmarDinheiro'); let troco = recebido - pedido.total; troco = Math.round(troco * 100) / 100; if (recebido === 0) { spanTroco.textContent = 'R$ 0,00'; spanTroco.parentElement.style.background = 'var(--troco-bg)'; btn.disabled = true; return; } if (troco >= 0) { spanTroco.textContent = formatarMoeda(troco); spanTroco.parentElement.style.background = 'var(--troco-bg)'; btn.disabled = false; } else { spanTroco.textContent = "Faltam " + formatarMoeda(Math.abs(troco)); spanTroco.parentElement.style.background = 'var(--danger)'; btn.disabled = true; } }
+
+        function abrirModalMisto() { const numBackup = pedidoAguardandoPagamento; fecharModais(); pedidoAguardandoPagamento = numBackup; const pedido = historicoNuvem.find(p => p.numero == pedidoAguardandoPagamento); if (!pedido) return; document.getElementById('totalMistoSpan').textContent = formatarMoeda(pedido.total); document.getElementById('mistoPix').value = ''; document.getElementById('mistoDinheiro').value = ''; document.getElementById('mistoDebito').value = ''; document.getElementById('mistoCredito').value = ''; document.getElementById('mistoVR').value = ''; calcularTotalMisto(); document.getElementById('modalMisto').style.display = 'flex'; }
+        function calcularTotalMisto() { const pedido = historicoNuvem.find(p => p.numero == pedidoAguardandoPagamento); if (!pedido) return; let vPix = parseDinheiro(document.getElementById('mistoPix').value); let vDin = parseDinheiro(document.getElementById('mistoDinheiro').value); let vDeb = parseDinheiro(document.getElementById('mistoDebito').value); let vCred = parseDinheiro(document.getElementById('mistoCredito').value); let vVR = parseDinheiro(document.getElementById('mistoVR').value); let soma = vPix + vDin + vDeb + vCred + vVR; let falta = pedido.total - soma; falta = Math.round(falta * 100) / 100; let spanFalta = document.getElementById('faltaMistoSpan'); let btnConfirmar = document.getElementById('btnConfirmarMisto'); if (falta === 0) { spanFalta.textContent = "OK! Tudo pago."; spanFalta.style.color = "var(--success)"; btnConfirmar.disabled = false; } else if (falta > 0) { spanFalta.textContent = "Faltam " + formatarMoeda(falta); spanFalta.style.color = "var(--danger)"; btnConfirmar.disabled = true; } else { spanFalta.textContent = "Passou " + formatarMoeda(Math.abs(falta)); spanFalta.style.color = "var(--danger)"; btnConfirmar.disabled = true; } }
+        function finalizarPagamentoMisto() { const index = historicoNuvem.findIndex(p => p.numero == pedidoAguardandoPagamento); if (index === -1) return; const pedido = historicoNuvem[index]; let vPix = parseDinheiro(document.getElementById('mistoPix').value); let vDin = parseDinheiro(document.getElementById('mistoDinheiro').value); let vDeb = parseDinheiro(document.getElementById('mistoDebito').value); let vCred = parseDinheiro(document.getElementById('mistoCredito').value); let vVR = parseDinheiro(document.getElementById('mistoVR').value); pedido.pagamentosMistos = []; if(vPix > 0) pedido.pagamentosMistos.push({forma: 'PIX', valor: vPix}); if(vDin > 0) pedido.pagamentosMistos.push({forma: 'Dinheiro', valor: vDin}); if(vDeb > 0) pedido.pagamentosMistos.push({forma: 'Cartão de Débito', valor: vDeb}); if(vCred > 0) pedido.pagamentosMistos.push({forma: 'Cartão de Crédito', valor: vCred}); if(vVR > 0) pedido.pagamentosMistos.push({forma: 'VR', valor: vVR}); finalizarVenda('Misto'); }
+
+        /**
+         * Finaliza a venda enviando pro histórico do Google
+         */
+        function finalizarVenda(forma) {
+            travarSyncTemporariamente();
+            const index = historicoNuvem.findIndex(p => p.numero == pedidoAguardandoPagamento);
+            if (index === -1) return;
+
+            let audioCaixa = document.getElementById('somCaixa');
+            if(audioCaixa) audioCaixa.play().catch(e => console.log(e));
+
+            const pedido = historicoNuvem[index];
+            const numeroSalvo = pedido.numero;
+            
+            pedido.formaPagamento = forma;
+            pedido.timestamp = new Date().getTime();
+            pedido.dataExibicao = new Date().toLocaleString('pt-BR');
+
+            if (forma === 'Dinheiro') {
+                let recebido = parseDinheiro(document.getElementById('inputValorRecebido').value);
+                pedido.troco = (recebido || pedido.total) - pedido.total;
+            }
+
+            fecharModais();
+            atualizarTudo();
+
+            if(typeof google !== 'undefined') {
+                google.script.run.moverParaHistorico(JSON.stringify(pedido));
+                google.script.run.atualizarVendaRealTime(JSON.stringify(pedido));
+            }
+            checarBaixaCache(pedido);
+
+            mostrarConfirmacaoPagamento(numeroSalvo);
+        }
+
+        // ====================================================================
+        // FUNÇÕES DE SINCRONIZAÇÃO E MANUTENÇÃO (HEARTBEAT)
+        // ====================================================================
+        function checarBaixaCache(pedido) { if (pedido.produzido && pedido.timestamp) { if(typeof google !== 'undefined') { google.script.run.removerDaBaseDeVendasBackend(pedido.numero); } } }
+        function sincronizarContadorGlobal() { let maxNum = 0; historicoNuvem.forEach(p => { if(p.numero > maxNum && (ehHoje(p.timestamp) || ehHoje(p.timestampCriacao))) maxNum = parseInt(p.numero); }); if (maxNum >= contadorPedidos) contadorPedidos = maxNum + 1; }
+
+        function iniciarSyncEmTempoReal() {
+            if (syncAtivo) clearInterval(syncAtivo);
+            syncAtivo = setInterval(() => {
+                if (pausarSync) return; 
+                if(typeof google !== 'undefined') {
+                    google.script.run.withSuccessHandler(function(resposta) {
+                        if (pausarSync) return; 
+                        let novaNuvem = JSON.parse(resposta) || [];
+                        if(JSON.stringify(historicoNuvem) !== JSON.stringify(novaNuvem)) { 
+                            if (novaNuvem.length > historicoNuvem.length) {
+                                let audio = document.getElementById('somCampainha');
+                                if(audio) audio.play().catch(e => console.log("Áudio bloqueado", e));
+                                
+                                let btnProdSync = document.getElementById('btnTopoProd');
+                                btnProdSync.classList.remove('piscar-alerta');
+                                void btnProdSync.offsetWidth;
+                                btnProdSync.classList.add('piscar-alerta');
+                            }
+                            historicoNuvem = novaNuvem; sincronizarContadorGlobal(); atualizarTudo(); 
+                        }
+                    }).carregarDadosNuvem();
+                }
+            }, 3000); 
+        } 
+
+        function atualizarTudo() { 
+            let qtdHoje = 0; 
+            
+            historicoNuvem.forEach(v => { 
+                if(v.timestamp && ehHoje(v.timestamp)) { 
+                    v.itens.forEach(i => { if(i.tipo === 'tapioca' || i.tipo === 'extra') qtdHoje += i.quantidade; }); 
+                } 
+                
+                let itensCozinha = v.itens.filter(i => i.tipo !== 'bebida');
+                if (itensCozinha.length === 0 || itensCozinha.every(i => i.pronto === true)) {
+                    v.produzido = true;
+                }
+            }); 
+            
+            document.getElementById('btnTopoTapiocas').textContent = `🌮 ${qtdHoje}`; 
+            
+            let pendentesCozinha = historicoNuvem.filter(p => !p.produzido && (ehHoje(p.timestamp) || ehHoje(p.timestampCriacao))).length;
+            let pendentesCaixa = historicoNuvem.filter(p => !p.timestamp && ehHoje(p.timestampCriacao)).length;
+            
+            let btnProd = document.getElementById('btnTopoProd');
+            let btnCaixa = document.getElementById('btnTopoCaixa');
+            
+            if (pendentesCozinha > 0) {
+                btnProd.innerHTML = `👨‍🍳 Prod. <span style="background:var(--danger); color:white; border-radius:10px; padding:2px 6px; font-size:0.75rem; margin-left:4px;">${pendentesCozinha}</span>`;
+            } else { btnProd.innerHTML = `👨‍🍳 Prod.`; }
+
+            if (pendentesCaixa > 0) {
+                btnCaixa.innerHTML = `📝 Caixa <span style="background:#f59f00; color:white; border-radius:10px; padding:2px 6px; font-size:0.75rem; margin-left:4px;">${pendentesCaixa}</span>`;
+            } else { btnCaixa.innerHTML = `📝 Caixa`; }
+            
+            if(document.getElementById('view-painel').classList.contains('active')) renderizarPainelPedidos(); 
+            if(document.getElementById('view-historico').classList.contains('active')) renderizarHistorico(); 
+            if(document.getElementById('view-producao').classList.contains('active')) renderizarProducao(); 
+        }
 
         /**
          * Inicializa o App buscando dados da nuvem ao carregar a janela.
@@ -491,7 +1102,6 @@
             try {
                 let dataHoje = new Date();
                 
-                // Configura os dropdowns de ano de 2024 até o ano atual (2026+)
                 let selectAnoFolga = document.getElementById('filtroAnoFolga');
                 let selectAnoRankings = document.getElementById('filtroAnoRankings');
                 if (selectAnoFolga) selectAnoFolga.innerHTML = '';
@@ -501,7 +1111,6 @@
                 }
 
                 if(typeof google !== 'undefined') {
-                    // Chama a função da nuvem e lida com o retorno assíncrono via Polyfill
                     google.script.run.withSuccessHandler(function(resposta) {
                         try {
                             historicoNuvem = JSON.parse(resposta) || []; 
@@ -525,45 +1134,416 @@
             }
         };
 
-        /**
-         * Adiciona item no carrinho ou soma quantidade
-         */
-        function adicionarAoCarrinho(produto) {
-            let index = carrinho.findIndex(item => item.nome === produto.nome && item.obs === (produto.obs || ''));
-            if (index !== -1) {
-                carrinho[index].quantidade += 1;
-            } else {
-                let novoItem = JSON.parse(JSON.stringify(produto));
-                novoItem.quantidade = 1;
-                if (!novoItem.obs) novoItem.obs = '';
-                carrinho.push(novoItem);
+        // ====================================================================
+        // FECHAMENTOS DIÁRIOS / MENSAIS
+        // ====================================================================
+        function zerarContadorPlanilha() { mostrarConfirmacao("Deseja excluir do histórico a linha de hoje da aba 'Tapiocas Diária'?", function() { let dataHojeStr = new Date().toLocaleDateString('pt-BR'); if(typeof google !== 'undefined') google.script.run.excluirContadorTapiocasHoje(dataHojeStr); ultimoQtdHojeEnviado = -1; mostrarAlerta("Linha de contagem excluída da planilha!"); }); }
+        function limparHistoricoVendasHoje() { mostrarConfirmacao("Limpar tela de Vendas Hoje?", function() { historicoNuvem.forEach(v => { if(v.timestamp && ehHoje(v.timestamp) && !v.ocultoVisualmente) { v.ocultoVisualmente = true; } }); renderizarHistorico(); if(typeof google !== 'undefined') google.script.run.salvarNuvemCompleta(JSON.stringify(historicoNuvem)); }); }
+
+        function abrirModalRelatorio() { 
+            let totDin = 0, totPix = 0, totCred = 0, totDeb = 0, totVR = 0, totTotal = 0, qtdTapiocasHoje = 0; 
+            
+            historicoNuvem.filter(v => v.timestamp && ehHoje(v.timestamp)).forEach(v => { 
+                totTotal += v.total; 
+                v.itens.forEach(i => { if(i.tipo === 'tapioca' || i.tipo === 'extra') qtdTapiocasHoje += i.quantidade; }); 
+                let arrPagamentos = v.pagamentosMistos || [{forma: v.formaPagamento, valor: v.total}]; 
+                arrPagamentos.forEach(pag => { 
+                    if(pag.forma === 'Dinheiro') totDin += pag.valor; 
+                    if(pag.forma === 'PIX') totPix += pag.valor; 
+                    if(pag.forma === 'Cartão de Crédito') totCred += pag.valor; 
+                    if(pag.forma === 'Cartão de Débito') totDeb += pag.valor; 
+                    if(pag.forma === 'VR') totVR += pag.valor; 
+                }); 
+            }); 
+            
+            document.getElementById('relFaturamento').textContent = formatarMoeda(totTotal); 
+            document.getElementById('relDin').textContent = formatarMoeda(totDin); 
+            document.getElementById('relPix').textContent = formatarMoeda(totPix); 
+            document.getElementById('relCred').textContent = formatarMoeda(totCred); 
+            document.getElementById('relDeb').textContent = formatarMoeda(totDeb); 
+            document.getElementById('relVR').textContent = formatarMoeda(totVR); 
+            document.getElementById('relQtdTapiocas').textContent = qtdTapiocasHoje + " un"; 
+            
+            let hoje = new Date();
+            let dia = String(hoje.getDate()).padStart(2, '0');
+            let mes = String(hoje.getMonth() + 1).padStart(2, '0');
+            document.getElementById('dataFechamentoPrint').textContent = `${dia}/${mes}`;
+            
+            document.getElementById('modalRelatorio').style.display = 'flex'; 
+        }
+
+        function baixarPrintFechamento() {
+            const btn = document.getElementById('btnSalvarPrint'); const textoOriginal = btn.innerHTML; btn.innerHTML = '📸 Gerando Imagem...'; btn.disabled = true;
+            html2canvas(document.getElementById('areaPrintRelatorio'), { scale: 2, backgroundColor: "#1e1e1e" }).then(canvas => {
+                let link = document.createElement('a'); link.download = `Fechamento_Dia_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.png`; link.href = canvas.toDataURL('image/png'); link.click(); btn.innerHTML = textoOriginal; btn.disabled = false;
+            }).catch(err => { mostrarAlerta("Ocorreu um erro ao salvar o print: " + err); btn.innerHTML = textoOriginal; btn.disabled = false; });
+        }
+
+        function registrarFechamentoDia() {
+            let qtdTapiocasStr = document.getElementById('relQtdTapiocas').textContent.replace(/\D/g, '');
+            let qtdTapiocasNum = parseInt(qtdTapiocasStr) || 0;
+
+            let resumo = { 
+                data: new Date().toLocaleDateString('pt-BR'), 
+                total: document.getElementById('relFaturamento').textContent, 
+                dinheiro: document.getElementById('relDin').textContent, 
+                pix: document.getElementById('relPix').textContent, 
+                credito: document.getElementById('relCred').textContent, 
+                debito: document.getElementById('relDeb').textContent, 
+                vr: document.getElementById('relVR').textContent,
+                qtdTapiocas: qtdTapiocasNum 
+            };
+
+            document.getElementById('loadingText').textContent = 'Registrando fechamento diário...'; 
+            document.getElementById('loadingScreen').style.display = 'flex';
+
+            if(typeof google !== 'undefined') { 
+                google.script.run
+                    .withSuccessHandler(function(resposta) {
+                        document.getElementById('loadingScreen').style.display = 'none';
+                        if (resposta === "OK") { 
+                            historicoNuvem = []; carrinho = []; 
+                            google.script.run.salvarNuvemCompleta("[]");
+                            atualizarTudo(); fecharModais(); 
+                            mostrarAlerta("✅ Fechamento do dia salvo com sucesso!"); 
+                        } else { mostrarAlerta("⚠️ Erro: " + resposta); }
+                    })
+                    .withFailureHandler(function(erro) { 
+                        document.getElementById('loadingScreen').style.display = 'none'; 
+                        mostrarAlerta("❌ Falha crítica: " + erro.message); 
+                    })
+                    .salvarFechamentoDiaPlanilha(JSON.stringify(resumo));
             }
-            atualizarCarrinho();
-            mostrarToast(`✅ ${produto.nome} adicionado!`);
         }
 
-        // Funções omitidas por brevidade da exibição do chat (mas mantidas no código base)
-        function fecharModais() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); pedidoAguardandoPagamento = null; }
-        function abrirMenuLateral() { document.querySelectorAll('.submenu').forEach(sub => { sub.style.display = 'none'; }); document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebarOverlay').style.display = 'block'; }
-        function fecharMenuLateral() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').style.display = 'none'; }
-        function mostrarToast(mensagem) {
-            let container = document.getElementById('toast-container'); let toast = document.createElement('div');
-            toast.className = 'toast'; toast.innerHTML = mensagem; container.appendChild(toast);
-            setTimeout(() => { toast.style.animation = 'fadeOut 0.3s ease-out forwards'; setTimeout(() => toast.remove(), 300); }, 2000);
+        // ====================================================================
+        // LIQUIDEZ E FECHAMENTO MENSAL
+        // ====================================================================
+        let faturamentoMesGlobal = 0; let combustivelMesGlobal = 0;
+        
+        function abrirModalLiquidez() {
+            const hoje = new Date(); 
+            const mesesExtenso = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]; 
+            document.getElementById('mesReferenciaPDF').textContent = `${mesesExtenso[hoje.getMonth()]} de ${hoje.getFullYear()}`;
+            
+            document.getElementById('modalLiquidez').style.display = 'flex'; 
+            document.getElementById('conteudoLiquidez').style.display = 'none'; 
+            document.getElementById('loadingLiquidez').style.display = 'block';
+
+            if(typeof google !== 'undefined') {
+                google.script.run.withSuccessHandler(function(res) {
+                    let dados = JSON.parse(res);
+                    faturamentoMesGlobal = dados.total;
+                    combustivelMesGlobal = dados.combustivel;
+                    document.getElementById('liqQtdTapiocasTxt').textContent = (dados.qtdTapiocas || 0) + " un";
+                    recalcularLiquidez(); 
+                    document.getElementById('loadingLiquidez').style.display = 'none'; 
+                    document.getElementById('conteudoLiquidez').style.display = 'block';
+                }).obterResumoMesPlanilha();
+            }
         }
 
+        function recalcularLiquidez() {
+            let faturamento = faturamentoMesGlobal;
+            let combustivel = combustivelMesGlobal;
+            let salCozinha = parseDinheiro(document.getElementById('inpSalCozinha').value);
+            let salCarro = parseDinheiro(document.getElementById('inpSalCarro').value);
+            
+            document.getElementById('liqTotalGeralTxt').textContent = formatarMoeda(faturamento);
+            document.getElementById('liqCombustivelTxt').textContent = "- " + formatarMoeda(combustivel);
+
+            const PERCENTUAL_MATERIAL = 0.60; const PERCENTUAL_LUCAS = 0.90; const PERCENTUAL_ELIEL = 0.10;     
+
+            let custoMaterial = faturamento * PERCENTUAL_MATERIAL;
+            let totalDespesasOperacionais = combustivel + salCozinha + salCarro;
+            
+            let sobraLiquida = faturamento - custoMaterial - totalDespesasOperacionais;
+            let baseParaDivisao = Math.max(0, sobraLiquida);
+
+            let lucroLucas = baseParaDivisao * PERCENTUAL_LUCAS;
+            let lucroEliel = baseParaDivisao * PERCENTUAL_ELIEL;
+
+            document.getElementById('liqMaterialTxt').textContent = "- " + formatarMoeda(custoMaterial);
+            document.getElementById('liqSobraLiquida').textContent = formatarMoeda(sobraLiquida);
+            document.getElementById('liqSobraLiquida').style.color = sobraLiquida >= 0 ? "var(--success)" : "var(--danger)";
+
+            document.getElementById('liqLucas').setAttribute('data-valor', lucroLucas);
+            document.getElementById('liqEliel').setAttribute('data-valor', lucroEliel);
+            
+            document.getElementById('liqLucas').textContent = 'R$ ****';
+            document.getElementById('liqEliel').textContent = 'R$ ****';
+            document.getElementById('icon-liqLucas').textContent = '👁️';
+            document.getElementById('icon-liqEliel').textContent = '👁️';
+        }
+
+        function toggleVis(id) { var el = document.getElementById(id); var icon = document.getElementById('icon-' + id); if(el.textContent.includes('****')) { el.textContent = formatarMoeda(parseFloat(el.getAttribute('data-valor'))); icon.textContent = '🙈'; } else { el.textContent = 'R$ ****'; icon.textContent = '👁️'; } }
+
+        function verificarPedidosAbertos() { const itensAbertos = historicoNuvem.filter(p => (!p.produzido || !p.timestamp) && (ehHoje(p.timestamp) || ehHoje(p.timestampCriacao))); if (itensAbertos.length > 0) { mostrarAlerta("⚠️ Você possui pedidos pendentes na cozinha ou caixa!"); return true; } return false; }
+        
+        function confirmarFechamentoMes() {
+            if (verificarPedidosAbertos()) return; 
+
+            let elMes = document.getElementById('mesReferenciaPDF');
+            let mesCalculado = elMes ? elMes.textContent : "Mês Atual";
+
+            mostrarConfirmacao("🚨 Salvar fechamento do mês na aba 'Fechamentos_Mensais' da planilha?", function() {
+                document.getElementById('loadingText').textContent = 'Processando fechamento...';
+                document.getElementById('loadingScreen').style.display = 'flex'; 
+                
+                try {
+                    let valLucas = document.getElementById('liqLucas').getAttribute('data-valor') || 0;
+                    let valEliel = document.getElementById('liqEliel').getAttribute('data-valor') || 0;
+
+                    let pacote = { 
+                        mesReferencia: mesCalculado, 
+                        qtdTapiocas: document.getElementById('liqQtdTapiocasTxt').textContent || "0", 
+                        totalGeral: document.getElementById('liqTotalGeralTxt').textContent || "R$ 0,00", 
+                        material: document.getElementById('liqMaterialTxt').textContent || "R$ 0,00",
+                        lucroLucas: formatarMoeda(parseFloat(valLucas)), 
+                        lucroEliel: formatarMoeda(parseFloat(valEliel)) 
+                    };
+
+                    if(typeof google !== 'undefined') {
+                        google.script.run
+                            .withSuccessHandler(function(resp) { 
+                                document.getElementById('loadingScreen').style.display = 'none'; 
+                                if (resp === "OK") { 
+                                    mostrarAlerta("✅ Mês fechado e salvo com sucesso na sua Planilha!"); 
+                                    fecharModais();
+                                } else { mostrarAlerta("⚠️ Erro do servidor: " + resp); } 
+                            })
+                            .withFailureHandler(function(erro) { 
+                                document.getElementById('loadingScreen').style.display = 'none'; 
+                                mostrarAlerta("❌ Erro de conexão: " + erro.message); 
+                            })
+                            .fecharMesESalvarDrive(JSON.stringify(pacote)); 
+                    }
+                } catch(e) {
+                    document.getElementById('loadingScreen').style.display = 'none'; 
+                    mostrarAlerta("❌ Erro interno do painel: " + e.message); 
+                }
+            });
+        }
+
+        // ====================================================================
+        // ESTIMATIVAS, FOLGAS E COMBUSTÍVEL
+        // ====================================================================
+        function abrirModalEstimativa() {
+            document.getElementById('modalEstimativa').style.display = 'flex'; 
+            document.getElementById('conteudoEstimativa').style.display = 'none'; 
+            document.getElementById('loadingEstimativa').style.display = 'block';
+            
+            if(typeof google !== 'undefined') {
+                google.script.run.withSuccessHandler(function(res) {
+                    let d = JSON.parse(res); 
+                    document.getElementById('loadingEstimativa').style.display = 'none'; 
+                    document.getElementById('conteudoEstimativa').style.display = 'block';
+                    
+                    document.getElementById('estMes').textContent = d.mes; 
+                    document.getElementById('estTotalDias').textContent = d.diasUteisTotal; 
+                    document.getElementById('estPassados').textContent = d.diasUteisPassados; 
+                    document.getElementById('estRestantes').textContent = d.diasUteisRestantes;
+                    document.getElementById('estMedia').textContent = formatarMoeda(d.mediaDiaria); 
+                    document.getElementById('estLucasAtual').textContent = formatarMoeda(d.lucasAtual); 
+                    document.getElementById('estLucasProjetado').textContent = formatarMoeda(d.lucasProjetado);
+                }).calcularEstimativaSalarioLucas();
+            }
+        }
+
+        function mudarAbaFolga(aba) {
+            let btnReg = document.getElementById('btnAbaRegFolga'); let btnHist = document.getElementById('btnAbaHistFolga'); let viewReg = document.getElementById('viewRegistrarFolga'); let viewHist = document.getElementById('viewHistoricoFolga');
+            if (aba === 'registrar') {
+                viewReg.style.display = 'block'; viewHist.style.display = 'none'; btnReg.style.background = 'var(--edit)'; btnReg.classList.remove('btn-limpar'); btnHist.style.background = 'transparent'; btnHist.classList.add('btn-limpar');
+            } else {
+                viewReg.style.display = 'none'; viewHist.style.display = 'block'; btnHist.style.background = 'var(--edit)'; btnHist.classList.remove('btn-limpar'); btnReg.style.background = 'transparent'; btnReg.classList.add('btn-limpar');
+                let d = new Date(); document.getElementById('filtroMesFolga').value = ("0" + (d.getMonth() + 1)).slice(-2); document.getElementById('filtroAnoFolga').value = d.getFullYear().toString();
+            }
+        }
+
+        function abrirModalDiaSemTrabalho() {
+            var hoje = new Date(); var dia = ("0" + hoje.getDate()).slice(-2); var mes = ("0" + (hoje.getMonth() + 1)).slice(-2); var ano = hoje.getFullYear();
+            document.getElementById('inputDataSemTrabalho').value = `${ano}-${mes}-${dia}`; document.getElementById('inputMotivoSemTrabalho').value = '';
+            mudarAbaFolga('registrar'); 
+            document.getElementById('modalDiaSemTrabalho').style.display = 'flex';
+        }
+
+        function registrarDiaSemTrabalho() {
+            var dataInp = document.getElementById('inputDataSemTrabalho').value; var motivo = document.getElementById('inputMotivoSemTrabalho').value.trim();
+            if(!dataInp || !motivo) { mostrarAlerta("Preencha a data e o motivo para registrar a folga."); return; }
+            var partes = dataInp.split("-"); var dataFormatada = `${partes[2]}/${partes[1]}/${partes[0]}`; var pacote = { data: dataFormatada, motivo: motivo };
+            document.getElementById('loadingText').textContent = 'Registrando folga na planilha...'; document.getElementById('loadingScreen').style.display = 'flex';
+            if(typeof google !== 'undefined') {
+                google.script.run.withSuccessHandler(function(resp) {
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    if(resp === "OK") { fecharModais(); mostrarAlerta("✅ Dia sem trabalho registrado com sucesso na planilha!"); } 
+                    else { mostrarAlerta("⚠️ Erro: " + resp); }
+                }).withFailureHandler(function(erro) { document.getElementById('loadingScreen').style.display = 'none'; mostrarAlerta("❌ Erro de comunicação: " + erro.message); }).registrarDiaSemTrabalhoPlanilha(JSON.stringify(pacote));
+            } else { document.getElementById('loadingScreen').style.display = 'none'; fecharModais(); mostrarAlerta("Simulação concluída."); }
+        }
+
+        function buscarHistoricoFolgas() {
+            var mes = document.getElementById('filtroMesFolga').value; var ano = document.getElementById('filtroAnoFolga').value;
+            document.getElementById('resultadoFolgas').style.display = 'none'; document.getElementById('loadingFolgas').style.display = 'block';
+            if(typeof google !== 'undefined') {
+                google.script.run.withSuccessHandler(function(res) {
+                    document.getElementById('loadingFolgas').style.display = 'none'; let dados = JSON.parse(res); let divRes = document.getElementById('resultadoFolgas'); divRes.style.display = 'block';
+                    if(dados.length === 0) { divRes.innerHTML = "<p style='text-align:center; color:var(--text-muted); padding: 10px;'>Nenhuma folga registrada neste mês.</p>"; return; }
+                    let html = "<table class='tabela-filtros'><thead><tr><th>Data</th><th>Motivo</th></tr></thead><tbody>";
+                    dados.forEach(d => { html += `<tr><td style='font-weight:bold; white-space:nowrap; color: var(--primary);'>${d.data}</td><td>${d.motivo}</td></tr>`; });
+                    html += "</tbody></table>"; divRes.innerHTML = html;
+                }).buscarFolgasBackend(mes, ano);
+            }
+        }
+
+        function registrarCombustivel() {
+            var dataInp = document.getElementById('inputDataCombustivel').value; var valorStr = document.getElementById('inputValorCombustivel').value;
+            var valorNum = parseDinheiro(valorStr); var litrosNum = parseFloat(document.getElementById('inputLitrosCombustivel').value);
+            if(!dataInp || valorNum <= 0 || isNaN(litrosNum) || litrosNum <= 0) { mostrarAlerta("Preencha a data, um valor válido e a quantidade de litros."); return; }
+            var partes = dataInp.split("-"); var dataFormatada = `${partes[2]}/${partes[1]}/${partes[0]}`; var pacote = { data: dataFormatada, valor: valorNum, litros: litrosNum };
+            document.getElementById('loadingText').textContent = 'Salvando abastecimento...'; document.getElementById('loadingScreen').style.display = 'flex';
+            if(typeof google !== 'undefined') {
+                google.script.run.withSuccessHandler(function(resp) {
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    if(resp === "OK") { mostrarAlerta("✅ Abastecimento salvo na planilha!"); document.getElementById('inputValorCombustivel').value = ''; document.getElementById('inputLitrosCombustivel').value = ''; carregarHistoricoCombustivel(); } 
+                    else { mostrarAlerta("⚠️ Erro: " + resp); }
+                }).withFailureHandler(function(erro) { document.getElementById('loadingScreen').style.display = 'none'; mostrarAlerta("❌ Erro: " + erro.message); }).salvarCombustivelPlanilha(JSON.stringify(pacote));
+            }
+        }
+
+        function carregarHistoricoCombustivel() {
+            var hoje = new Date(); var mes = ("0" + (hoje.getMonth() + 1)).slice(-2); var ano = hoje.getFullYear().toString();
+            document.getElementById('listaCombustivel').innerHTML = '<div style="text-align:center;"><div class="spinner" style="width:20px;height:20px;border-top-color:#ff922b;margin:0 auto;"></div></div>';
+            if(typeof google !== 'undefined') {
+                google.script.run.withSuccessHandler(function(res) {
+                    var dados = JSON.parse(res);
+                    document.getElementById('combResumoGasto').textContent = formatarMoeda(dados.totalGasto); document.getElementById('combResumoLitros').textContent = dados.totalLitros.toFixed(1) + " L";
+                    var lista = document.getElementById('listaCombustivel'); lista.innerHTML = '';
+                    if(dados.itens.length === 0) { lista.innerHTML = '<p style="text-align:center; color:var(--text-muted);">Nenhum abastecimento neste mês.</p>'; return; }
+                    dados.itens.forEach(item => {
+                        lista.innerHTML += `<div style="background: var(--bg); padding: 10px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                            <div><strong style="color: #ff922b;">${item.data}</strong><br><span style="font-size: 0.85rem; color: var(--text-muted);">${item.litros} Litros</span></div>
+                            <div style="font-size: 1.1rem; font-weight: bold; color: var(--danger);">${formatarMoeda(item.valor)}</div></div>`;
+                    });
+                }).buscarHistoricoCombustivel(mes, ano);
+            }
+        }
+
+        // ====================================================================
+        // ESPELHO DA PLANILHA
+        // ====================================================================
+        function mudarAbaEspelho() { carregarEspelhoPlanilha(); }
+        function carregarEspelhoPlanilha() {
+            let abaNome = document.getElementById('selectAbaEspelho').value;
+            let loading = document.getElementById('loadingEspelho'); let container = document.getElementById('containerTabelaEspelho');
+            loading.style.display = 'block'; container.style.display = 'none';
+
+            if(typeof google !== 'undefined') {
+                google.script.run.withSuccessHandler(function(res) {
+                    loading.style.display = 'none'; container.style.display = 'block';
+                    try {
+                        let dados = JSON.parse(res); let headEl = document.getElementById('headEspelho'); let bodyEl = document.getElementById('bodyEspelho');
+                        if(dados.length === 0 || !dados[0]) { headEl.innerHTML = ''; bodyEl.innerHTML = '<tr><td style="text-align:center; color:var(--text-muted);">Aba vazia ou sem cabeçalho.</td></tr>'; return; }
+                        let headHtml = '<tr>'; dados[0].forEach(col => { headHtml += `<th>${col}</th>`; }); headHtml += '</tr>'; headEl.innerHTML = headHtml;
+                        let bodyHtml = '';
+                        for(let i = 1; i < dados.length; i++) {
+                            bodyHtml += '<tr>';
+                            dados[i].forEach(celula => { let valor = celula !== undefined && celula !== null ? celula : ''; bodyHtml += `<td>${valor}</td>`; });
+                            bodyHtml += '</tr>';
+                        }
+                        bodyEl.innerHTML = bodyHtml;
+                    } catch(e) { document.getElementById('headEspelho').innerHTML = ''; document.getElementById('bodyEspelho').innerHTML = `<tr><td style="color:var(--danger);">Erro ao formatar espelho: ${e.message}</td></tr>`; }
+                }).withFailureHandler(function(erro) { loading.style.display = 'none'; mostrarAlerta("Erro do Servidor ao carregar espelho: " + erro.message); }).buscarDadosEspelhoBackend(abaNome); 
+            } else {
+                loading.style.display = 'none'; container.style.display = 'block';
+                document.getElementById('headEspelho').innerHTML = '<tr><th>Google Script Ausente</th></tr>';
+                document.getElementById('bodyEspelho').innerHTML = '<tr><td>Você precisa configurar a API_URL corretamente.</td></tr>';
+            }
+        }
+
+        // ====================================================================
+        // MÓDULO DE INTELIGÊNCIA: RANKINGS
+        // ====================================================================
+        let abaAtivaRanking = 'top';
+
+        function mudarAbaRanking(aba) {
+            abaAtivaRanking = aba; let btnTop = document.getElementById('btnAbaTop'); let btnRotas = document.getElementById('btnAbaRotas'); let btnGerar = document.getElementById('btnGerarRanking'); let spinner = document.getElementById('spinnerRankings'); let textoLoading = document.getElementById('textoLoadingRankings');
+            document.getElementById('resultadoRankings').innerHTML = ''; 
+
+            if(aba === 'top') {
+                btnTop.style.background = '#ff6b6b'; btnTop.classList.remove('btn-limpar'); btnTop.style.color = 'white'; btnRotas.style.background = 'transparent'; btnRotas.classList.add('btn-limpar');
+                btnGerar.style.background = '#ff6b6b'; btnGerar.style.color = 'white'; btnGerar.innerHTML = '📊 Gerar Top Produtos'; spinner.style.borderTopColor = '#ff6b6b'; textoLoading.textContent = 'Analisando produtos campeões...';
+            } else {
+                btnRotas.style.background = '#ffd43b'; btnRotas.classList.remove('btn-limpar'); btnRotas.style.color = '#000'; btnTop.style.background = 'transparent'; btnTop.classList.add('btn-limpar');
+                btnGerar.style.background = '#ffd43b'; btnGerar.style.color = '#000'; btnGerar.innerHTML = '📊 Gerar Ranking de Rotas'; spinner.style.borderTopColor = '#ffd43b'; textoLoading.textContent = 'Calculando inteligência de rotas...';
+            }
+        }
+
+        function gerarRankingAtual() { if(abaAtivaRanking === 'top') { carregarTopTapiocas(); } else { carregarRankingRotas(); } }
+
+        function carregarTopTapiocas() {
+            var mes = document.getElementById('filtroMesRankings').value; var ano = document.getElementById('filtroAnoRankings').value;
+            var divResult = document.getElementById('resultadoRankings'); var loading = document.getElementById('loadingRankings');
+            divResult.innerHTML = ''; loading.style.display = 'block';
+
+            if(typeof google !== 'undefined') {
+                google.script.run.withSuccessHandler(function(res) {
+                    loading.style.display = 'none';
+                    try {
+                        var dados = JSON.parse(res);
+                        if(dados.length === 0) { divResult.innerHTML = '<p style="text-align:center; color:var(--text-muted);">Nenhum dado de vendas encontrado.</p>'; return; }
+                        var html = '';
+                        dados.forEach((item, index) => {
+                            let medalha = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`;
+                            html += `
+                            <div style="background: var(--stat-bg); padding: 12px; border-radius: 8px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="font-size: 1.2rem; font-weight: bold; color: var(--primary); min-width: 30px;">${medalha}</span>
+                                    <div><strong style="display: block; color: var(--text);">${item.produto}</strong><small style="color: var(--text-muted);">${item.quantidade} unidades vendidas</small></div>
+                                </div>
+                                <div style="text-align: right;"><strong style="color: var(--success);">${formatarMoeda(item.totalArrecadado)}</strong></div>
+                            </div>`;
+                        });
+                        divResult.innerHTML = html;
+                    } catch(e) { divResult.innerHTML = `<p style="color:var(--danger); text-align:center;">Erro ao desenhar: ${e.message}</p>`; }
+                }).withFailureHandler(function(erro) {
+                    loading.style.display = 'none'; divResult.innerHTML = `<p style="color:var(--danger); text-align:center; border: 1px solid var(--danger); padding: 10px; border-radius: 6px;"><b>Erro:</b><br>${erro.message}</p>`;
+                }).buscarTopProdutosBackend(mes, ano);
+            }
+        }
+
+        function carregarRankingRotas() {
+            var mes = document.getElementById('filtroMesRankings').value; var ano = document.getElementById('filtroAnoRankings').value;
+            var divResult = document.getElementById('resultadoRankings'); var loading = document.getElementById('loadingRankings');
+            divResult.innerHTML = ''; loading.style.display = 'block';
+
+            if(typeof google !== 'undefined') {
+                google.script.run.withSuccessHandler(function(res) {
+                    loading.style.display = 'none';
+                    try {
+                        var dados = JSON.parse(res);
+                        if(dados.length === 0) { divResult.innerHTML = '<p style="text-align:center; color:var(--text-muted);">Nenhuma venda encontrada.</p>'; return; }
+                        var html = '';
+                        dados.forEach((item, index) => {
+                            let corFundo = "var(--stat-bg)"; let icone = "📌"; let tamanhoFonte = "1.1rem"; let corTexto = "var(--text)";
+                            if(index === 0) { icone = "🥇"; corFundo = "rgba(255, 212, 59, 0.15)"; corTexto = "#ffd43b"; tamanhoFonte = "1.3rem"; }
+                            else if(index === 1) { icone = "🥈"; corFundo = "rgba(206, 212, 218, 0.1)"; corTexto = "#ced4da"; tamanhoFonte = "1.2rem"; }
+                            else if(index === 2) { icone = "🥉"; corFundo = "rgba(205, 127, 50, 0.1)"; corTexto = "#cd7f32"; tamanhoFonte = "1.15rem"; }
+                            html += `
+                            <div style="background: ${corFundo}; padding: 15px; border-radius: 8px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.2); margin-bottom: 8px;">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <span style="font-size: 2rem;">${icone}</span>
+                                    <div><div style="font-size: 0.8rem; color: var(--text-muted);">${index + 1}º Lugar</div><strong style="color: ${corTexto}; font-size: ${tamanhoFonte};">${item.rota}</strong></div>
+                                </div>
+                                <strong style="font-size: 1.2rem; color: var(--success);">${formatarMoeda(item.total)}</strong>
+                            </div>`;
+                        });
+                        divResult.innerHTML = html;
+                    } catch (e) { divResult.innerHTML = `<p style="color:var(--danger); text-align:center;">Erro ao desenhar: ${e.message}</p>`; }
+                }).withFailureHandler(function(erro) {
+                    loading.style.display = 'none'; divResult.innerHTML = `<p style="color:var(--danger); text-align:center; border: 1px solid var(--danger); padding: 10px; border-radius: 6px;"><b>Erro:</b><br>${erro.message}</p>`;
+                }).buscarRankingRotasBackend(mes, ano);
+            }
+        }
     </script>
-    
-    <!-- Aviso Final de Pagamento -->
-    <div id="avisoPagamento" onclick="this.style.display='none'" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 10000; justify-content: center; align-items: center; backdrop-filter: blur(2px);">
-        <div style="background: var(--success); color: white; padding: 30px; border-radius: 15px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; overflow: hidden;">
-            <div style="font-size: 4rem; margin-bottom: 10px;">✅</div>
-            <h2 style="margin: 0; font-size: 1.8rem;">Pagamento Realizado!</h2>
-            <p id="textoAvisoPedido" style="margin: 10px 0 0 0; opacity: 0.9; font-size: 1.1rem;"></p>
-            <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 6px; background: rgba(0,0,0,0.2);">
-                <div id="barraProgressoPagamento" style="height: 100%; background: white; width: 100%;"></div>
-            </div>
-        </div>
-    </div>
 </body>
 </html>
