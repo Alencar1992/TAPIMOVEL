@@ -6,9 +6,10 @@
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <title>PDV - Expresso Tapiocaria</title> 
     <meta name="theme-color" content="#ff6b6b">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
     <style>
-        /* Variáveis de cor com tons mais modernos e suaves */
         :root {
             --primary: #ff6b6b; --primary-hover: #fa5252; --edit: #339af0; 
             --success: #40c057; --danger: #dc3545; --tab-active: #39ff14; 
@@ -79,8 +80,12 @@
         .item-producao { background: var(--stat-bg); padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border);}
         .btn-check-item { background: var(--success); color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s;}
         
-        #loadingScreen { display: flex; flex-direction: column; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18,18,18,0.9); backdrop-filter: blur(5px); z-index: 9999; justify-content: center; align-items: center; color: var(--primary); }
-        .spinner { border: 5px solid var(--border); border-top: 5px solid var(--primary); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px;}
+        /* NOVO: Modal de Carregamento 0-100% */
+        #loadingScreen { display: flex; flex-direction: column; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18,18,18,0.95); backdrop-filter: blur(5px); z-index: 9999; justify-content: center; align-items: center; color: var(--primary); }
+        .spinner { border: 5px solid var(--border); border-top: 5px solid var(--primary); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 10px;}
+        .progress-bar-container { width: 80%; max-width: 300px; background: var(--border); border-radius: 10px; height: 10px; overflow: hidden; margin-top: 15px;}
+        .progress-bar-fill { height: 100%; background: var(--success); width: 0%; transition: width 0.3s ease; }
+        
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
@@ -97,13 +102,20 @@
         .tabela-espelho th { background: var(--stat-bg); padding: 12px; color: #20c997; border-bottom: 2px solid var(--border); border-right: 1px solid var(--border); position: sticky; top: 0; }
         .tabela-espelho td { padding: 10px; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
         
-        @media print { body * { visibility: hidden; } #areaPrintRelatorio, #areaPrintRelatorio * { visibility: visible; } #areaPrintRelatorio { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; background: white; color: black; padding: 20px; box-sizing: border-box; z-index: 99999; } .modal-overlay { background: none; position: static; display: block !important; } .modal-content { box-shadow: none; border: none; padding: 0; background: transparent; } .btn-acao, .nav-voltar { display: none !important; } }
     </style>
 </head>
 <body>
     
-   <div id="loadingScreen"><div class="spinner"></div><h2 id="loadingText">Sincronizando Sistema...</h2></div>
-   <div id="toast-container"></div> 
+    <div id="loadingScreen">
+        <div class="spinner"></div>
+        <h2 id="loadingText" style="margin:0;">Sincronizando... <span id="loadingPercent">0%</span></h2>
+        <div class="progress-bar-container">
+            <div id="loadingProgress" class="progress-bar-fill"></div>
+        </div>
+        <button id="btnFecharLoading" class="btn-acao btn-limpar" style="display:none; max-width: 200px;" onclick="fecharLoading()">Forçar Fechamento</button>
+    </div>
+
+    <div id="toast-container"></div> 
 
     <div id="modalAlerta" class="modal-overlay" style="z-index: 4000;">
         <div class="modal-content" style="max-width: 350px; text-align: center; border-top: 5px solid var(--primary);">
@@ -111,6 +123,7 @@
             <h3 style="margin-top: 0;">Aviso</h3>
             <p id="textoAlerta" style="font-size: 1.1rem; margin-bottom: 20px; color: var(--text-muted);"></p>
             <button id="btnOkAlerta" class="btn-acao">OK, Entendi</button>
+            <button class="btn-acao btn-limpar" onclick="fecharModais()" style="margin-top: 5px; padding: 10px;">Fechar Janela</button>
         </div>
     </div>
     
@@ -220,7 +233,7 @@
         <button class="nav-voltar" onclick="mudarTela('view-catalogo')">⬅️ Voltar para o Catálogo</button>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <h2 style="color: var(--success); margin: 0;">✅ Vendas Hoje</h2>
-            <div>
+            <div style="display: flex; gap: 5px;">
                 <button onclick="zerarContadorPlanilha()" style="background: var(--edit); color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer;">🗑️ Apagar Cont.</button>
                 <button onclick="limparHistoricoVendasHoje()" style="background: var(--danger); color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer;">🧹 Limpar Tela</button>
             </div>
@@ -241,8 +254,7 @@
             <option value="Fechamentos_Mensais">Fechamentos Mensais</option>
             <option value="Pedidos Cancelados">Pedidos Cancelados</option>
         </select>
-        <button class="btn-acao" style="background: #20c997; color: #000;" onclick="carregarEspelhoPlanilha()">🔄 Atualizar</button>
-        <div id="loadingEspelho" style="text-align:center; display:none; margin: 20px 0;"><div class="spinner" style="margin: 0 auto;"></div></div>
+        <button class="btn-acao" style="background: #20c997; color: #000;" onclick="carregarEspelhoPlanilha()">🔄 Atualizar Agora</button>
         <div id="containerTabelaEspelho" style="overflow-x: auto; max-height: 50vh; overflow-y: auto; display: none; margin-top: 15px; border: 1px solid var(--border);">
             <table class="tabela-espelho"><thead id="headEspelho"></thead><tbody id="bodyEspelho"></tbody></table>
         </div>
@@ -258,7 +270,7 @@
             <input type="text" id="inputValorCombustivel" class="input-obs" placeholder="0,00" oninput="maskCurrency(event)">
             <label>Litros:</label>
             <input type="number" id="inputLitrosCombustivel" class="input-obs" placeholder="Ex: 10.5">
-            <button class="btn-acao" style="background: #ff922b;" onclick="registrarCombustivel()">Salvar</button>
+            <button class="btn-acao" style="background: #ff922b;" onclick="registrarCombustivel()">Salvar Registro</button>
         </div>
         <h3 style="margin-top: 20px;">Histórico do Mês</h3>
         <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
@@ -284,7 +296,6 @@
             <button id="btnAbaRotas" class="btn-acao btn-limpar" style="margin:0;" onclick="mudarAbaRanking('rotas')">Rotas</button>
         </div>
         <button id="btnGerarRanking" class="btn-acao" onclick="gerarRankingAtual()">Gerar Ranking</button>
-        <div id="loadingRankings" style="display:none; text-align:center; margin-top:20px;"><div id="spinnerRankings" class="spinner" style="margin:0 auto;"></div><p id="textoLoadingRankings"></p></div>
         <div id="resultadoRankings" style="margin-top: 15px;"></div>
     </div>
 
@@ -346,27 +357,31 @@
     </div>
 
     <div id="modalRelatorio" class="modal-overlay">
-        <div class="modal-content" id="areaPrintRelatorio">
-            <h3 style="color: var(--primary);">📊 Fechamento do Dia (<span id="dataFechamentoPrint"></span>)</h3>
-            <div style="background: var(--stat-bg); padding: 15px; border-radius: 8px;">
-                <p style="display: flex; justify-content: space-between; font-size: 1.2rem; border-bottom: 1px solid var(--border); padding-bottom: 5px;">Faturamento Bruto: <strong id="relFaturamento" style="color: var(--success);"></strong></p>
-                <p style="display: flex; justify-content: space-between;">Dinheiro: <span id="relDin"></span></p>
-                <p style="display: flex; justify-content: space-between;">PIX: <span id="relPix"></span></p>
-                <p style="display: flex; justify-content: space-between;">Crédito: <span id="relCred"></span></p>
-                <p style="display: flex; justify-content: space-between;">Débito: <span id="relDeb"></span></p>
-                <p style="display: flex; justify-content: space-between;">VR: <span id="relVR"></span></p>
-                <p style="display: flex; justify-content: space-between; color: var(--primary); font-weight: bold; margin-top: 10px;">Tapiocas Vendidas: <span id="relQtdTapiocas"></span></p>
+        <div class="modal-content">
+            <div id="areaPrintRelatorio" style="background: var(--panel-bg); padding: 10px; border-radius: 8px;">
+                <h3 style="color: var(--primary); margin-top:0;">📊 Fechamento do Dia (<span id="dataFechamentoPrint"></span>)</h3>
+                <div style="background: var(--stat-bg); padding: 15px; border-radius: 8px;">
+                    <p style="display: flex; justify-content: space-between; font-size: 1.2rem; border-bottom: 1px solid var(--border); padding-bottom: 5px;">Faturamento Bruto: <strong id="relFaturamento" style="color: var(--success);"></strong></p>
+                    <p style="display: flex; justify-content: space-between;">Dinheiro: <span id="relDin"></span></p>
+                    <p style="display: flex; justify-content: space-between;">PIX: <span id="relPix"></span></p>
+                    <p style="display: flex; justify-content: space-between;">Crédito: <span id="relCred"></span></p>
+                    <p style="display: flex; justify-content: space-between;">Débito: <span id="relDeb"></span></p>
+                    <p style="display: flex; justify-content: space-between;">VR: <span id="relVR"></span></p>
+                    <p style="display: flex; justify-content: space-between; color: var(--primary); font-weight: bold; margin-top: 10px;">Tapiocas Vendidas: <span id="relQtdTapiocas"></span></p>
+                </div>
             </div>
-            <button id="btnSalvarPrint" class="btn-acao" style="background: #339af0;" onclick="baixarPrintFechamento()">📸 Salvar Print</button>
-            <button class="btn-acao" style="background: var(--success);" onclick="registrarFechamentoDia()">✅ Registrar na Planilha</button>
-            <button class="btn-acao btn-limpar" onclick="fecharModais()">Cancelar / Fechar</button>
+            
+            <div id="botoesRelatorio" style="display: flex; flex-direction: column; gap: 5px; margin-top: 15px;">
+                <button id="btnSalvarPrint" class="btn-acao" style="background: #339af0; margin-top:0;" onclick="baixarPrintFechamento()">📸 Salvar Print</button>
+                <button class="btn-acao" style="background: var(--success); margin-top:0;" onclick="registrarFechamentoDia()">✅ Registrar na Planilha</button>
+                <button class="btn-acao btn-limpar" style="margin-top:0;" onclick="fecharModais()">Cancelar / Fechar</button>
+            </div>
         </div>
     </div>
 
     <div id="modalLiquidez" class="modal-overlay">
         <div class="modal-content">
             <h3 style="color: var(--edit);">💧 Liquidez (<span id="mesReferenciaPDF"></span>)</h3>
-            <div id="loadingLiquidez" style="text-align:center;"><div class="spinner" style="margin: 0 auto;"></div></div>
             <div id="conteudoLiquidez" style="display:none;">
                 <div style="background: var(--stat-bg); padding: 15px; border-radius: 8px; margin-bottom: 10px;">
                     <p style="display: flex; justify-content: space-between; font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 5px;">Faturamento Bruto:<strong id="liqTotalGeralTxt" style="color:var(--success);"></strong></p>
@@ -391,7 +406,6 @@
     <div id="modalEstimativa" class="modal-overlay">
         <div class="modal-content">
             <h3 style="color: #20c997;">💵 Projeção de Salário (<span id="estMes"></span>)</h3>
-            <div id="loadingEstimativa" style="text-align:center;"><div class="spinner" style="margin: 0 auto;"></div></div>
             <div id="conteudoEstimativa" style="display:none;">
                 <p>Dias Úteis Totais: <strong id="estTotalDias"></strong></p>
                 <p>Dias Trabalhados: <strong id="estPassados"></strong></p>
@@ -424,9 +438,8 @@
                     <select id="filtroMesFolga" class="input-obs"><option value="01">Jan</option><option value="02">Fev</option><option value="03">Mar</option><option value="04">Abr</option><option value="05">Mai</option><option value="06">Jun</option><option value="07">Jul</option><option value="08">Ago</option><option value="09">Set</option><option value="10">Out</option><option value="11">Nov</option><option value="12">Dez</option></select>
                     <select id="filtroAnoFolga" class="input-obs"></select>
                 </div>
-                <button class="btn-acao" style="background: var(--stat-bg); border: 1px solid var(--border); color: var(--text);" onclick="buscarHistoricoFolgas()">Buscar</button>
-                <div id="loadingFolgas" style="display:none; text-align:center; margin-top:10px;"><div class="spinner" style="margin: 0 auto; width: 25px; height: 25px;"></div></div>
-                <div id="resultadoFolgas" style="margin-top: 10px;"></div>
+                <button class="btn-acao" style="background: var(--stat-bg); border: 1px solid var(--border); color: var(--text);" onclick="buscarHistoricoFolgas()">Buscar Histórico</button>
+                <div id="resultadoFolgas" style="margin-top: 10px; background: var(--stat-bg); border-radius: 6px; padding: 10px;"></div>
             </div>
             <button class="btn-acao btn-limpar" onclick="fecharModais()">Fechar</button>
         </div>
@@ -440,7 +453,8 @@
     </div>
 
     <script>
-        // --- 1. A PONTE DE API (POLYFILL) ---
+        // --- A. A PONTE DE API (POLYFILL) E PROTEÇÃO DE FALHAS ---
+        
         // ⚠️ INSIRA AQUI A SUA URL GERADA NO APPS SCRIPT! ⚠️
         const API_URL = "https://script.google.com/macros/s/AKfycbweCn7s4GjVqem7sOAjp5UAfrMHUbCRSjOzNaNEsidNS3YOy2plyAnRvogAlegBsawy9g/exec"; 
 
@@ -465,29 +479,52 @@
 
             funcoes.forEach(funcName => {
                 runner[funcName] = function(...args) {
+                    
+                    // Adicionando um controlador de Tempo limite (Timeout)
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 Segundos máximo
+
                     fetch(API_URL, {
                         method: 'POST', mode: 'cors',
                         headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                        body: JSON.stringify({ action: funcName, args: args })
+                        body: JSON.stringify({ action: funcName, args: args }),
+                        signal: controller.signal
                     })
-                    .then(response => response.json())
-                    .then(result => {
-                        if (result.status === 'success' && handler.success) { handler.success(result.data); } 
-                        else if (result.status === 'error' && handler.failure) { handler.failure(new Error(result.message)); }
+                    .then(async response => {
+                        clearTimeout(timeoutId);
+                        let text = await response.text(); // Pega a resposta pura primeiro
+                        try {
+                            // Tenta ler como JSON estruturado
+                            let result = JSON.parse(text);
+                            if (result && result.status) {
+                                if (result.status === 'success' && handler.success) { handler.success(result.data); } 
+                                else if (result.status === 'error' && handler.failure) { handler.failure(new Error(result.message)); }
+                            } else {
+                                // Se for um JSON mas sem estrutura status/data, devolve ele puro
+                                if (handler.success) handler.success(result);
+                            }
+                        } catch(e) {
+                            // SE CAIR AQUI: A resposta foi texto puro (ex: "OK") que não é JSON. Isso resolve o seu erro!
+                            if (handler.success) handler.success(text);
+                        }
                     })
-                    .catch(err => { if (handler.failure) handler.failure(err); else console.error("Falha API:", err); });
+                    .catch(err => { 
+                        clearTimeout(timeoutId);
+                        let msgErro = err.name === 'AbortError' ? "Tempo de conexão esgotado (Internet Lenta)." : err.message;
+                        if (handler.failure) handler.failure(new Error(msgErro)); 
+                        else console.error("Falha API:", msgErro); 
+                    });
                 };
             });
             return runner;
         }
         google.script.run = criarPonteGoogleScript();
 
-        // --- 2. VARIÁVEIS GLOBAIS ---
+        // --- B. VARIÁVEIS GLOBAIS E BANCO DE DADOS ---
         let historicoNuvem = []; let carrinho = []; let contadorPedidos = 1; let pedidoEmEdicao = null; let pedidoAguardandoPagamento = null; 
         let abaAtivaCatalogo = null; let baseSelecionadaMonte = null; let syncAtivo = null; let ultimoQtdHojeEnviado = -1;
         let itensIndisponiveis = []; let termoPesquisa = ""; let pausarSync = false; 
 
-        // --- 3. BANCO DE DADOS COMPLETO ---
         const bdCatalogo = {
             salgadas: [ 
                 { nome: "Bauru", preco: 14.00, tipo: "tapioca", ing: "Presunto, muçarela, tomate e orégano" }, 
@@ -557,24 +594,62 @@
             'Peito de Peru': { 'Catupiry (Orig.)': 16.00, 'Cheddar': 15.00, 'Cream Cheese': 15.00, 'Muçarela': 15.00, 'Queijo Branco': 16.00 }
         };
 
-        // --- 4. FUNÇÕES UTILITÁRIAS ---
+        // --- C. UTILITÁRIOS E BARRA DE PROGRESSO ---
         const formatarMoeda = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         const ehHoje = (t) => { if(!t) return false; let d = new Date(t), h = new Date(); return d.getDate()===h.getDate() && d.getMonth()===h.getMonth() && d.getFullYear()===h.getFullYear(); };
-        function parseDinheiro(val) { if (!val) return 0; return parseFloat(String(val).replace(/\./g, '').replace(',', '.')) || 0; }
-        function maskCurrency(e) { let v = e.target.value.replace(/\D/g, ''); if(v===''){e.target.value=''; if(e.target.id==='inputValorRecebido') calcularTroco(); return;} v=(parseInt(v)/100).toFixed(2).replace('.',',').replace(/(\d)(?=(\d{3})+(?!\d))/g,'$1.'); e.target.value=v; if(e.target.id==='inputValorRecebido') calcularTroco(); }
         
+        // Tratamento numérico blindado para o botão Dinheiro
+        function parseDinheiro(val) { 
+            if (!val) return 0; 
+            let clean = String(val).replace(/\./g, '').replace(',', '.'); 
+            return parseFloat(clean) || 0; 
+        }
+        function maskCurrency(e) { 
+            let v = e.target.value.replace(/\D/g, ''); 
+            if(v===''){e.target.value=''; if(e.target.id==='inputValorRecebido') calcularTroco(); return;} 
+            v=(parseInt(v)/100).toFixed(2).replace('.',',').replace(/(\d)(?=(\d{3})+(?!\d))/g,'$1.'); 
+            e.target.value=v; 
+            if(e.target.id==='inputValorRecebido') calcularTroco(); 
+        }
+        
+        // Sistema de Loading Visual
+        let simInterval;
+        function showLoading(text) {
+            document.getElementById('loadingText').innerHTML = text + ' <span id="loadingPercent">0%</span>';
+            document.getElementById('loadingScreen').style.display='flex';
+            document.getElementById('btnFecharLoading').style.display='none';
+            document.getElementById('loadingProgress').style.width = '0%';
+            let p = 0;
+            if(simInterval) clearInterval(simInterval);
+            simInterval = setInterval(() => {
+                if(p < 90) { p += Math.floor(Math.random() * 8) + 1; if(p>90) p=90; }
+                document.getElementById('loadingPercent').innerText = p + '%';
+                document.getElementById('loadingProgress').style.width = p + '%';
+            }, 300);
+            
+            // Se travar por 8 segundos, o botão de forçar fechamento aparece
+            setTimeout(() => { document.getElementById('btnFecharLoading').style.display='block'; }, 8000); 
+        }
+        function hideLoading() {
+            if(simInterval) clearInterval(simInterval);
+            document.getElementById('loadingPercent').innerText = '100%';
+            document.getElementById('loadingProgress').style.width = '100%';
+            setTimeout(() => { document.getElementById('loadingScreen').style.display='none'; }, 300);
+        }
+        function fecharLoading() { hideLoading(); }
+
         function mostrarToast(m) { let c = document.getElementById('toast-container'); let t = document.createElement('div'); t.className='toast'; t.innerHTML=m; c.appendChild(t); setTimeout(()=>{ t.style.animation='fadeOut 0.3s forwards'; setTimeout(()=>t.remove(),300);},2000); }
         function fecharModais() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display='none'); pedidoAguardandoPagamento=null; }
         function mostrarAlerta(m, cb) { document.getElementById('textoAlerta').innerHTML=m; document.getElementById('modalAlerta').style.display='flex'; document.getElementById('btnOkAlerta').onclick = function(){ document.getElementById('modalAlerta').style.display='none'; if(cb) cb();}; }
         function mostrarConfirmacao(m, cbSim) { document.getElementById('textoConfirm').innerHTML=m; document.getElementById('modalConfirm').style.display='flex'; document.getElementById('btnCancelarConfirm').onclick=()=>document.getElementById('modalConfirm').style.display='none'; document.getElementById('btnOkConfirm').onclick=()=>{ document.getElementById('modalConfirm').style.display='none'; if(cbSim) cbSim(); }; }
         function travarSyncTemporariamente() { pausarSync = true; setTimeout(() => { pausarSync = false; }, 4000); }
 
-        // --- 5. NAVEGAÇÃO ---
+        // --- D. NAVEGAÇÃO E ACESSO RÁPIDO (SEM SENHA) ---
         function abrirMenuLateral() { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebarOverlay').style.display='block'; }
         function fecharMenuLateral() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').style.display='none'; }
         function toggleSubmenu(id) { const s = document.getElementById(id); s.style.display = s.style.display === "flex" ? "none" : "flex"; }
         
-        // ✨ SEM SENHA DEV: Vai direto pra tela escolhida!
+        // Acesso liberado!
         function abrirRestrito(acao) {
             fecharMenuLateral();
             if(acao === 'espelho') mudarTela('view-espelho');
@@ -601,7 +676,7 @@
             if(idTela === 'view-rankings') { gerarRankingAtual(); }
         }
 
-        // --- 6. LÓGICA DE CATÁLOGO E PESQUISA ---
+        // --- E. CATÁLOGO E CARRINHO ---
         function trocarAba(cat, btn) { document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); if(btn) btn.classList.add('active'); abaAtivaCatalogo = cat; baseSelecionadaMonte = null; limparPesquisaVisual(); renderizarCatalogo(cat); }
         function limparPesquisaVisual() { let i=document.getElementById('inputPesquisa'); if(i.value!=='') { i.value=''; termoPesquisa=''; document.getElementById('containerAbas').style.display='flex'; document.getElementById('btnLimparPesquisa').style.display='none'; } }
         function limparPesquisa() { limparPesquisaVisual(); renderizarCatalogo(abaAtivaCatalogo); }
@@ -618,7 +693,7 @@
             } else { limparPesquisa(); } 
         }
 
-        const gerarHtmlProduto = (p) => { let b = carrinho.filter(i => i.nome === p.nome).length > 0 ? `<div class="badge-qtd" style="position:absolute;top:-8px;right:-8px;background:var(--success);color:white;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:0.95rem;border:2px solid var(--bg);">${carrinho.filter(i => i.nome === p.nome).reduce((acc, obj) => acc + obj.quantidade, 0)}</div>` : ''; let sel = b ? 'border-color:var(--success); background:#1a3320;' : ''; return `<div class="produto-btn" style="${sel}" onclick='adicionarAoCarrinho(${JSON.stringify(p)})'>${b}<span class="produto-nome">${p.nome}</span><span class="produto-preco">${formatarMoeda(p.preco)}</span></div>`; };
+        const gerarHtmlProduto = (p) => { let b = carrinho.filter(i => i.nome === p.nome).length > 0 ? `<div style="position:absolute;top:-8px;right:-8px;background:var(--success);color:white;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:0.95rem;border:2px solid var(--bg);">${carrinho.filter(i => i.nome === p.nome).reduce((acc, obj) => acc + obj.quantidade, 0)}</div>` : ''; let sel = b ? 'border-color:var(--success); background:#1a3320;' : ''; return `<div class="produto-btn" style="${sel}" onclick='adicionarAoCarrinho(${JSON.stringify(p)})'>${b}<span class="produto-nome">${p.nome}</span><span class="produto-preco">${formatarMoeda(p.preco)}</span></div>`; };
 
         function renderizarCatalogo(cat) {
             if(termoPesquisa.length > 0) return;
@@ -644,7 +719,6 @@
             }
         }
 
-        // --- 7. LÓGICA DE CARRINHO E ADICIONAIS ---
         function selecionarBaseMonteUI(c) { baseSelecionadaMonte=c; renderizarCatalogo('monte'); }
         function lancarMonte(q, p) { adicionarAoCarrinho({nome:`Monte: ${baseSelecionadaMonte} c/ ${q}`, preco:p, tipo:'tapioca', ing:`${baseSelecionadaMonte} e ${q}`}); baseSelecionadaMonte=null; renderizarCatalogo('monte'); }
         function lancarMonteSemQueijo() { document.getElementById('tituloCarneSemQueijo').textContent=baseSelecionadaMonte; document.getElementById('inputPrecoSemQueijo').value=''; document.getElementById('modalPrecoSemQueijo').style.display='flex'; }
@@ -674,7 +748,7 @@
         }
         function limparCarrinho() { carrinho = []; pedidoEmEdicao=null; document.getElementById('tituloCarrinho').textContent="Pedido em Andamento"; document.getElementById('btnLancar').textContent="Lançar para Produção"; atualizarCarrinho(); }
 
-        // --- 8. FLUXO DE PEDIDOS ---
+        // --- F. GESTÃO DE PEDIDOS E PAGAMENTOS ---
         function lancarPedido() {
             if (carrinho.length === 0) return alert("Carrinho vazio!");
             let audioCampainha = document.getElementById('somCampainha'); if(audioCampainha) audioCampainha.play().catch(e=>console.log(e));
@@ -703,59 +777,308 @@
         function reabrirPedido(num) { mostrarConfirmacao("Deseja ESTORNAR o pedido #" + num + "?", function() { travarSyncTemporariamente(); const i = historicoNuvem.findIndex(p => p.numero == num); if(i !== -1) { const p = historicoNuvem[i]; delete p.timestamp; delete p.formaPagamento; atualizarTudo(); if(typeof google !== 'undefined') { google.script.run.reabrirPedidoBackend(JSON.stringify(p)); google.script.run.atualizarVendaRealTime(JSON.stringify(p)); } mudarTela('view-painel'); } }); }
 
         function abrirModalPagamento(num) { pedidoAguardandoPagamento = num; document.getElementById('numeroPedidoPagamento').textContent = num; document.getElementById('modalPagamento').style.display = 'flex'; }
-        function processarPagamento(f) { const p = historicoNuvem.find(x => x.numero == pedidoAguardandoPagamento); if(!p) return; if(f === 'Dinheiro') { fecharModais(); document.getElementById('trocoTotalPedido').textContent = formatarMoeda(p.total); document.getElementById('inputValorRecebido').value=''; document.getElementById('valorDoTroco').textContent='R$ 0,00'; document.getElementById('btnConfirmarDinheiro').disabled=true; document.getElementById('modalTroco').style.display='flex'; } else { finalizarVenda(f); } }
-        function preencherValorExato() { const p = historicoNuvem.find(x => x.numero == pedidoAguardandoPagamento); if(!p) return; document.getElementById('inputValorRecebido').value = p.total.toFixed(2).replace('.',','); calcularTroco(); }
-        function calcularTroco() { const p = historicoNuvem.find(x => x.numero == pedidoAguardandoPagamento); if(!p) return; let r = parseDinheiro(document.getElementById('inputValorRecebido').value); let t = r - p.total; let span = document.getElementById('valorDoTroco'); let btn = document.getElementById('btnConfirmarDinheiro'); if(r===0){span.textContent='R$ 0,00'; btn.disabled=true; return;} if(t>=0){span.textContent=formatarMoeda(t); btn.disabled=false;}else{span.textContent="Faltam "+formatarMoeda(Math.abs(t)); btn.disabled=true;} }
         
-        function finalizarVenda(f) {
-            travarSyncTemporariamente(); const i = historicoNuvem.findIndex(p => p.numero == pedidoAguardandoPagamento); if (i === -1) return;
-            let audioCaixa = document.getElementById('somCaixa'); if(audioCaixa) audioCaixa.play().catch(e=>console.log(e));
-            const p = historicoNuvem[i]; p.formaPagamento = f; p.timestamp = new Date().getTime(); p.dataExibicao = new Date().toLocaleString('pt-BR');
-            fecharModais(); atualizarTudo();
-            if(typeof google !== 'undefined') { google.script.run.moverParaHistorico(JSON.stringify(p)); google.script.run.atualizarVendaRealTime(JSON.stringify(p)); google.script.run.removerDaBaseDeVendasBackend(p.numero); }
-            document.getElementById('avisoPagamento').style.display = 'flex'; setTimeout(() => { document.getElementById('avisoPagamento').style.display = 'none'; }, 3000);
+        function processarPagamento(f) { 
+            const p = historicoNuvem.find(x => x.numero == pedidoAguardandoPagamento); 
+            if(!p) return; 
+            
+            if(f === 'Dinheiro') { 
+                fecharModais(); 
+                document.getElementById('trocoTotalPedido').textContent = formatarMoeda(p.total); 
+                document.getElementById('inputValorRecebido').value=''; 
+                document.getElementById('valorDoTroco').textContent='R$ 0,00'; 
+                document.getElementById('btnConfirmarDinheiro').disabled=true; 
+                document.getElementById('modalTroco').style.display='flex'; 
+            } else { 
+                finalizarVenda(f); 
+            } 
         }
 
-        // --- 9. RENDERIZAÇÃO DE TELAS ---
-        function renderizarProducao() { const lista = document.getElementById('listaProducao'); lista.innerHTML = ''; let fila = historicoNuvem.filter(p => !p.produzido && (ehHoje(p.timestamp) || ehHoje(p.timestampCriacao))); fila.sort((a,b)=>a.numero-b.numero); if(fila.length === 0) { lista.innerHTML = '<p style="color:var(--text-muted);">Nenhum pedido na fila.</p>'; return; } fila.forEach(pedido => { let html = ''; pedido.itens.forEach((item, idx) => { if(item.tipo === 'bebida' || item.pronto) return; let ing = item.ing ? `<span style="display:block;font-size:0.8rem;color:var(--success);">${item.ing}</span>` : ''; let obs = item.obs ? `<span style="display:block;font-size:0.85rem;color:#ffc107;">OBS: ${item.obs}</span>` : ''; html += `<div class="item-producao"><div><strong>${item.quantidade}x ${item.nome}</strong>${ing}${obs}</div><button class="btn-check-item" onclick="marcarItemPronto('${pedido.numero}', ${idx})">✅ Concluir</button></div>`; }); if(html) { lista.innerHTML += `<div class="card-producao"><h3>Pedido #${pedido.numero}</h3>${html}</div>`; } else { pedido.produzido=true; } }); }
-        function marcarItemPronto(num, idx) { travarSyncTemporariamente(); let p = historicoNuvem.find(x => x.numero == num); if(p) { p.itens[idx].pronto = true; p.produzido = p.itens.filter(i => i.tipo !== 'bebida').every(i => i.pronto === true); if(typeof google !== 'undefined') google.script.run.atualizarVendaRealTime(JSON.stringify(p)); atualizarTudo(); } }
-        
-        function renderizarPainelPedidos() { const lista = document.getElementById('listaPainelPedidos'); lista.innerHTML = ''; let pendentes = historicoNuvem.filter(p => !p.timestamp && ehHoje(p.timestampCriacao)); pendentes.sort((a,b)=>b.numero-a.numero); if(pendentes.length === 0) { lista.innerHTML = '<p style="color:var(--text-muted);">Nenhum pedido aguardando pagamento.</p>'; return; } pendentes.forEach(p => { const status = p.produzido ? '<span style="background:var(--success);padding:4px 8px;border-radius:6px;font-size:0.8rem;color:white;">PRONTO</span>' : '<span style="background:var(--danger);padding:4px 8px;border-radius:6px;font-size:0.8rem;color:white;">COZINHA</span>'; const itensTxt = p.itens.map(i => `${i.quantidade}x ${i.nome}`).join(', '); lista.innerHTML += `<div class="card-painel"><div style="display:flex; justify-content:space-between; font-weight:bold; border-bottom:1px solid var(--border); padding-bottom:8px;"><span>#${p.numero} - ${status}</span><span>${formatarMoeda(p.total)}</span></div><div style="font-size:0.9rem;color:var(--text-muted);margin:8px 0;">${itensTxt}</div><div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;"><button style="background:var(--edit);color:white;border:none;padding:10px;border-radius:6px;font-weight:bold;cursor:pointer;" onclick="carregarParaEdicao('${p.numero}')">✏️ Editar</button><button style="background:var(--danger);color:white;border:none;padding:10px;border-radius:6px;font-weight:bold;cursor:pointer;" onclick="cancelarPedido('${p.numero}')">🗑️ Cancelar</button><button style="background:var(--success);color:white;border:none;padding:15px;border-radius:6px;font-weight:bold;grid-column:span 2;font-size:1.1rem;cursor:pointer;" onclick="abrirModalPagamento('${p.numero}')">💳 Pagar</button></div></div>`; }); }
-        
-        function renderizarHistorico() { const lista = document.getElementById('listaHistoricoHoje'); lista.innerHTML = ''; const vendas = historicoNuvem.filter(v => v.timestamp && ehHoje(v.timestamp) && !v.oculta).reverse(); if(vendas.length === 0) { lista.innerHTML = '<p style="color:var(--text-muted);">Nenhuma venda hoje.</p>'; return; } vendas.forEach(v => { const itensTxt = v.itens.map(i => `${i.quantidade}x ${i.nome}`).join(', '); lista.innerHTML += `<div class="card-historico"><div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom:4px;"><span>Pedido #${v.numero}</span><span>${formatarMoeda(v.total)}</span></div><div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:6px;">${itensTxt}</div><div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:0.8rem;">${v.formaPagamento} às ${new Date(v.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span><button onclick="reabrirPedido('${v.numero}')" style="background:var(--edit);color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;">🔄 Estornar</button></div></div>`; }); }
+        function preencherValorExato() { 
+            const p = historicoNuvem.find(x => x.numero == pedidoAguardandoPagamento); 
+            if(!p) return; 
+            document.getElementById('inputValorRecebido').value = p.total.toFixed(2).replace('.',','); 
+            calcularTroco(); 
+        }
 
-        // --- 10. GESTÃO E FECHAMENTOS ---
+        function calcularTroco() { 
+            const p = historicoNuvem.find(x => x.numero == pedidoAguardandoPagamento); 
+            if(!p) return; 
+            let r = parseDinheiro(document.getElementById('inputValorRecebido').value); 
+            let t = r - p.total; 
+            let span = document.getElementById('valorDoTroco'); 
+            let btn = document.getElementById('btnConfirmarDinheiro'); 
+            
+            if(r===0){span.textContent='R$ 0,00'; btn.disabled=true; return;} 
+            if(t>=0){span.textContent=formatarMoeda(t); btn.disabled=false;}
+            else{span.textContent="Faltam "+formatarMoeda(Math.abs(t)); btn.disabled=true;} 
+        }
+        
+        function finalizarVenda(f) {
+            travarSyncTemporariamente(); 
+            const i = historicoNuvem.findIndex(p => p.numero == pedidoAguardandoPagamento); 
+            if (i === -1) return;
+            
+            let audioCaixa = document.getElementById('somCaixa'); if(audioCaixa) audioCaixa.play().catch(e=>console.log(e));
+            const p = historicoNuvem[i]; 
+            p.formaPagamento = f; p.timestamp = new Date().getTime(); p.dataExibicao = new Date().toLocaleString('pt-BR');
+            fecharModais(); atualizarTudo();
+            
+            if(typeof google !== 'undefined') { 
+                google.script.run.moverParaHistorico(JSON.stringify(p)); 
+                google.script.run.atualizarVendaRealTime(JSON.stringify(p)); 
+                google.script.run.removerDaBaseDeVendasBackend(p.numero); 
+            }
+            
+            document.getElementById('avisoPagamento').style.display = 'flex'; 
+            setTimeout(() => { document.getElementById('avisoPagamento').style.display = 'none'; }, 3000);
+        }
+
+        // --- G. FUNÇÕES DE RENDERIZAÇÃO DAS TELAS PRINCIPAIS ---
+        function renderizarProducao() { 
+            const lista = document.getElementById('listaProducao'); lista.innerHTML = ''; 
+            let fila = historicoNuvem.filter(p => !p.produzido && (ehHoje(p.timestamp) || ehHoje(p.timestampCriacao))); 
+            fila.sort((a,b)=>a.numero-b.numero); 
+            if(fila.length === 0) { lista.innerHTML = '<p style="color:var(--text-muted);">Nenhum pedido na fila.</p>'; return; } 
+            
+            fila.forEach(pedido => { 
+                let html = ''; 
+                // Usando for normal para garantir o index verdadeiro do item na matriz original (isso corrige o botão Concluir)
+                for(let idx = 0; idx < pedido.itens.length; idx++) {
+                    let item = pedido.itens[idx];
+                    if(item.tipo === 'bebida' || item.pronto) continue; 
+                    
+                    let ing = item.ing ? `<span style="display:block;font-size:0.8rem;color:var(--success);">${item.ing}</span>` : ''; 
+                    let obs = item.obs ? `<span style="display:block;font-size:0.85rem;color:#ffc107;">OBS: ${item.obs}</span>` : ''; 
+                    html += `<div class="item-producao"><div><strong>${item.quantidade}x ${item.nome}</strong>${ing}${obs}</div><button class="btn-check-item" onclick="marcarItemPronto('${pedido.numero}', ${idx})">✅ Concluir</button></div>`; 
+                }
+                
+                if(html) { lista.innerHTML += `<div class="card-producao"><h3>Pedido #${pedido.numero}</h3>${html}</div>`; } 
+                else { pedido.produzido=true; } 
+            }); 
+        }
+
+        function marcarItemPronto(num, idxOriginal) { 
+            try {
+                travarSyncTemporariamente(); 
+                let p = historicoNuvem.find(x => x.numero == num); 
+                if(p && p.itens[idxOriginal]) { 
+                    p.itens[idxOriginal].pronto = true; 
+                    p.produzido = p.itens.filter(i => i.tipo !== 'bebida').every(i => i.pronto === true); 
+                    if(typeof google !== 'undefined') google.script.run.atualizarVendaRealTime(JSON.stringify(p)); 
+                    atualizarTudo(); 
+                }
+            } catch (e) {
+                mostrarAlerta("Erro ao concluir: " + e.message);
+            }
+        }
+        
+        function renderizarPainelPedidos() { 
+            const lista = document.getElementById('listaPainelPedidos'); lista.innerHTML = ''; 
+            let pendentes = historicoNuvem.filter(p => !p.timestamp && ehHoje(p.timestampCriacao)); 
+            pendentes.sort((a,b)=>b.numero-a.numero); 
+            if(pendentes.length === 0) { lista.innerHTML = '<p style="color:var(--text-muted);">Nenhum pedido aguardando pagamento.</p>'; return; } 
+            
+            pendentes.forEach(p => { 
+                const status = p.produzido ? '<span style="background:var(--success);padding:4px 8px;border-radius:6px;font-size:0.8rem;color:white;">PRONTO</span>' : '<span style="background:var(--danger);padding:4px 8px;border-radius:6px;font-size:0.8rem;color:white;">COZINHA</span>'; 
+                const itensTxt = p.itens.map(i => `${i.quantidade}x ${i.nome}`).join(', '); 
+                lista.innerHTML += `<div class="card-painel"><div style="display:flex; justify-content:space-between; font-weight:bold; border-bottom:1px solid var(--border); padding-bottom:8px;"><span>#${p.numero} - ${status}</span><span>${formatarMoeda(p.total)}</span></div><div style="font-size:0.9rem;color:var(--text-muted);margin:8px 0;">${itensTxt}</div><div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;"><button style="background:var(--edit);color:white;border:none;padding:10px;border-radius:6px;font-weight:bold;cursor:pointer;" onclick="carregarParaEdicao('${p.numero}')">✏️ Editar</button><button style="background:var(--danger);color:white;border:none;padding:10px;border-radius:6px;font-weight:bold;cursor:pointer;" onclick="cancelarPedido('${p.numero}')">🗑️ Cancelar</button><button style="background:var(--success);color:white;border:none;padding:15px;border-radius:6px;font-weight:bold;grid-column:span 2;font-size:1.1rem;cursor:pointer;" onclick="abrirModalPagamento('${p.numero}')">💳 Pagar</button></div></div>`; 
+            }); 
+        }
+        
+        function renderizarHistorico() { 
+            const lista = document.getElementById('listaHistoricoHoje'); lista.innerHTML = ''; 
+            const vendas = historicoNuvem.filter(v => v.timestamp && ehHoje(v.timestamp) && !v.oculta).reverse(); 
+            if(vendas.length === 0) { lista.innerHTML = '<p style="color:var(--text-muted);">Nenhuma venda hoje.</p>'; return; } 
+            
+            vendas.forEach(v => { 
+                const itensTxt = v.itens.map(i => `${i.quantidade}x ${i.nome}`).join(', '); 
+                lista.innerHTML += `<div class="card-historico"><div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom:4px;"><span>Pedido #${v.numero}</span><span>${formatarMoeda(v.total)}</span></div><div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:6px;">${itensTxt}</div><div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:0.8rem;">${v.formaPagamento} às ${new Date(v.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span><button onclick="reabrirPedido('${v.numero}')" style="background:var(--edit);color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;">🔄 Estornar</button></div></div>`; 
+            }); 
+        }
+
+        // --- H. GESTÃO E FECHAMENTOS DE CAIXA E MÊS ---
         function zerarContadorPlanilha() { mostrarConfirmacao("Deseja apagar a linha de Tapiocas de Hoje?", function() { if(typeof google !== 'undefined') google.script.run.excluirContadorTapiocasHoje(new Date().toLocaleDateString('pt-BR')); mostrarToast("Contador de tapiocas reiniciado!"); }); }
         function limparHistoricoVendasHoje() { mostrarConfirmacao("Ocultar vendas na tela?", function() { historicoNuvem.forEach(v => { if(v.timestamp && ehHoje(v.timestamp)) v.oculta=true; }); renderizarHistorico(); }); }
 
-        function abrirModalRelatorio() { let td=0,tp=0,tc=0,tdb=0,tvr=0,tot=0,qtd=0; historicoNuvem.filter(v => v.timestamp && ehHoje(v.timestamp)).forEach(v => { tot += v.total; v.itens.forEach(i => { if(i.tipo==='tapioca'||i.tipo==='extra') qtd+=i.quantidade; }); if(v.formaPagamento==='Dinheiro') td+=v.total; if(v.formaPagamento==='PIX') tp+=v.total; if(v.formaPagamento==='Cartão de Crédito') tc+=v.total; if(v.formaPagamento==='Cartão de Débito') tdb+=v.total; if(v.formaPagamento==='VR') tvr+=v.total; }); document.getElementById('relFaturamento').textContent=formatarMoeda(tot); document.getElementById('relDin').textContent=formatarMoeda(td); document.getElementById('relPix').textContent=formatarMoeda(tp); document.getElementById('relCred').textContent=formatarMoeda(tc); document.getElementById('relDeb').textContent=formatarMoeda(tdb); document.getElementById('relVR').textContent=formatarMoeda(tvr); document.getElementById('relQtdTapiocas').textContent=qtd+" un"; let h = new Date(); document.getElementById('dataFechamentoPrint').textContent=`${("0"+h.getDate()).slice(-2)}/${("0"+(h.getMonth()+1)).slice(-2)}`; document.getElementById('modalRelatorio').style.display='flex'; }
-        function baixarPrintFechamento() { const b=document.getElementById('btnSalvarPrint'); b.innerHTML='Gerando...'; html2canvas(document.getElementById('areaPrintRelatorio'), {scale:2,backgroundColor:"#1e1e1e"}).then(c=>{ let l=document.createElement('a'); l.download=`Fechamento_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.png`; l.href=c.toDataURL('image/png'); l.click(); b.innerHTML='📸 Salvar Print'; }); }
-        function registrarFechamentoDia() { let q=parseInt(document.getElementById('relQtdTapiocas').textContent)||0; let res={data:new Date().toLocaleDateString('pt-BR'), total:document.getElementById('relFaturamento').textContent, dinheiro:document.getElementById('relDin').textContent, pix:document.getElementById('relPix').textContent, credito:document.getElementById('relCred').textContent, debito:document.getElementById('relDeb').textContent, vr:document.getElementById('relVR').textContent, qtdTapiocas:q}; document.getElementById('loadingScreen').style.display='flex'; if(typeof google !== 'undefined') { google.script.run.withSuccessHandler(r=>{ document.getElementById('loadingScreen').style.display='none'; if(r==="OK"){ historicoNuvem=[]; carrinho=[]; google.script.run.salvarNuvemCompleta("[]"); atualizarTudo(); fecharModais(); mostrarAlerta("✅ Fechamento salvo!"); }else{ mostrarAlerta("Erro: "+r); } }).salvarFechamentoDiaPlanilha(JSON.stringify(res)); } }
+        function abrirModalRelatorio() { 
+            let td=0,tp=0,tc=0,tdb=0,tvr=0,tot=0,qtd=0; 
+            historicoNuvem.filter(v => v.timestamp && ehHoje(v.timestamp)).forEach(v => { 
+                tot += v.total; 
+                v.itens.forEach(i => { if(i.tipo==='tapioca'||i.tipo==='extra') qtd+=i.quantidade; }); 
+                if(v.formaPagamento==='Dinheiro') td+=v.total; if(v.formaPagamento==='PIX') tp+=v.total; if(v.formaPagamento==='Cartão de Crédito') tc+=v.total; if(v.formaPagamento==='Cartão de Débito') tdb+=v.total; if(v.formaPagamento==='VR') tvr+=v.total; 
+            }); 
+            document.getElementById('relFaturamento').textContent=formatarMoeda(tot); document.getElementById('relDin').textContent=formatarMoeda(td); document.getElementById('relPix').textContent=formatarMoeda(tp); document.getElementById('relCred').textContent=formatarMoeda(tc); document.getElementById('relDeb').textContent=formatarMoeda(tdb); document.getElementById('relVR').textContent=formatarMoeda(tvr); document.getElementById('relQtdTapiocas').textContent=qtd+" un"; 
+            let h = new Date(); document.getElementById('dataFechamentoPrint').textContent=`${("0"+h.getDate()).slice(-2)}/${("0"+(h.getMonth()+1)).slice(-2)}`; 
+            document.getElementById('modalRelatorio').style.display='flex'; 
+        }
+
+        function baixarPrintFechamento() { 
+            const botoes = document.getElementById('botoesRelatorio');
+            botoes.style.display = 'none'; // Esconde os botões para o print
+            
+            html2canvas(document.getElementById('areaPrintRelatorio'), {scale:2, backgroundColor:"#1e1e1e"}).then(c=>{ 
+                let l=document.createElement('a'); 
+                l.download=`Fechamento_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.png`; 
+                l.href=c.toDataURL('image/png'); l.click(); 
+                
+                botoes.style.display = 'flex'; // Volta a exibir os botões
+            }).catch(e => {
+                botoes.style.display = 'flex';
+                mostrarAlerta("Erro ao salvar print.");
+            }); 
+        }
+
+        function registrarFechamentoDia() { 
+            let q=parseInt(document.getElementById('relQtdTapiocas').textContent)||0; 
+            let res={data:new Date().toLocaleDateString('pt-BR'), total:document.getElementById('relFaturamento').textContent, dinheiro:document.getElementById('relDin').textContent, pix:document.getElementById('relPix').textContent, credito:document.getElementById('relCred').textContent, debito:document.getElementById('relDeb').textContent, vr:document.getElementById('relVR').textContent, qtdTapiocas:q}; 
+            showLoading("Registrando na Planilha..."); 
+            if(typeof google !== 'undefined') { 
+                google.script.run.withSuccessHandler(r=>{ 
+                    hideLoading(); 
+                    if(r==="OK"){ 
+                        historicoNuvem=[]; carrinho=[]; google.script.run.salvarNuvemCompleta("[]"); 
+                        atualizarTudo(); fecharModais(); mostrarAlerta("✅ Fechamento salvo!"); 
+                    }else{ 
+                        // Tratamento a prova de falhas caso ele devolva OK sem formato de erro do google
+                        if(r.includes("OK") || r.includes("sucesso")) {
+                           historicoNuvem=[]; carrinho=[]; google.script.run.salvarNuvemCompleta("[]"); 
+                           atualizarTudo(); fecharModais(); mostrarAlerta("✅ Fechamento salvo!"); 
+                        } else {
+                           mostrarAlerta("Resposta inesperada do Servidor: "+r); 
+                        }
+                    } 
+                }).withFailureHandler(e=>{
+                    hideLoading(); mostrarAlerta("Erro: " + e.message);
+                }).salvarFechamentoDiaPlanilha(JSON.stringify(res)); 
+            } 
+        }
 
         let fatMesG = 0, combMesG = 0;
-        function abrirModalLiquidez() { const h=new Date(); const m=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"]; document.getElementById('mesReferenciaPDF').textContent=`${m[h.getMonth()]} ${h.getFullYear()}`; document.getElementById('modalLiquidez').style.display='flex'; document.getElementById('conteudoLiquidez').style.display='none'; document.getElementById('loadingLiquidez').style.display='block'; if(typeof google !== 'undefined'){ google.script.run.withSuccessHandler(r=>{ let d=JSON.parse(r); fatMesG=d.total; combMesG=d.combustivel; document.getElementById('liqQtdTapiocasTxt').textContent=(d.qtdTapiocas||0)+" un"; recalcularLiquidez(); document.getElementById('loadingLiquidez').style.display='none'; document.getElementById('conteudoLiquidez').style.display='block'; }).obterResumoMesPlanilha(); } }
+        function abrirModalLiquidez() { 
+            const h=new Date(); const m=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"]; 
+            document.getElementById('mesReferenciaPDF').textContent=`${m[h.getMonth()]} ${h.getFullYear()}`; 
+            document.getElementById('modalLiquidez').style.display='flex'; 
+            document.getElementById('conteudoLiquidez').style.display='none'; 
+            
+            showLoading("Calculando Liquidez...");
+            if(typeof google !== 'undefined'){ 
+                google.script.run.withSuccessHandler(r=>{ 
+                    hideLoading();
+                    try {
+                        let d=JSON.parse(r); fatMesG=d.total; combMesG=d.combustivel; document.getElementById('liqQtdTapiocasTxt').textContent=(d.qtdTapiocas||0)+" un"; recalcularLiquidez(); document.getElementById('conteudoLiquidez').style.display='block';
+                    } catch(e) {
+                        mostrarAlerta("Erro ao interpretar dados do mês.");
+                    }
+                }).withFailureHandler(e=>{hideLoading(); mostrarAlerta("Erro ao carregar liquidez.");}).obterResumoMesPlanilha(); 
+            } 
+        }
+        
         function recalcularLiquidez() { let sc=parseDinheiro(document.getElementById('inpSalCozinha').value); let scar=parseDinheiro(document.getElementById('inpSalCarro').value); document.getElementById('liqTotalGeralTxt').textContent=formatarMoeda(fatMesG); document.getElementById('liqCombustivelTxt').textContent="- "+formatarMoeda(combMesG); let mat=fatMesG*0.60; let sob=fatMesG-mat-(combMesG+sc+scar); let b=Math.max(0,sob); document.getElementById('liqMaterialTxt').textContent="- "+formatarMoeda(mat); document.getElementById('liqSobraLiquida').textContent=formatarMoeda(sob); document.getElementById('liqSobraLiquida').style.color=sob>=0?"var(--success)":"var(--danger)"; document.getElementById('liqLucas').setAttribute('data-v', b*0.90); document.getElementById('liqEliel').setAttribute('data-v', b*0.10); document.getElementById('liqLucas').textContent='R$ ****'; document.getElementById('liqEliel').textContent='R$ ****'; document.getElementById('icon-liqLucas').textContent='👁️'; document.getElementById('icon-liqEliel').textContent='👁️'; }
         function toggleVis(id) { let el=document.getElementById(id); let ic=document.getElementById('icon-'+id); if(el.textContent==='R$ ****'){ el.textContent=formatarMoeda(parseFloat(el.getAttribute('data-v'))); ic.textContent='🙈'; }else{ el.textContent='R$ ****'; ic.textContent='👁️'; } }
-        function confirmarFechamentoMes() { let ab = historicoNuvem.filter(p => (!p.produzido || !p.timestamp) && (ehHoje(p.timestamp) || ehHoje(p.timestampCriacao))); if(ab.length>0) return mostrarAlerta("Finalize pedidos abertos antes de fechar o mês!"); mostrarConfirmacao("Salvar mês no Google Drive?", ()=>{ document.getElementById('loadingScreen').style.display='flex'; let pac={mesReferencia:document.getElementById('mesReferenciaPDF').textContent, qtdTapiocas:document.getElementById('liqQtdTapiocasTxt').textContent, totalGeral:document.getElementById('liqTotalGeralTxt').textContent, material:document.getElementById('liqMaterialTxt').textContent, lucroLucas:formatarMoeda(parseFloat(document.getElementById('liqLucas').getAttribute('data-v')||0)), lucroEliel:formatarMoeda(parseFloat(document.getElementById('liqEliel').getAttribute('data-v')||0))}; if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{document.getElementById('loadingScreen').style.display='none'; fecharModais(); mostrarAlerta("Mês salvo!");}).fecharMesESalvarDrive(JSON.stringify(pac)); }); }
+        
+        function confirmarFechamentoMes() { 
+            let ab = historicoNuvem.filter(p => (!p.produzido || !p.timestamp) && (ehHoje(p.timestamp) || ehHoje(p.timestampCriacao))); 
+            if(ab.length>0) return mostrarAlerta("Finalize pedidos abertos antes de fechar o mês!"); 
+            
+            mostrarConfirmacao("Salvar mês no Google Drive?", ()=>{ 
+                showLoading("Salvando no Drive..."); 
+                let pac={mesReferencia:document.getElementById('mesReferenciaPDF').textContent, qtdTapiocas:document.getElementById('liqQtdTapiocasTxt').textContent, totalGeral:document.getElementById('liqTotalGeralTxt').textContent, material:document.getElementById('liqMaterialTxt').textContent, lucroLucas:formatarMoeda(parseFloat(document.getElementById('liqLucas').getAttribute('data-v')||0)), lucroEliel:formatarMoeda(parseFloat(document.getElementById('liqEliel').getAttribute('data-v')||0))}; 
+                if(typeof google!=='undefined') {
+                    google.script.run.withSuccessHandler(r=>{ hideLoading(); fecharModais(); mostrarAlerta("Mês salvo!");}).withFailureHandler(e=>{ hideLoading(); mostrarAlerta("Falha: " + e.message);}).fecharMesESalvarDrive(JSON.stringify(pac));
+                }
+            }); 
+        }
 
-        function abrirModalEstimativa() { document.getElementById('modalEstimativa').style.display='flex'; document.getElementById('conteudoEstimativa').style.display='none'; document.getElementById('loadingEstimativa').style.display='block'; if(typeof google !== 'undefined') google.script.run.withSuccessHandler(r=>{ let d=JSON.parse(r); document.getElementById('loadingEstimativa').style.display='none'; document.getElementById('conteudoEstimativa').style.display='block'; document.getElementById('estMes').textContent=d.mes; document.getElementById('estTotalDias').textContent=d.diasUteisTotal; document.getElementById('estPassados').textContent=d.diasUteisPassados; document.getElementById('estRestantes').textContent=d.diasUteisRestantes; document.getElementById('estMedia').textContent=formatarMoeda(d.mediaDiaria); document.getElementById('estLucasAtual').textContent=formatarMoeda(d.lucasAtual); document.getElementById('estLucasProjetado').textContent=formatarMoeda(d.lucasProjetado); }).calcularEstimativaSalarioLucas(); }
+        function abrirModalEstimativa() { 
+            document.getElementById('modalEstimativa').style.display='flex'; document.getElementById('conteudoEstimativa').style.display='none'; 
+            showLoading("Gerando Projeção...");
+            if(typeof google !== 'undefined') {
+                google.script.run.withSuccessHandler(r=>{ 
+                    hideLoading();
+                    try {
+                        let d=JSON.parse(r); document.getElementById('conteudoEstimativa').style.display='block'; document.getElementById('estMes').textContent=d.mes; document.getElementById('estTotalDias').textContent=d.diasUteisTotal; document.getElementById('estPassados').textContent=d.diasUteisPassados; document.getElementById('estRestantes').textContent=d.diasUteisRestantes; document.getElementById('estMedia').textContent=formatarMoeda(d.mediaDiaria); document.getElementById('estLucasAtual').textContent=formatarMoeda(d.lucasAtual); document.getElementById('estLucasProjetado').textContent=formatarMoeda(d.lucasProjetado); 
+                    } catch(e) { mostrarAlerta("Erro ao gerar projeção."); }
+                }).withFailureHandler(e=>{ hideLoading(); mostrarAlerta("Falha: " + e.message);}).calcularEstimativaSalarioLucas(); 
+            }
+        }
         
         function abrirModalDiaSemTrabalho() { let h=new Date(); document.getElementById('inputDataSemTrabalho').value=`${h.getFullYear()}-${("0"+(h.getMonth()+1)).slice(-2)}-${("0"+h.getDate()).slice(-2)}`; mudarAbaFolga('registrar'); document.getElementById('modalDiaSemTrabalho').style.display='flex'; }
-        function mudarAbaFolga(a) { if(a==='registrar'){ document.getElementById('viewRegistrarFolga').style.display='block'; document.getElementById('viewHistoricoFolga').style.display='none'; document.getElementById('btnAbaRegFolga').style.background='var(--edit)'; document.getElementById('btnAbaHistFolga').style.background='transparent'; }else{ document.getElementById('viewRegistrarFolga').style.display='none'; document.getElementById('viewHistoricoFolga').style.display='block'; document.getElementById('btnAbaHistFolga').style.background='var(--edit)'; document.getElementById('btnAbaRegFolga').style.background='transparent'; let h=new Date(); document.getElementById('filtroMesFolga').value=("0"+(h.getMonth()+1)).slice(-2); document.getElementById('filtroAnoFolga').innerHTML=`<option value="${h.getFullYear()}">${h.getFullYear()}</option>`; } }
-        function registrarDiaSemTrabalho() { let d=document.getElementById('inputDataSemTrabalho').value; let m=document.getElementById('inputMotivoSemTrabalho').value; if(!d||!m) return mostrarAlerta("Preencha tudo."); let p=d.split("-"); document.getElementById('loadingScreen').style.display='flex'; if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{document.getElementById('loadingScreen').style.display='none'; fecharModais(); mostrarToast("Folga Salva!");}).registrarDiaSemTrabalhoPlanilha(JSON.stringify({data:`${p[2]}/${p[1]}/${p[0]}`, motivo:m})); }
-        function buscarHistoricoFolgas() { document.getElementById('loadingFolgas').style.display='block'; document.getElementById('resultadoFolgas').innerHTML=''; if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{ document.getElementById('loadingFolgas').style.display='none'; let d=JSON.parse(r); if(d.length===0) return document.getElementById('resultadoFolgas').innerHTML='Nenhuma folga.'; let html=''; d.forEach(x=>html+=`<p><b>${x.data}</b> - ${x.motivo}</p>`); document.getElementById('resultadoFolgas').innerHTML=html; }).buscarFolgasBackend(document.getElementById('filtroMesFolga').value, document.getElementById('filtroAnoFolga').value); }
+        
+        function mudarAbaFolga(a) { 
+            if(a==='registrar'){ 
+                document.getElementById('viewRegistrarFolga').style.display='block'; document.getElementById('viewHistoricoFolga').style.display='none'; document.getElementById('btnAbaRegFolga').style.background='var(--edit)'; document.getElementById('btnAbaHistFolga').style.background='transparent'; 
+            } else { 
+                document.getElementById('viewRegistrarFolga').style.display='none'; document.getElementById('viewHistoricoFolga').style.display='block'; document.getElementById('btnAbaHistFolga').style.background='var(--edit)'; document.getElementById('btnAbaRegFolga').style.background='transparent'; 
+                let h=new Date(); document.getElementById('filtroMesFolga').value=("0"+(h.getMonth()+1)).slice(-2); document.getElementById('filtroAnoFolga').innerHTML=`<option value="${h.getFullYear()}">${h.getFullYear()}</option>`; 
+            } 
+        }
 
-        function registrarCombustivel() { let d=document.getElementById('inputDataCombustivel').value; let v=parseDinheiro(document.getElementById('inputValorCombustivel').value); let l=parseFloat(document.getElementById('inputLitrosCombustivel').value); if(!d||v<=0||isNaN(l)) return mostrarAlerta("Preencha corretamente."); let p=d.split("-"); document.getElementById('loadingScreen').style.display='flex'; if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{document.getElementById('loadingScreen').style.display='none'; mostrarToast("Salvo!"); document.getElementById('inputValorCombustivel').value=''; document.getElementById('inputLitrosCombustivel').value=''; carregarHistoricoCombustivel();}).salvarCombustivelPlanilha(JSON.stringify({data:`${p[2]}/${p[1]}/${p[0]}`, valor:v, litros:l})); }
-        function carregarHistoricoCombustivel() { let h=new Date(); document.getElementById('listaCombustivel').innerHTML='<div class="spinner" style="margin:0 auto;"></div>'; if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{ let d=JSON.parse(r); document.getElementById('combResumoGasto').textContent=formatarMoeda(d.totalGasto); document.getElementById('combResumoLitros').textContent=d.totalLitros.toFixed(1)+" L"; let html=''; d.itens.forEach(i=>html+=`<div style="display:flex;justify-content:space-between;padding:10px;background:var(--stat-bg);margin-bottom:8px;border-radius:6px;"><div><b style="color:#ff922b;">${i.data}</b><br><small>${i.litros} L</small></div><b style="color:var(--danger);">${formatarMoeda(i.valor)}</b></div>`); document.getElementById('listaCombustivel').innerHTML=html||'Vazio.'; }).buscarHistoricoCombustivel(("0"+(h.getMonth()+1)).slice(-2), h.getFullYear().toString()); }
+        function registrarDiaSemTrabalho() { 
+            let d=document.getElementById('inputDataSemTrabalho').value; let m=document.getElementById('inputMotivoSemTrabalho').value; 
+            if(!d||!m) return mostrarAlerta("Preencha tudo."); let p=d.split("-"); 
+            showLoading("Registrando Folga..."); 
+            if(typeof google!=='undefined') {
+                google.script.run.withSuccessHandler(r=>{hideLoading(); fecharModais(); mostrarToast("Folga Salva!");}).withFailureHandler(e=>{hideLoading(); mostrarAlerta("Erro: " + e.message)}).registrarDiaSemTrabalhoPlanilha(JSON.stringify({data:`${p[2]}/${p[1]}/${p[0]}`, motivo:m})); 
+            }
+        }
 
-        function carregarEspelhoPlanilha() { document.getElementById('loadingEspelho').style.display='block'; document.getElementById('containerTabelaEspelho').style.display='none'; if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{ document.getElementById('loadingEspelho').style.display='none'; document.getElementById('containerTabelaEspelho').style.display='block'; let d=JSON.parse(r); if(d.length===0) return document.getElementById('bodyEspelho').innerHTML='<tr><td>Vazio</td></tr>'; let head='<tr>'; d[0].forEach(c=>head+=`<th>${c}</th>`); head+='</tr>'; document.getElementById('headEspelho').innerHTML=head; let body=''; for(let i=1;i<d.length;i++){ body+='<tr>'; d[i].forEach(c=>body+=`<td>${c!==null?c:''}</td>`); body+='</tr>'; } document.getElementById('bodyEspelho').innerHTML=body; }).buscarDadosEspelhoBackend(document.getElementById('selectAbaEspelho').value); }
+        function buscarHistoricoFolgas() { 
+            document.getElementById('resultadoFolgas').innerHTML=''; 
+            showLoading("Buscando Folgas..."); 
+            if(typeof google!=='undefined') {
+                google.script.run.withSuccessHandler(r=>{ 
+                    hideLoading(); 
+                    try {
+                        let d=JSON.parse(r); 
+                        if(d.length===0) return document.getElementById('resultadoFolgas').innerHTML='Nenhuma folga.'; 
+                        let html=''; d.forEach(x=>html+=`<p><b>${x.data}</b> - ${x.motivo}</p>`); document.getElementById('resultadoFolgas').innerHTML=html; 
+                    } catch(e) {
+                         document.getElementById('resultadoFolgas').innerHTML='Nenhum Histórico Localizado.';
+                    }
+                }).withFailureHandler(e=>{hideLoading(); document.getElementById('resultadoFolgas').innerHTML='Erro na Consulta: ' + e.message;}).buscarFolgasBackend(document.getElementById('filtroMesFolga').value, document.getElementById('filtroAnoFolga').value); 
+            }
+        }
+
+        function registrarCombustivel() { let d=document.getElementById('inputDataCombustivel').value; let v=parseDinheiro(document.getElementById('inputValorCombustivel').value); let l=parseFloat(document.getElementById('inputLitrosCombustivel').value); if(!d||v<=0||isNaN(l)) return mostrarAlerta("Preencha corretamente."); let p=d.split("-"); showLoading("Registrando..."); if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{hideLoading(); mostrarToast("Salvo!"); document.getElementById('inputValorCombustivel').value=''; document.getElementById('inputLitrosCombustivel').value=''; carregarHistoricoCombustivel();}).withFailureHandler(e=>{hideLoading(); mostrarAlerta("Erro: " + e.message);}).salvarCombustivelPlanilha(JSON.stringify({data:`${p[2]}/${p[1]}/${p[0]}`, valor:v, litros:l})); }
+        function carregarHistoricoCombustivel() { let h=new Date(); document.getElementById('listaCombustivel').innerHTML='<p>Carregando...</p>'; if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{ try{let d=JSON.parse(r); document.getElementById('combResumoGasto').textContent=formatarMoeda(d.totalGasto); document.getElementById('combResumoLitros').textContent=d.totalLitros.toFixed(1)+" L"; let html=''; d.itens.forEach(i=>html+=`<div style="display:flex;justify-content:space-between;padding:10px;background:var(--stat-bg);margin-bottom:8px;border-radius:6px;"><div><b style="color:#ff922b;">${i.data}</b><br><small>${i.litros} L</small></div><b style="color:var(--danger);">${formatarMoeda(i.valor)}</b></div>`); document.getElementById('listaCombustivel').innerHTML=html||'Vazio.';}catch(e){document.getElementById('listaCombustivel').innerHTML='Erro.';} }).buscarHistoricoCombustivel(("0"+(h.getMonth()+1)).slice(-2), h.getFullYear().toString()); }
+
+        function carregarEspelhoPlanilha() { showLoading("Puxando Tabela..."); document.getElementById('containerTabelaEspelho').style.display='none'; if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{ hideLoading(); document.getElementById('containerTabelaEspelho').style.display='block'; try {let d=JSON.parse(r); if(d.length===0) return document.getElementById('bodyEspelho').innerHTML='<tr><td>Vazio</td></tr>'; let head='<tr>'; d[0].forEach(c=>head+=`<th>${c}</th>`); head+='</tr>'; document.getElementById('headEspelho').innerHTML=head; let body=''; for(let i=1;i<d.length;i++){ body+='<tr>'; d[i].forEach(c=>body+=`<td>${c!==null?c:''}</td>`); body+='</tr>'; } document.getElementById('bodyEspelho').innerHTML=body; } catch(e){mostrarAlerta("Erro ao desenhar planilha.");} }).withFailureHandler(e=>{hideLoading(); mostrarAlerta("Erro: "+e.message);}).buscarDadosEspelhoBackend(document.getElementById('selectAbaEspelho').value); }
 
         function mudarAbaRanking(a) { abaAtivaRanking=a; document.getElementById('btnAbaTop').style.background=a==='top'?'var(--primary)':'transparent'; document.getElementById('btnAbaRotas').style.background=a==='rotas'?'#ffd43b':'transparent'; document.getElementById('btnGerarRanking').textContent=a==='top'?'Gerar Top Tapiocas':'Gerar Ranking Rotas'; }
-        function gerarRankingAtual() { document.getElementById('loadingRankings').style.display='block'; document.getElementById('resultadoRankings').innerHTML=''; let m=document.getElementById('filtroMesRankings').value; let a=document.getElementById('filtroAnoRankings').value; if(abaAtivaRanking==='top'){ if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{document.getElementById('loadingRankings').style.display='none'; let d=JSON.parse(r); let html=''; d.forEach((i,idx)=>html+=`<div style="background:var(--stat-bg);padding:10px;margin-bottom:8px;border-radius:6px;display:flex;justify-content:space-between;"><div><b>#${idx+1} ${i.produto}</b><br><small>${i.quantidade} un</small></div><b style="color:var(--success);">${formatarMoeda(i.totalArrecadado)}</b></div>`); document.getElementById('resultadoRankings').innerHTML=html||'Sem dados.';}).buscarTopProdutosBackend(m, a); } else { if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{document.getElementById('loadingRankings').style.display='none'; let d=JSON.parse(r); let html=''; d.forEach((i,idx)=>html+=`<div style="background:var(--stat-bg);padding:10px;margin-bottom:8px;border-radius:6px;display:flex;justify-content:space-between;"><div><b>#${idx+1} ${i.rota}</b></div><b style="color:var(--success);">${formatarMoeda(i.total)}</b></div>`); document.getElementById('resultadoRankings').innerHTML=html||'Sem dados.';}).buscarRankingRotasBackend(m, a); } }
+        
+        function gerarRankingAtual() { 
+            document.getElementById('resultadoRankings').innerHTML=''; 
+            let m=document.getElementById('filtroMesRankings').value; let a=document.getElementById('filtroAnoRankings').value; 
+            showLoading("Gerando Inteligência...");
+            if(abaAtivaRanking==='top'){ 
+                if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{
+                    hideLoading(); try{let d=JSON.parse(r); let html=''; d.forEach((i,idx)=>html+=`<div style="background:var(--stat-bg);padding:10px;margin-bottom:8px;border-radius:6px;display:flex;justify-content:space-between;"><div><b>#${idx+1} ${i.produto}</b><br><small>${i.quantidade} un</small></div><b style="color:var(--success);">${formatarMoeda(i.totalArrecadado)}</b></div>`); document.getElementById('resultadoRankings').innerHTML=html||'Sem dados.';}catch(e){mostrarAlerta("Falha.");}
+                }).withFailureHandler(e=>{hideLoading(); mostrarAlerta("Erro.");}).buscarTopProdutosBackend(m, a); 
+            } else { 
+                if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{
+                    hideLoading(); try{let d=JSON.parse(r); let html=''; d.forEach((i,idx)=>html+=`<div style="background:var(--stat-bg);padding:10px;margin-bottom:8px;border-radius:6px;display:flex;justify-content:space-between;"><div><b>#${idx+1} ${i.rota}</b></div><b style="color:var(--success);">${formatarMoeda(i.total)}</b></div>`); document.getElementById('resultadoRankings').innerHTML=html||'Sem dados.';}catch(e){mostrarAlerta("Falha.");}
+                }).withFailureHandler(e=>{hideLoading(); mostrarAlerta("Erro.");}).buscarRankingRotasBackend(m, a); 
+            } 
+        }
 
-        // --- 11. INICIALIZAÇÃO ---
+        // --- I. SINCRONIZAÇÃO EM TEMPO REAL ---
         function sincronizarContadorGlobal() { let max = 0; historicoNuvem.forEach(p => { if(p.numero > max && (ehHoje(p.timestamp) || ehHoje(p.timestampCriacao))) max = parseInt(p.numero); }); if (max >= contadorPedidos) contadorPedidos = max + 1; }
-        function iniciarSyncEmTempoReal() { if(syncAtivo) clearInterval(syncAtivo); syncAtivo = setInterval(()=>{ if(pausarSync) return; if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{ if(pausarSync) return; let nova = JSON.parse(r)||[]; if(JSON.stringify(historicoNuvem)!==JSON.stringify(nova)) { historicoNuvem=nova; sincronizarContadorGlobal(); atualizarTudo(); } }).carregarDadosNuvem(); }, 3000); }
+        
+        function iniciarSyncEmTempoReal() { 
+            if(syncAtivo) clearInterval(syncAtivo); 
+            syncAtivo = setInterval(()=>{ 
+                if(pausarSync) return; 
+                if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{ 
+                    if(pausarSync) return; 
+                    try {
+                        let nova = JSON.parse(r)||[]; 
+                        if(JSON.stringify(historicoNuvem)!==JSON.stringify(nova)) { historicoNuvem=nova; sincronizarContadorGlobal(); atualizarTudo(); } 
+                    } catch(e) {}
+                }).carregarDadosNuvem(); 
+            }, 3000); 
+        }
+        
         function atualizarTudo() { 
             let qtd=0, pc=0, px=0; 
             historicoNuvem.forEach(v => { 
@@ -772,17 +1095,19 @@
             if(document.getElementById('view-producao').classList.contains('active')) renderizarProducao(); 
         }
 
+        // --- J. INICIALIZAÇÃO INICIAL DO SISTEMA ---
         window.onload = function() {
             try {
                 let h=new Date(); let yr=h.getFullYear();
                 if(document.getElementById('filtroAnoRankings')) document.getElementById('filtroAnoRankings').innerHTML = `<option value="${yr}">${yr}</option><option value="${yr-1}">${yr-1}</option>`;
                 if(document.getElementById('filtroAnoFolga')) document.getElementById('filtroAnoFolga').innerHTML = `<option value="${yr}">${yr}</option>`;
                 if(typeof google !== 'undefined') {
+                    showLoading("Conectando Servidor...");
                     google.script.run.withSuccessHandler(r=>{
                         try { historicoNuvem = JSON.parse(r) || []; } catch(e) { historicoNuvem = []; }
-                        document.getElementById('loadingScreen').style.display='none'; atualizarTudo(); iniciarSyncEmTempoReal(); 
-                    }).withFailureHandler(e=>{ document.getElementById('loadingText').innerHTML = "Falha de Conexão.<br><small>"+e.message+"</small>"; }).carregarDadosNuvem();
-                } else { document.getElementById('loadingScreen').style.display='none'; atualizarTudo(); }
+                        hideLoading(); atualizarTudo(); iniciarSyncEmTempoReal(); 
+                    }).withFailureHandler(e=>{ hideLoading(); document.getElementById('loadingText').innerHTML = "Falha de Conexão.<br><small>"+e.message+"</small>"; document.getElementById('loadingScreen').style.display='flex'; }).carregarDadosNuvem();
+                } else { hideLoading(); atualizarTudo(); }
             } catch (e) { console.error(e); }
         };
     </script>
