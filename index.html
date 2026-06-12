@@ -5,24 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <title>PDV - Expresso Tapiocaria</title> 
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#ff6b6b">
-
-    <link rel="icon" type="image/png" href="https://drive.google.com/thumbnail?id=1vvxg2bM392Ct-JeXnAN38mKU2RTClnFA&sz=w512">
-    <link rel="apple-touch-icon" href="https://drive.google.com/thumbnail?id=1vvxg2bM392Ct-JeXnAN38mKU2RTClnFA&sz=w512">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
+        /* Variáveis de cor com tons mais modernos e suaves */
         :root {
-            --primary: #ff6b6b; --primary-hover: #fa5252; --edit: #339af0; --edit-hover: #228be6;
-            --success: #40c057; --success-hover: #2f9e44; --danger: #dc3545; --danger-hover: #c82333;
-            --tab-active: #39ff14; 
+            --primary: #ff6b6b; --primary-hover: #fa5252; --edit: #339af0; 
+            --success: #40c057; --danger: #dc3545; --tab-active: #39ff14; 
             --bg: #121212; --panel-bg: #1e1e1e; --text: #e0e0e0;
-            --text-muted: #aaaaaa; --border: #333333; --pending-bg: #2a2510; --card-bg: #2d2d2d;
-            --troco-bg: #162b16; --troco-neg-bg: #4a1c1c; --stat-bg: #252525; --input-bg: #2d2d2d;
+            --text-muted: #aaaaaa; --border: #333333; --card-bg: #2d2d2d;
+            --troco-bg: #162b16; --stat-bg: #252525; --input-bg: #2d2d2d;
             --radius-default: 12px;
         }
 
+        /* Estrutura base da página */
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         header { background: var(--panel-bg); display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 2px solid var(--border); flex-shrink: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
         .menu-btn { background: none; border: none; color: var(--primary); font-size: 1.8rem; cursor: pointer; padding: 0 10px 0 0; }
@@ -41,13 +37,15 @@
         }
         .piscar-alerta { animation: piscarVerde 1.2s infinite !important; }
 
+        /* Sidebar e Modais */
         .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(3px); z-index: 2000; }
         .sidebar { position: fixed; top: 0; left: -280px; width: 260px; height: 100%; background: var(--panel-bg); z-index: 2001; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 2px 0 15px rgba(0,0,0,0.8); padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 15px; overflow-y: auto;}
         .sidebar.open { left: 0; }
         .sidebar h2 { margin-top: 0; color: var(--primary); border-bottom: 1px solid var(--border); padding-bottom: 10px; }
-        .sidebar button { background: var(--stat-bg); border: 1px solid var(--border); color: var(--text); padding: 15px; border-radius: var(--radius-default); font-size: 1.1rem; font-weight: bold; cursor: pointer; text-align: left; transition: 0.2s; display: flex; align-items: center; gap: 10px;}
-        .sidebar button:hover { background: var(--primary); color: white; border-color: var(--primary); transform: translateX(5px); }
-        .fechar-sidebar { background: var(--danger) !important; color: white !important; margin-top: auto; justify-content: center;}
+        .fechar-sidebar { background: var(--danger) !important; color: white !important; margin-top: auto; justify-content: center; padding: 15px; border-radius: var(--radius-default); font-weight: bold; border: none; cursor: pointer;}
+        
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 3000; animation: fadeIn 0.2s; }
+        .modal-content { background: var(--panel-bg); padding: 25px; border-radius: 16px; width: 95%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-sizing: border-box; box-shadow: 0 15px 40px rgba(0,0,0,0.5); }
         
         .app-view { display: none; flex: 1; overflow-y: auto; padding: 15px; box-sizing: border-box; flex-direction: column;}
         .app-view.active { display: flex; animation: fadeInView 0.3s ease-out; }
@@ -59,98 +57,47 @@
         .tab-btn.active { background: var(--tab-active); color: #000; border-color: var(--tab-active); box-shadow: 0 0 12px rgba(57, 255, 20, 0.4);}
         
         .barra-pesquisa { width: 100%; padding: 14px; font-size: 1rem; border: 1px solid var(--border); border-radius: var(--radius-default); background: var(--input-bg); color: var(--text); box-sizing: border-box; margin-bottom: 15px; transition: 0.3s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);}
-        .barra-pesquisa:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 8px rgba(255,107,107,0.4); }
-
-        .grid-produtos { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
-        .produto-btn { background: var(--bg); border: 1px solid var(--border); padding: 12px 8px; border-radius: var(--radius-default); cursor: pointer; display: flex; flex-direction: column; align-items: center; text-align: center; color: var(--text); min-height: 90px; justify-content: center; position: relative; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; outline: none; box-shadow: 0 4px 6px rgba(0,0,0,0.15);}
-        .produto-btn:active { transform: scale(0.92); box-shadow: 0 1px 3px rgba(0,0,0,0.2); } 
-        .produto-nome, .produto-preco { pointer-events: none;}
-        .produto-nome { font-weight: bold; margin-bottom: 5px; font-size: 0.9rem; line-height: 1.2; }
-        .produto-preco { font-size: 0.95rem; color: var(--text-muted); font-weight: 500;}
-        .produto-btn.esgotado { opacity: 0.4; filter: grayscale(100%); pointer-events: none;}
-        .produto-btn.esgotado .produto-preco { text-decoration: line-through; color: var(--danger); }
-        .produto-btn.esgotado::after { content: "ESGOTADO"; position: absolute; background: var(--danger); color: white; padding: 4px 8px; font-size: 0.7rem; font-weight: bold; border-radius: 4px; transform: rotate(-10deg); pointer-events: none; box-shadow: 0 2px 4px rgba(0,0,0,0.3);}
-
-        .btn-acao { background: var(--primary); color: white; border: none; padding: 15px; font-size: 1.1rem; font-weight: bold; border-radius: var(--radius-default); cursor: pointer; width: 100%; transition: 0.2s; box-sizing: border-box; box-shadow: 0 4px 10px rgba(0,0,0,0.2);}
-        .btn-acao:hover { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.3);}
-        .btn-acao:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none;}
-        .btn-limpar { background: var(--border); color: var(--text); margin-top: 10px; }
         
-        .produto-btn.selecionado { border-color: var(--success); background: #1a3320; box-shadow: 0 0 10px rgba(64,192,87,0.2);}
-        .badge-qtd { position: absolute; top: -8px; right: -8px; background: var(--success); color: white; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.95rem; border: 2px solid var(--bg); box-shadow: 0 2px 5px rgba(0,0,0,0.5);}
+        .grid-produtos { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+        .produto-btn { background: var(--bg); border: 1px solid var(--border); padding: 12px 8px; border-radius: var(--radius-default); cursor: pointer; display: flex; flex-direction: column; align-items: center; text-align: center; color: var(--text); min-height: 90px; justify-content: center; position: relative; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); outline: none; box-shadow: 0 4px 6px rgba(0,0,0,0.15);}
+        .produto-nome { font-weight: bold; margin-bottom: 5px; font-size: 0.9rem; line-height: 1.2; pointer-events: none;}
+        .produto-preco { font-size: 0.95rem; color: var(--text-muted); font-weight: 500; pointer-events: none;}
+        
+        .btn-acao { background: var(--primary); color: white; border: none; padding: 15px; font-size: 1.1rem; font-weight: bold; border-radius: var(--radius-default); cursor: pointer; width: 100%; transition: 0.2s; box-sizing: border-box; box-shadow: 0 4px 10px rgba(0,0,0,0.2); margin-top: 10px;}
+        .btn-acao:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-limpar { background: var(--border); color: var(--text); }
         
         .painel-carrinho { background: var(--panel-bg); border: 2px solid var(--primary); border-radius: var(--radius-default); padding: 15px; margin-top: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.4); }
         .lista-carrinho { max-height: 200px; overflow-y: auto; margin-bottom: 15px; padding-right: 5px;}
-        .lista-carrinho::-webkit-scrollbar { width: 6px; }
-        .lista-carrinho::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+        .item-carrinho { display: flex; flex-direction: column; padding: 12px 0; border-bottom: 1px dashed var(--border); gap: 8px;}
+        .input-obs { width: 100%; padding: 12px; font-size: 0.95rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); box-sizing: border-box; margin-top: 5px;}
         
-        .item-carrinho { display: flex; flex-direction: column; padding: 12px 0; border-bottom: 1px dashed var(--border); gap: 8px; animation: fadeIn 0.3s;}
-        .input-obs { width: 100%; padding: 12px; font-size: 0.95rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); box-sizing: border-box; transition: 0.3s;}
-        .input-obs:focus { border-color: var(--primary); outline: none;}
-        
-        .card-producao { background: var(--panel-bg); border-left: 5px solid var(--danger); padding: 15px; border-radius: var(--radius-default); margin-bottom: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.3);}
-        .card-producao h3 { margin: 0 0 10px 0; color: var(--primary); font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;}
-        .badge-status-cozinha { font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; color: white; font-weight: bold;}
-        .badge-pago { background: var(--success); }
-        .badge-pendente { background: var(--danger); }
+        .card-producao, .card-painel, .card-historico { background: var(--panel-bg); padding: 15px; border-radius: var(--radius-default); margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); border: 1px solid var(--border);}
+        .card-producao { border-left: 5px solid var(--danger); }
+        .card-historico { border-left: 5px solid var(--success); }
         
         .item-producao { background: var(--stat-bg); padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border);}
-        .info-prod { flex: 1; }
-        .ingredientes { display: block; font-size: 0.9rem; color: var(--success); margin-top: 4px; font-weight: bold; }
         .btn-check-item { background: var(--success); color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s;}
-        .btn-forcar-baixa { background: var(--danger); color: white; border: none; padding: 10px; border-radius: 6px; font-size: 0.9rem; cursor: pointer; margin-top: 12px; width: 100%; font-weight: bold;}
-        
-        .card-painel { background: var(--panel-bg); border: 1px solid var(--border); padding: 15px; border-radius: var(--radius-default); margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);}
-        .card-painel-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 8px;}
-        .status-badge { padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; }
-        .status-preparo { background: var(--danger); color: white; }
-        .status-pronto { background: var(--success); color: white; }
-        .acoes-painel { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 5px; }
-        .btn-painel { padding: 12px; font-weight: bold; border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 0.95rem; transition: 0.2s;}
-        .btn-painel:hover { opacity: 0.8; transform: translateY(-1px);}
-        .btn-p-pagar { background: var(--success); grid-column: span 2; font-size: 1.1rem; padding: 15px;}
-        .btn-p-editar { background: var(--edit); color: white;}
-        .btn-p-cancelar { background: var(--danger); color: white;}
-        
-        .card-historico { background: var(--panel-bg); border-left: 5px solid var(--success); padding: 15px; border-radius: var(--radius-default); margin-bottom: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
-        
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 3000; animation: fadeIn 0.2s; }
-        .modal-content { background: var(--panel-bg); padding: 25px; border-radius: 16px; width: 95%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-sizing: border-box; box-shadow: 0 15px 40px rgba(0,0,0,0.5); }
-        
-        .liq-box { background: var(--stat-bg); border: 1px solid var(--border); border-radius: var(--radius-default); padding: 15px; margin-bottom: 15px; }
-        .liq-row { display: flex; justify-content: space-between; font-size: 1.1rem; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px dashed var(--border); align-items: center;}
-        .liq-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        .liq-total { font-size: 1.5rem; font-weight: bold; color: var(--success); text-align: center; margin-bottom: 15px; }
-        .ocultavel { transition: all 0.3s; font-family: monospace; font-size: 1.2rem; }
         
         #loadingScreen { display: flex; flex-direction: column; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18,18,18,0.9); backdrop-filter: blur(5px); z-index: 9999; justify-content: center; align-items: center; color: var(--primary); }
-        .spinner { border: 5px solid var(--border); border-top: 5px solid var(--primary); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; box-shadow: 0 0 15px rgba(255,107,107,0.4); }
+        .spinner { border: 5px solid var(--border); border-top: 5px solid var(--primary); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px;}
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
         #toast-container { position: fixed; top: 80px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none;}
-        .toast { background: var(--success); color: white; padding: 12px 24px; border-radius: 8px; font-weight: bold; font-size: 1rem; box-shadow: 0 6px 15px rgba(0,0,0,0.3); animation: slideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; opacity: 0; transform: translateX(100%); display: flex; align-items: center; gap: 8px;}
-        @keyframes slideIn { to { opacity: 1; transform: translateX(0); } }
-        @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
-
-        .tabela-filtros { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.95rem; }
-        .tabela-filtros th, .tabela-filtros td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border); }
-        .tabela-filtros th { color: var(--primary); }
-
-        .tabela-espelho { width: 100%; border-collapse: collapse; font-size: 0.9rem; text-align: left; white-space: nowrap; }
-        .tabela-espelho th { background: var(--stat-bg); padding: 12px; color: #20c997; border-bottom: 2px solid var(--border); border-right: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
-        .tabela-espelho td { padding: 10px; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
-        
-        @media (max-width: 768px) { .grid-produtos { grid-template-columns: 1fr 1fr; } }
-        @media print { body * { visibility: hidden; } #areaPrintRelatorio, #areaPrintRelatorio * { visibility: visible; } #areaPrintRelatorio { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; background: white; color: black; padding: 20px; box-sizing: border-box; z-index: 99999; } .modal-overlay { background: none; position: static; display: block !important; } .modal-content { box-shadow: none; border: none; padding: 0; background: transparent; } .btn-acao { display: none !important; } }
+        .toast { background: var(--success); color: white; padding: 12px 24px; border-radius: 8px; font-weight: bold; box-shadow: 0 6px 15px rgba(0,0,0,0.3); animation: slideIn 0.3s forwards; }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
 
         .menu-grupo { margin-bottom: 10px; border: 1px solid var(--border); border-radius: var(--radius-default); overflow: hidden; }
-        .btn-categoria { width: 100% !important; background: var(--card-bg) !important; border: none !important; padding: 15px !important; display: flex !important; justify-content: space-between !important; align-items: center !important; font-size: 1rem !important; border-radius: 0 !important; }
+        .btn-categoria { width: 100%; background: var(--card-bg); border: none; padding: 15px; display: flex; justify-content: space-between; align-items: center; font-size: 1rem; color: var(--text); cursor: pointer;}
         .submenu { display: none; background: #252525; flex-direction: column; padding: 5px 0; }
-        .submenu button { background: transparent !important; border: none !important; padding: 12px 20px !important; font-size: 0.95rem !important; font-weight: normal !important; border-radius: 0 !important; border-bottom: 1px solid #333 !important; }
-        .submenu button:last-child { border-bottom: none !important; }
-        .seta { font-size: 0.8rem; transition: 0.3s; }
-        .aberto .seta { transform: rotate(180deg); }
+        .submenu button { background: transparent; border: none; padding: 12px 20px; font-size: 0.95rem; color: var(--text); cursor: pointer; text-align: left; border-bottom: 1px solid #333; }
+        
+        .tabela-espelho { width: 100%; border-collapse: collapse; font-size: 0.9rem; text-align: left; white-space: nowrap; }
+        .tabela-espelho th { background: var(--stat-bg); padding: 12px; color: #20c997; border-bottom: 2px solid var(--border); border-right: 1px solid var(--border); position: sticky; top: 0; }
+        .tabela-espelho td { padding: 10px; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
+        
+        @media print { body * { visibility: hidden; } #areaPrintRelatorio, #areaPrintRelatorio * { visibility: visible; } #areaPrintRelatorio { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; background: white; color: black; padding: 20px; box-sizing: border-box; z-index: 99999; } .modal-overlay { background: none; position: static; display: block !important; } .modal-content { box-shadow: none; border: none; padding: 0; background: transparent; } .btn-acao, .nav-voltar { display: none !important; } }
     </style>
 </head>
 <body>
@@ -161,29 +108,16 @@
     <div id="modalAlerta" class="modal-overlay" style="z-index: 4000;">
         <div class="modal-content" style="max-width: 350px; text-align: center; border-top: 5px solid var(--primary);">
             <div style="font-size: 3rem; margin-bottom: 10px;">🔔</div>
-            <h3 id="tituloAlerta" style="margin-top: 0; color: var(--text);">Aviso</h3>
+            <h3 style="margin-top: 0;">Aviso</h3>
             <p id="textoAlerta" style="font-size: 1.1rem; margin-bottom: 20px; color: var(--text-muted);"></p>
-            <button id="btnOkAlerta" class="btn-acao" style="background: var(--primary);">OK, Entendi</button>
-        </div>
-    </div>
-
-    <div id="modalAcessoDev" class="modal-overlay" style="z-index: 5000;">
-        <div class="modal-content" style="max-width: 350px; text-align: center; border-top: 5px solid #1c7ed6;">
-            <div style="font-size: 3rem; margin-bottom: 10px;">🚧</div>
-            <h3 style="margin-top: 0; color: var(--text);">Área em Construção / DEV</h3>
-            <p style="font-size: 0.95rem; margin-bottom: 15px; color: var(--text-muted);">
-                Insira a senha de programador para continuar:
-            </p>
-            <input type="password" id="inputSenhaDev" class="input-obs" placeholder="****" style="text-align: center; font-size: 1.5rem; margin-bottom: 15px; letter-spacing: 5px;">
-            <button class="btn-acao" style="background: #1c7ed6; margin-bottom: 10px;" onclick="validarSenhaDev()">🔓 Desbloquear Acesso</button>
-            <button class="btn-acao btn-limpar" onclick="fecharModais()" style="margin-top: 0;">Cancelar</button>
+            <button id="btnOkAlerta" class="btn-acao">OK, Entendi</button>
         </div>
     </div>
     
     <div id="modalConfirm" class="modal-overlay" style="z-index: 4000;">
         <div class="modal-content" style="max-width: 380px; text-align: center; border-top: 5px solid var(--edit);">
             <div style="font-size: 3rem; margin-bottom: 10px;">❓</div>
-            <h3 style="margin-top: 0; color: var(--text);">Atenção!</h3>
+            <h3 style="margin-top: 0;">Atenção!</h3>
             <p id="textoConfirm" style="font-size: 1.1rem; margin-bottom: 25px; color: var(--text-muted);"></p>
             <div style="display: flex; gap: 10px;">
                 <button id="btnCancelarConfirm" class="btn-acao btn-limpar" style="margin: 0;">Cancelar</button>
@@ -213,15 +147,15 @@
         </div>
 
         <div class="menu-grupo">
-            <button class="btn-categoria" onclick="toggleSubmenu('sub-planilhas')">📑 Planilhas <span class="seta">▼</span></button>
+            <button class="btn-categoria" onclick="toggleSubmenu('sub-planilhas')">📑 Planilhas ▼</button>
             <div id="sub-planilhas" class="submenu">
-                <button onclick="window.open('https://docs.google.com/spreadsheets/d/1_XkhvERb8BrJCFGau7djN0A_0MBEgLZhgmvnzv4Zmz0/edit', '_blank');">📈 Abrir Planilha Real</button>
-                <button onclick="abrirRestrito('espelho')">🪞 Abrir planilha (App)</button>
+                <button onclick="window.open('https://docs.google.com/spreadsheets/d/1_XkhvERb8BrJCFGau7djN0A_0MBEgLZhgmvnzv4Zmz0/edit', '_blank');">📈 Planilha Real</button>
+                <button onclick="abrirRestrito('espelho')">🪞 Planilha (App)</button>
             </div>
         </div>
 
         <div class="menu-grupo">
-            <button class="btn-categoria" onclick="toggleSubmenu('sub-fechamentos')">💰 Fechamentos <span class="seta">▼</span></button>
+            <button class="btn-categoria" onclick="toggleSubmenu('sub-fechamentos')">💰 Fechamentos ▼</button>
             <div id="sub-fechamentos" class="submenu">
                 <button onclick="abrirModalRelatorio(); fecharMenuLateral();">📊 Fechar o Dia</button>
                 <button onclick="abrirRestrito('liquidez')">💧 Liquidez Mensal</button>
@@ -230,11 +164,11 @@
         </div>
 
         <div class="menu-grupo">
-            <button class="btn-categoria" onclick="toggleSubmenu('sub-gestao')">🚀 Gestão O.P <span class="seta">▼</span></button>
+            <button class="btn-categoria" onclick="toggleSubmenu('sub-gestao')">🚀 Gestão O.P ▼</button>
             <div id="sub-gestao" class="submenu">
                 <button onclick="abrirRestrito('estimativa')">💵 Projeção Salário</button>
                 <button onclick="abrirRestrito('dias')">💤 Dias não Trabalho</button>
-                <button onclick="abrirRestrito('combustivel')">⛽ Controle Combustível</button>
+                <button onclick="abrirRestrito('combustivel')">⛽ Combustível</button>
             </div>
         </div>
 
@@ -242,13 +176,13 @@
             <button class="btn-categoria" onclick="abrirRestrito('rankings')">🏅 Rankings de Vendas</button>
         </div>
         
-        <button class="fechar-sidebar" onclick="fecharMenuLateral()" style="margin-top: auto;">⬅️ Voltar ao App</button>
+        <button class="fechar-sidebar" onclick="fecharMenuLateral()">⬅️ Voltar ao App</button>
     </div>
 
     <div id="view-catalogo" class="app-view active">
         <div style="position: relative; width: 100%; margin-bottom: 15px;">
-            <input type="text" id="inputPesquisa" class="barra-pesquisa" placeholder="🔍 Buscar produto (Ex: Morango, Calabresa...)" oninput="pesquisarProdutos()" style="margin-bottom: 0; padding-right: 40px;">
-            <button id="btnLimparPesquisa" onclick="limparPesquisa()" style="display: none; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; padding: 5px;">✖ Limpar</button>
+            <input type="text" id="inputPesquisa" class="barra-pesquisa" placeholder="🔍 Buscar produto..." oninput="pesquisarProdutos()">
+            <button id="btnLimparPesquisa" onclick="limparPesquisa()" style="display: none; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer;">✖</button>
         </div>
         <div class="tabs-container" id="containerAbas">
             <button class="tab-btn" onclick="trocarAba('salgadas', this)">Salgadas</button>
@@ -284,53 +218,230 @@
     
     <div id="view-historico" class="app-view">
         <button class="nav-voltar" onclick="mudarTela('view-catalogo')">⬅️ Voltar para o Catálogo</button>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 8px;">
-            <h2 style="color: var(--success); margin: 0; flex: 1;">✅ Vendas Hoje</h2>
-            <button onclick="zerarContadorPlanilha()" style="background: var(--edit); color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.85rem;">🗑️ Apagar Cont.</button>
-            <button onclick="limparHistoricoVendasHoje()" style="background: var(--danger); color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.85rem;">🧹 Limpar Tela</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 style="color: var(--success); margin: 0;">✅ Vendas Hoje</h2>
+            <div>
+                <button onclick="zerarContadorPlanilha()" style="background: var(--edit); color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer;">🗑️ Apagar Cont.</button>
+                <button onclick="limparHistoricoVendasHoje()" style="background: var(--danger); color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer;">🧹 Limpar Tela</button>
+            </div>
         </div>
         <div id="listaHistoricoHoje"></div>
     </div>
 
     <div id="view-espelho" class="app-view">
         <button class="nav-voltar" onclick="mudarTela('view-catalogo')">⬅️ Voltar para o Catálogo</button>
-        <h2 style="color: #20c997; margin-top: 0; margin-bottom: 5px;">🪞 Espelho da Planilha</h2>
-        <select id="selectAbaEspelho" class="input-obs" style="margin-bottom: 15px;" onchange="mudarAbaEspelho()">
+        <h2 style="color: #20c997; margin-top: 0;">🪞 Espelho da Planilha</h2>
+        <select id="selectAbaEspelho" class="input-obs" onchange="carregarEspelhoPlanilha()" style="margin-bottom: 15px;">
             <option value="Fechamentos_Diarios">Fechamentos Diários</option>
             <option value="Tapiocas Diária">Tapiocas Diária</option>
             <option value="Base de Vendas">Base de Vendas</option>
+            <option value="Historico_Diario">Histórico de Pedidos</option>
+            <option value="Combustivel">Combustível</option>
+            <option value="Dias_Nao_Trabalhados">Dias Não Trabalhados</option>
+            <option value="Fechamentos_Mensais">Fechamentos Mensais</option>
+            <option value="Pedidos Cancelados">Pedidos Cancelados</option>
         </select>
-        <button class="btn-acao" style="background: #20c997; color: #000; margin-bottom: 15px;" onclick="carregarEspelhoPlanilha()">🔄 Sincronizar Dados Agora</button>
-        <div id="loadingEspelho" style="text-align:center; display:none; margin: 20px 0;"><div class="spinner" style="width:30px; height:30px; margin: 0 auto; border-top-color: #20c997;"></div></div>
-        <div id="containerTabelaEspelho" style="overflow-x: auto; max-height: 50vh; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; display: none; background: var(--bg);">
+        <button class="btn-acao" style="background: #20c997; color: #000;" onclick="carregarEspelhoPlanilha()">🔄 Atualizar</button>
+        <div id="loadingEspelho" style="text-align:center; display:none; margin: 20px 0;"><div class="spinner" style="margin: 0 auto;"></div></div>
+        <div id="containerTabelaEspelho" style="overflow-x: auto; max-height: 50vh; overflow-y: auto; display: none; margin-top: 15px; border: 1px solid var(--border);">
             <table class="tabela-espelho"><thead id="headEspelho"></thead><tbody id="bodyEspelho"></tbody></table>
         </div>
+    </div>
+
+    <div id="view-combustivel" class="app-view">
+        <button class="nav-voltar" onclick="mudarTela('view-catalogo')">⬅️ Voltar</button>
+        <h2 style="color: #ff922b;">⛽ Abastecimento</h2>
+        <div style="background: var(--panel-bg); padding: 15px; border-radius: 10px; border: 1px solid var(--border);">
+            <label>Data:</label>
+            <input type="date" id="inputDataCombustivel" class="input-obs">
+            <label>Valor (R$):</label>
+            <input type="text" id="inputValorCombustivel" class="input-obs" placeholder="0,00" oninput="maskCurrency(event)">
+            <label>Litros:</label>
+            <input type="number" id="inputLitrosCombustivel" class="input-obs" placeholder="Ex: 10.5">
+            <button class="btn-acao" style="background: #ff922b;" onclick="registrarCombustivel()">Salvar</button>
+        </div>
+        <h3 style="margin-top: 20px;">Histórico do Mês</h3>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <span>Gasto: <strong id="combResumoGasto" style="color:var(--danger);">R$ 0,00</strong></span>
+            <span>Litros: <strong id="combResumoLitros" style="color:var(--success);">0 L</strong></span>
+        </div>
+        <div id="listaCombustivel"></div>
+    </div>
+
+    <div id="view-rankings" class="app-view">
+        <button class="nav-voltar" onclick="mudarTela('view-catalogo')">⬅️ Voltar</button>
+        <h2 style="color: #ffd43b;">🏅 Rankings</h2>
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <select id="filtroMesRankings" class="input-obs" style="margin: 0;">
+                <option value="01">Jan</option><option value="02">Fev</option><option value="03">Mar</option><option value="04">Abr</option>
+                <option value="05">Mai</option><option value="06">Jun</option><option value="07">Jul</option><option value="08">Ago</option>
+                <option value="09">Set</option><option value="10">Out</option><option value="11">Nov</option><option value="12">Dez</option>
+            </select>
+            <select id="filtroAnoRankings" class="input-obs" style="margin: 0;"></select>
+        </div>
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <button id="btnAbaTop" class="btn-acao" style="margin:0; background: var(--primary);" onclick="mudarAbaRanking('top')">Tapiocas</button>
+            <button id="btnAbaRotas" class="btn-acao btn-limpar" style="margin:0;" onclick="mudarAbaRanking('rotas')">Rotas</button>
+        </div>
+        <button id="btnGerarRanking" class="btn-acao" onclick="gerarRankingAtual()">Gerar Ranking</button>
+        <div id="loadingRankings" style="display:none; text-align:center; margin-top:20px;"><div id="spinnerRankings" class="spinner" style="margin:0 auto;"></div><p id="textoLoadingRankings"></p></div>
+        <div id="resultadoRankings" style="margin-top: 15px;"></div>
     </div>
 
     <div id="modalPagamento" class="modal-overlay">
         <div class="modal-content">
             <h3>Pagar Pedido #<span id="numeroPedidoPagamento"></span></h3>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
-                <button class="btn-acao" style="background:var(--bg); border:2px solid var(--border); color:var(--text);" onclick="processarPagamento('PIX')">PIX</button>
-                <button class="btn-acao" style="background:var(--bg); border:2px solid var(--border); color:var(--text);" onclick="processarPagamento('Dinheiro')">Dinheiro</button>
-                <button class="btn-acao" style="background:var(--bg); border:2px solid var(--border); color:var(--text);" onclick="processarPagamento('Cartão de Crédito')">Crédito</button>
-                <button class="btn-acao" style="background:var(--bg); border:2px solid var(--border); color:var(--text);" onclick="processarPagamento('Cartão de Débito')">Débito</button>
-                <button class="btn-acao" style="background:var(--bg); border:2px solid var(--border); color:var(--text); grid-column: span 2;" onclick="processarPagamento('VR')">VR (Vale Refeição)</button>
+                <button class="btn-acao" style="background:var(--bg); border:2px solid var(--border);" onclick="processarPagamento('PIX')">PIX</button>
+                <button class="btn-acao" style="background:var(--bg); border:2px solid var(--border);" onclick="processarPagamento('Dinheiro')">Dinheiro</button>
+                <button class="btn-acao" style="background:var(--bg); border:2px solid var(--border);" onclick="processarPagamento('Cartão de Crédito')">Crédito</button>
+                <button class="btn-acao" style="background:var(--bg); border:2px solid var(--border);" onclick="processarPagamento('Cartão de Débito')">Débito</button>
+                <button class="btn-acao" style="background:var(--bg); border:2px solid var(--border); grid-column: span 2;" onclick="processarPagamento('VR')">VR (Vale Refeição)</button>
             </div>
             <button class="btn-acao btn-limpar" onclick="fecharModais()">Cancelar</button>
         </div>
     </div>
 
+    <div id="modalTroco" class="modal-overlay">
+        <div class="modal-content">
+            <h3>💵 Pagamento em Dinheiro</h3>
+            <p style="font-size: 1.2rem; display: flex; justify-content: space-between;"><span>Total:</span> <strong id="trocoTotalPedido">R$ 0,00</strong></p>
+            <label>Recebido (R$):</label>
+            <input type="text" id="inputValorRecebido" class="input-obs" placeholder="0,00" style="font-size:1.5rem;" oninput="maskCurrency(event)">
+            <button class="btn-acao btn-limpar" style="padding: 10px;" onclick="preencherValorExato()">Exato (Sem Troco)</button>
+            <div id="caixaTroco" style="padding:15px; font-size:1.3rem; margin: 15px 0; background: var(--troco-bg); border-radius: 6px; text-align:center;">Troco: <strong id="valorDoTroco">R$ 0,00</strong></div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-acao btn-limpar" style="margin:0;" onclick="fecharModais()">Voltar</button>
+                <button id="btnConfirmarDinheiro" class="btn-acao" style="background: var(--success);" onclick="finalizarVenda('Dinheiro')" disabled>✓ Finalizar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalAvulso" class="modal-overlay">
+        <div class="modal-content">
+            <h3>➕ Lançar Item Avulso</h3>
+            <input type="text" id="inputNomeAvulso" class="input-obs" placeholder="Nome (Ex: Massa Extra)">
+            <input type="text" id="inputPrecoAvulso" class="input-obs" placeholder="Valor (Ex: 5,00)">
+            <button class="btn-acao" style="background: var(--success);" onclick="lancarAvulsoCarrinho()">Adicionar</button>
+            <button class="btn-acao btn-limpar" onclick="fecharModais()">Cancelar</button>
+        </div>
+    </div>
+    
+    <div id="modalAdicional" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="color: var(--primary);">➕ Adicional (R$ 4,00)</h3>
+            <input type="text" id="inputDescAdicional" class="input-obs" placeholder="Ex: Cheddar, Bacon...">
+            <button class="btn-acao" style="background: var(--success);" onclick="confirmarAdicional()">Adicionar</button>
+            <button class="btn-acao btn-limpar" onclick="fecharModais()">Cancelar</button>
+        </div>
+    </div>
+    
+    <div id="modalPrecoSemQueijo" class="modal-overlay">
+        <div class="modal-content">
+            <h3>🚫 <span id="tituloCarneSemQueijo"></span> (Sem Queijo)</h3>
+            <input type="text" id="inputPrecoSemQueijo" class="input-obs" placeholder="Valor (R$)" style="font-size:1.5rem;" oninput="maskCurrency(event)">
+            <button class="btn-acao" style="background: var(--success);" onclick="confirmarMonteSemQueijo()">✓ Adicionar</button>
+            <button class="btn-acao btn-limpar" onclick="fecharModais()">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="modalRelatorio" class="modal-overlay">
+        <div class="modal-content" id="areaPrintRelatorio">
+            <h3 style="color: var(--primary);">📊 Fechamento do Dia (<span id="dataFechamentoPrint"></span>)</h3>
+            <div style="background: var(--stat-bg); padding: 15px; border-radius: 8px;">
+                <p style="display: flex; justify-content: space-between; font-size: 1.2rem; border-bottom: 1px solid var(--border); padding-bottom: 5px;">Faturamento Bruto: <strong id="relFaturamento" style="color: var(--success);"></strong></p>
+                <p style="display: flex; justify-content: space-between;">Dinheiro: <span id="relDin"></span></p>
+                <p style="display: flex; justify-content: space-between;">PIX: <span id="relPix"></span></p>
+                <p style="display: flex; justify-content: space-between;">Crédito: <span id="relCred"></span></p>
+                <p style="display: flex; justify-content: space-between;">Débito: <span id="relDeb"></span></p>
+                <p style="display: flex; justify-content: space-between;">VR: <span id="relVR"></span></p>
+                <p style="display: flex; justify-content: space-between; color: var(--primary); font-weight: bold; margin-top: 10px;">Tapiocas Vendidas: <span id="relQtdTapiocas"></span></p>
+            </div>
+            <button id="btnSalvarPrint" class="btn-acao" style="background: #339af0;" onclick="baixarPrintFechamento()">📸 Salvar Print</button>
+            <button class="btn-acao" style="background: var(--success);" onclick="registrarFechamentoDia()">✅ Registrar na Planilha</button>
+            <button class="btn-acao btn-limpar" onclick="fecharModais()">Cancelar / Fechar</button>
+        </div>
+    </div>
+
+    <div id="modalLiquidez" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="color: var(--edit);">💧 Liquidez (<span id="mesReferenciaPDF"></span>)</h3>
+            <div id="loadingLiquidez" style="text-align:center;"><div class="spinner" style="margin: 0 auto;"></div></div>
+            <div id="conteudoLiquidez" style="display:none;">
+                <div style="background: var(--stat-bg); padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                    <p style="display: flex; justify-content: space-between; font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 5px;">Faturamento Bruto:<strong id="liqTotalGeralTxt" style="color:var(--success);"></strong></p>
+                    <p style="display: flex; justify-content: space-between;">Custo Matéria Prima (60%):<span id="liqMaterialTxt" style="color:var(--danger);"></span></p>
+                    <p style="display: flex; justify-content: space-between;">Combustível no Mês:<span id="liqCombustivelTxt" style="color:var(--danger);"></span></p>
+                    <p style="display: flex; justify-content: space-between;">Tapiocas Vendidas:<strong id="liqQtdTapiocasTxt"></strong></p>
+                </div>
+                <label>Despesas Extras (R$):</label>
+                <input type="text" id="inpSalCozinha" class="input-obs" placeholder="Salário Cozinha" oninput="maskCurrency(event); recalcularLiquidez()">
+                <input type="text" id="inpSalCarro" class="input-obs" placeholder="Salário Carro" oninput="maskCurrency(event); recalcularLiquidez()" style="margin-bottom: 15px;">
+                
+                <div style="background: #1a3320; padding: 15px; border-radius: 8px; border: 1px solid var(--success);">
+                    <p style="text-align: center; margin: 0 0 10px 0; font-size: 1.2rem;">Sobra Líquida: <strong id="liqSobraLiquida">R$ 0,00</strong></p>
+                    <p style="display: flex; justify-content: space-between;">Lucro (90%): <span><strong id="liqLucas">R$ ****</strong> <span id="icon-liqLucas" style="cursor:pointer;" onclick="toggleVis('liqLucas')">👁️</span></span></p>
+                    <p style="display: flex; justify-content: space-between;">Lucro (10%): <span><strong id="liqEliel">R$ ****</strong> <span id="icon-liqEliel" style="cursor:pointer;" onclick="toggleVis('liqEliel')">👁️</span></span></p>
+                </div>
+                <button class="btn-acao btn-limpar" onclick="fecharModais()">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalEstimativa" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="color: #20c997;">💵 Projeção de Salário (<span id="estMes"></span>)</h3>
+            <div id="loadingEstimativa" style="text-align:center;"><div class="spinner" style="margin: 0 auto;"></div></div>
+            <div id="conteudoEstimativa" style="display:none;">
+                <p>Dias Úteis Totais: <strong id="estTotalDias"></strong></p>
+                <p>Dias Trabalhados: <strong id="estPassados"></strong></p>
+                <p>Dias Restantes: <strong id="estRestantes"></strong></p>
+                <p>Média Diária: <strong id="estMedia" style="color:var(--primary);"></strong></p>
+                <hr style="border-color: var(--border);">
+                <p style="font-size: 1.1rem;">Garantido Agora: <strong id="estLucasAtual" style="color:var(--success);"></strong></p>
+                <p style="font-size: 1.2rem;">Projeção Fim do Mês: <strong id="estLucasProjetado" style="color:var(--edit);"></strong></p>
+                <button class="btn-acao btn-limpar" onclick="fecharModais()">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalDiaSemTrabalho" class="modal-overlay">
+        <div class="modal-content">
+            <h3>💤 Gestão de Folgas</h3>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <button id="btnAbaRegFolga" class="btn-acao" style="margin:0;" onclick="mudarAbaFolga('registrar')">Registrar</button>
+                <button id="btnAbaHistFolga" class="btn-acao btn-limpar" style="margin:0;" onclick="mudarAbaFolga('historico')">Histórico</button>
+            </div>
+            
+            <div id="viewRegistrarFolga">
+                <input type="date" id="inputDataSemTrabalho" class="input-obs">
+                <input type="text" id="inputMotivoSemTrabalho" class="input-obs" placeholder="Motivo (Ex: Chuva, Feriado)">
+                <button class="btn-acao" onclick="registrarDiaSemTrabalho()">Registrar Folga</button>
+            </div>
+            
+            <div id="viewHistoricoFolga" style="display: none;">
+                <div style="display: flex; gap: 10px;">
+                    <select id="filtroMesFolga" class="input-obs"><option value="01">Jan</option><option value="02">Fev</option><option value="03">Mar</option><option value="04">Abr</option><option value="05">Mai</option><option value="06">Jun</option><option value="07">Jul</option><option value="08">Ago</option><option value="09">Set</option><option value="10">Out</option><option value="11">Nov</option><option value="12">Dez</option></select>
+                    <select id="filtroAnoFolga" class="input-obs"></select>
+                </div>
+                <button class="btn-acao" style="background: var(--stat-bg); border: 1px solid var(--border); color: var(--text);" onclick="buscarHistoricoFolgas()">Buscar</button>
+                <div id="loadingFolgas" style="display:none; text-align:center; margin-top:10px;"><div class="spinner" style="margin: 0 auto; width: 25px; height: 25px;"></div></div>
+                <div id="resultadoFolgas" style="margin-top: 10px;"></div>
+            </div>
+            <button class="btn-acao btn-limpar" onclick="fecharModais()">Fechar</button>
+        </div>
+    </div>
+
     <div id="avisoPagamento" onclick="this.style.display='none'" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 10000; justify-content: center; align-items: center; backdrop-filter: blur(2px);">
-        <div style="background: var(--success); color: white; padding: 30px; border-radius: 15px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; overflow: hidden;">
+        <div style="background: var(--success); color: white; padding: 30px; border-radius: 15px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: popIn 0.3s forwards;">
             <div style="font-size: 4rem; margin-bottom: 10px;">✅</div>
             <h2 style="margin: 0; font-size: 1.8rem;">Pagamento Realizado!</h2>
-            <p id="textoAvisoPedido" style="margin: 10px 0 0 0; opacity: 0.9; font-size: 1.1rem;"></p>
         </div>
     </div>
 
     <script>
-        // 1. API_URL e Polyfill
+        // --- 1. A PONTE DE API (POLYFILL) ---
+        // ⚠️ INSIRA AQUI A SUA URL GERADA NO APPS SCRIPT! ⚠️
         const API_URL = "https://script.google.com/macros/s/AKfycbweCn7s4GjVqem7sOAjp5UAfrMHUbCRSjOzNaNEsidNS3YOy2plyAnRvogAlegBsawy9g/exec"; 
 
         const google = { script: { run: {} } };
@@ -349,79 +460,134 @@
                 'calcularEstimativaSalarioLucas', 'registrarDiaSemTrabalhoPlanilha', 'buscarFolgasBackend', 
                 'salvarCombustivelPlanilha', 'buscarHistoricoCombustivel', 'buscarRankingRotasBackend', 
                 'buscarTopProdutosBackend', 'buscarDadosEspelhoBackend', 'salvarFechamentoDiaPlanilha', 
-                'excluirContadorTapiocasHoje', 'salvarMultiplosFechamentos'
+                'excluirContadorTapiocasHoje'
             ];
 
             funcoes.forEach(funcName => {
                 runner[funcName] = function(...args) {
                     fetch(API_URL, {
-                        method: 'POST',
-                        mode: 'cors',
+                        method: 'POST', mode: 'cors',
                         headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
                         body: JSON.stringify({ action: funcName, args: args })
                     })
                     .then(response => response.json())
                     .then(result => {
-                        if (result.status === 'success' && handler.success) {
-                            handler.success(result.data); 
-                        } else if (result.status === 'error' && handler.failure) {
-                            handler.failure(new Error(result.message));
-                        }
+                        if (result.status === 'success' && handler.success) { handler.success(result.data); } 
+                        else if (result.status === 'error' && handler.failure) { handler.failure(new Error(result.message)); }
                     })
-                    .catch(err => {
-                        if (handler.failure) handler.failure(err);
-                        else console.error("Falha na ponte de comunicação:", err);
-                    });
+                    .catch(err => { if (handler.failure) handler.failure(err); else console.error("Falha API:", err); });
                 };
             });
             return runner;
         }
-
         google.script.run = criarPonteGoogleScript();
 
-        // 2. Variáveis Globais
+        // --- 2. VARIÁVEIS GLOBAIS ---
         let historicoNuvem = []; let carrinho = []; let contadorPedidos = 1; let pedidoEmEdicao = null; let pedidoAguardandoPagamento = null; 
         let abaAtivaCatalogo = null; let baseSelecionadaMonte = null; let syncAtivo = null; let ultimoQtdHojeEnviado = -1;
         let itensIndisponiveis = []; let termoPesquisa = ""; let pausarSync = false; 
-        let devModeUnlocked = false; let acaoPendenteDev = null;
 
-        // 3. Banco de Dados Simulado
+        // --- 3. BANCO DE DADOS COMPLETO ---
         const bdCatalogo = {
-            salgadas: [ { nome: "Bauru", preco: 14.00, tipo: "tapioca", ing: "Presunto, muçarela, tomate e orégano" }, { nome: "Caipira I", preco: 15.00, tipo: "tapioca", ing: "Frango, muçarela e milho" } ],
-            especiais: [ { nome: "Expresso I", preco: 20.00, tipo: "tapioca", ing: "Muçarela, frango, bacon e catupiry" } ],
-            doces_tradicionais: [ { nome: "Canelinha", preco: 10.00, tipo: "tapioca", ing: "Coco, leite cond e canela" } ],
-            bebidas: [ { nome: "🥤 Refri / Suco - LATA", preco: 6.00, tipo: "bebida", ing: "" } ]
+            salgadas: [ 
+                { nome: "Bauru", preco: 14.00, tipo: "tapioca", ing: "Presunto, muçarela, tomate e orégano" }, 
+                { nome: "Caipira I", preco: 15.00, tipo: "tapioca", ing: "Frango, muçarela e milho" }, 
+                { nome: "Caipira II", preco: 15.00, tipo: "tapioca", ing: "Frango, catupiry e milho" }, 
+                { nome: "Pizza", preco: 13.00, tipo: "tapioca", ing: "Muçarela, tomate e oregano" }, 
+                { nome: "Peito de Peru c/ Queijo Branco e Tomate", preco: 15.00, tipo: "tapioca", ing: "Peito de peru, queijo branco e tomate" }, 
+                { nome: "Presunto, Queijo e Catupiry", preco: 16.00, tipo: "tapioca", ing: "Presunto, muçarela e catupiry" }, 
+                { nome: "Presunto e Queijo", preco: 14.00, tipo: "tapioca", ing: "Presunto e muçarela" }, 
+                { nome: "Paulistana", preco: 16.00, tipo: "tapioca", ing: "muçarela, bacon, Tomate e Cebola" }, 
+                { nome: "Três Queijos", preco: 15.00, tipo: "tapioca", ing: "Muçarela, catupiry e cheddar" }, 
+                { nome: "Baiana", preco: 18.00, tipo: "tapioca", ing: "Muçarela, calabresa, catupiry, M. de Pimenta, Tomate, Cebola e orégano" }, 
+                { nome: "Carne Seca, Muçarela e Catupiry", preco: 18.00, tipo: "tapioca", ing: "Carne seca, muçarela e catupiry" }, 
+                { nome: "Carne Seca, Muçarela e Cheddar", preco: 18.00, tipo: "tapioca", ing: "Carne seca, muçarela e cheddar" }, 
+                { nome: "Frango, Muçarela e Catupiry", preco: 17.00, tipo: "tapioca", ing: "Frango, muçarela e catupiry" }, 
+                { nome: "Frango, Muçarela e Cheddar", preco: 17.00, tipo: "tapioca", ing: "Frango, muçarela e cheddar" }, 
+                { nome: "Frango, Muçarela e Bacon", preco: 17.00, tipo: "tapioca", ing: "Frango, muçarela e bacon" }, 
+                { nome: "Frango Catupiry e Bacon", preco: 17.00, tipo: "tapioca", ing: "Frango, catupiry e bacon" }, 
+                { nome: "Calabresa, Muçarela e Catupiry", preco: 17.00, tipo: "tapioca", ing: "Calabresa, muçarela e catupiry" }, 
+                { nome: "Calabresa, Muçarela e Cheddar", preco: 17.00, tipo: "tapioca", ing: "Calabresa, muçarela e cheddar" } 
+            ],
+            especiais: [ 
+                { nome: "Expresso I", preco: 20.00, tipo: "tapioca", ing: "Muçarela, frango, bacon e catupiry" }, 
+                { nome: "Expresso II", preco: 20.00, tipo: "tapioca", ing: "Muçarela, calabresa, bacon e catupiry" }, 
+                { nome: "A Moda I", preco: 21.00, tipo: "tapioca", ing: "Muçarela, calabresa, frango e catupiry" }, 
+                { nome: "A Moda II", preco: 22.00, tipo: "tapioca", ing: "Muçarela, presunto, frango, catupiry e cheddar" }, 
+                { nome: "Especial", preco: 24.00, tipo: "tapioca", ing: "Muçarela, presunto, calabresa, frango, catupiry e cheddar" }, 
+                { nome: "Tapi-Tudo", preco: 26.00, tipo: "tapioca", ing: "Muçarela, presunto, calabresa, cheddar, frango, catupiry e bacon" } 
+            ],
+            doces_tradicionais: [ 
+                { nome: "Canelinha", preco: 10.00, tipo: "tapioca", ing: "Coco, leite cond e canela" }, 
+                { nome: "Beijinho", preco: 10.00, tipo: "tapioca", ing: "Coco e leite condensado" }, 
+                { nome: "SÓ COCO", preco: 10.00, tipo: "tapioca", ing: "SÓ COCO" },
+                { nome: "Banana Leite Cond. e Canela", preco: 12.00, tipo: "tapioca", ing: "Banana, Leite cond. e Canela" }, 
+                { nome: "Banana Chocolate ao Leite", preco: 13.00, tipo: "tapioca", ing: "Banana Chocolate ao Leite" }, 
+                { nome: "Brigadeiro", preco: 13.00, tipo: "tapioca", ing: "Chocolate ao Leite e granulado" }, 
+                { nome: "Prestígio", preco: 13.00, tipo: "tapioca", ing: "Coco e chocolate ao Leite" }, 
+                { nome: "Romeu e Julieta", preco: 14.00, tipo: "tapioca", ing: "Muçarela c/ Goiabada" }, 
+                { nome: "Morango c/ Chocolate", preco: 13.00, tipo: "tapioca", ing: "Morango c/ Chocolate ao Leite" }, 
+                { nome: "Paçoca c/ Chocolate", preco: 14.00, tipo: "tapioca", ing: "Paçoca c/ Chocolate ao Leite" }
+            ],
+            doces_avela: [ 
+                { nome: "Banana Chocolate Avelã", preco: 13.00, tipo: "tapioca", ing: "Banana Chocolate Avelã" }, 
+                { nome: "Brigadeiro c/ Avelã", preco: 13.00, tipo: "tapioca", ing: "Brigadeiro c/ Avelã e Granulado" }, 
+                { nome: "Prestígio de Avelã", preco: 14.00, tipo: "tapioca", ing: "Coco e chocolate avelã" }, 
+                { nome: "Sensação (Morango/Avelã)", preco: 14.00, tipo: "tapioca", ing: "Morango c/ Avelã" }
+            ],
+            doces_nutella: [ 
+                { nome: "NUTELLA", preco: 16.00, tipo: "tapioca", ing: "SÓ NUTELLA" },
+                { nome: "Ninho com Nutella", preco: 18.00, tipo: "tapioca", ing: "Ninho com Nutella" }, 
+                { nome: "Nutella com Morango", preco: 18.00, tipo: "tapioca", ing: "Nutella com Morango" }, 
+                { nome: "Nutella com Banana", preco: 18.00, tipo: "tapioca", ing: "Nutella com Banana" }
+            ],
+            bebidas: [ 
+                { nome: "🥤 Refri / Suco - LATA", preco: 6.00, tipo: "bebida", ing: "" }, 
+                { nome: "💧 Água Mineral", preco: 3.00, tipo: "bebida", ing: "" }, 
+                { nome: "🧃 Suco Natural", preco: 8.00, tipo: "bebida", ing: "" } 
+            ]
         };
 
-        const precosMonteSua = { 'Calabresa': { 'Muçarela': 14.00 } };
+        const precosMonteSua = {
+            'Calabresa': { 'Catupiry (Orig.)': 14.00, 'Cheddar': 14.00, 'Cream Cheese': 14.00, 'Muçarela': 14.00, 'Queijo Branco': 14.00 },
+            'Frango': { 'Catupiry (Orig.)': 14.00, 'Cheddar': 14.00, 'Cream Cheese': 14.00, 'Muçarela': 14.00, 'Queijo Branco': 14.00 },
+            'Carne Seca': { 'Catupiry (Orig.)': 15.00, 'Cheddar': 15.00, 'Cream Cheese': 15.00, 'Muçarela': 15.00, 'Queijo Branco': 15.00 },
+            'Salame': { 'Catupiry (Orig.)': 15.00, 'Cheddar': 15.00, 'Cream Cheese': 15.00, 'Muçarela': 15.00, 'Queijo Branco': 15.00 },
+            'Bacon': { 'Catupiry (Orig.)': 16.00, 'Cheddar': 15.00, 'Cream Cheese': 15.00, 'Muçarela': 15.00, 'Queijo Branco': 16.00 },
+            'Peito de Peru': { 'Catupiry (Orig.)': 16.00, 'Cheddar': 15.00, 'Cream Cheese': 15.00, 'Muçarela': 15.00, 'Queijo Branco': 16.00 }
+        };
 
-        // 4. Funções Utilitárias e de Modais
-        const formatarMoeda = (valor) => valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        const ehHoje = (timestamp) => { if (!timestamp) return false; const d = new Date(timestamp), h = new Date(); return d.getDate()===h.getDate() && d.getMonth()===h.getMonth() && d.getFullYear()===h.getFullYear(); };
+        // --- 4. FUNÇÕES UTILITÁRIAS ---
+        const formatarMoeda = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        const ehHoje = (t) => { if(!t) return false; let d = new Date(t), h = new Date(); return d.getDate()===h.getDate() && d.getMonth()===h.getMonth() && d.getFullYear()===h.getFullYear(); };
+        function parseDinheiro(val) { if (!val) return 0; return parseFloat(String(val).replace(/\./g, '').replace(',', '.')) || 0; }
+        function maskCurrency(e) { let v = e.target.value.replace(/\D/g, ''); if(v===''){e.target.value=''; if(e.target.id==='inputValorRecebido') calcularTroco(); return;} v=(parseInt(v)/100).toFixed(2).replace('.',',').replace(/(\d)(?=(\d{3})+(?!\d))/g,'$1.'); e.target.value=v; if(e.target.id==='inputValorRecebido') calcularTroco(); }
+        
+        function mostrarToast(m) { let c = document.getElementById('toast-container'); let t = document.createElement('div'); t.className='toast'; t.innerHTML=m; c.appendChild(t); setTimeout(()=>{ t.style.animation='fadeOut 0.3s forwards'; setTimeout(()=>t.remove(),300);},2000); }
+        function fecharModais() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display='none'); pedidoAguardandoPagamento=null; }
+        function mostrarAlerta(m, cb) { document.getElementById('textoAlerta').innerHTML=m; document.getElementById('modalAlerta').style.display='flex'; document.getElementById('btnOkAlerta').onclick = function(){ document.getElementById('modalAlerta').style.display='none'; if(cb) cb();}; }
+        function mostrarConfirmacao(m, cbSim) { document.getElementById('textoConfirm').innerHTML=m; document.getElementById('modalConfirm').style.display='flex'; document.getElementById('btnCancelarConfirm').onclick=()=>document.getElementById('modalConfirm').style.display='none'; document.getElementById('btnOkConfirm').onclick=()=>{ document.getElementById('modalConfirm').style.display='none'; if(cbSim) cbSim(); }; }
+        function travarSyncTemporariamente() { pausarSync = true; setTimeout(() => { pausarSync = false; }, 4000); }
 
-        function mostrarToast(mensagem) {
-            let container = document.getElementById('toast-container'); let toast = document.createElement('div');
-            toast.className = 'toast'; toast.innerHTML = mensagem; container.appendChild(toast);
-            setTimeout(() => { toast.style.animation = 'fadeOut 0.3s ease-out forwards'; setTimeout(() => toast.remove(), 300); }, 2000);
+        // --- 5. NAVEGAÇÃO ---
+        function abrirMenuLateral() { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebarOverlay').style.display='block'; }
+        function fecharMenuLateral() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').style.display='none'; }
+        function toggleSubmenu(id) { const s = document.getElementById(id); s.style.display = s.style.display === "flex" ? "none" : "flex"; }
+        
+        // ✨ SEM SENHA DEV: Vai direto pra tela escolhida!
+        function abrirRestrito(acao) {
+            fecharMenuLateral();
+            if(acao === 'espelho') mudarTela('view-espelho');
+            else if(acao === 'rankings') mudarTela('view-rankings');
+            else if(acao === 'liquidez') abrirModalLiquidez();
+            else if(acao === 'estimativa') abrirModalEstimativa();
+            else if(acao === 'dias') abrirModalDiaSemTrabalho();
+            else if(acao === 'combustivel') mudarTela('view-combustivel');
         }
 
-        function fecharModais() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); pedidoAguardandoPagamento = null; }
-        function abrirMenuLateral() { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebarOverlay').style.display = 'block'; }
-        function fecharMenuLateral() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').style.display = 'none'; }
-        function toggleSubmenu(id) { const s = document.getElementById(id); s.style.display = s.style.display === "flex" ? "none" : "flex"; }
-        function travarSyncTemporariamente() { pausarSync = true; setTimeout(() => { pausarSync = false; }, 4000); }
-        function mostrarConfirmacao(mensagem, callbackSim) { document.getElementById('textoConfirm').innerHTML = mensagem; document.getElementById('modalConfirm').style.display = 'flex'; let btnSim = document.getElementById('btnOkConfirm'); let novoBtnSim = btnSim.cloneNode(true); btnSim.parentNode.replaceChild(novoBtnSim, btnSim); document.getElementById('btnCancelarConfirm').onclick = function() { document.getElementById('modalConfirm').style.display = 'none'; }; novoBtnSim.onclick = function() { document.getElementById('modalConfirm').style.display = 'none'; if(callbackSim) callbackSim(); }; }
-        function mostrarAlerta(mensagem, callback) { document.getElementById('textoAlerta').innerHTML = mensagem; document.getElementById('modalAlerta').style.display = 'flex'; let btn = document.getElementById('btnOkAlerta'); let novoBtn = btn.cloneNode(true); btn.parentNode.replaceChild(novoBtn, btn); novoBtn.onclick = function() { document.getElementById('modalAlerta').style.display = 'none'; if(callback) callback(); }; }
-
-        function abrirRestrito(acao) { fecharMenuLateral(); if (devModeUnlocked) { executarAcaoRestrita(acao); } else { acaoPendenteDev = acao; document.getElementById('modalAcessoDev').style.display = 'flex'; } }
-        function validarSenhaDev() { if (document.getElementById('inputSenhaDev').value === "5986") { devModeUnlocked = true; fecharModais(); mostrarToast("🔓 Desbloqueado!"); if (acaoPendenteDev) { executarAcaoRestrita(acaoPendenteDev); acaoPendenteDev = null; } } else { mostrarAlerta("❌ Senha incorreta!"); } }
-        function executarAcaoRestrita(acao) { if(acao === 'espelho') mudarTela('view-espelho'); }
-
-        // 5. Navegação de Telas
         function mudarTela(idTela) { 
             document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active')); 
             document.getElementById(idTela).classList.add('active'); 
-            
             document.getElementById('btnTopoProd').classList.remove('active-nav'); 
             document.getElementById('btnTopoCaixa').classList.remove('active-nav'); 
             document.getElementById('btnTopoTapiocas').classList.remove('active-nav');
@@ -431,24 +597,70 @@
             if(idTela === 'view-painel') { renderizarPainelPedidos(); document.getElementById('btnTopoCaixa').classList.add('active-nav'); } 
             if(idTela === 'view-historico') { renderizarHistorico(); document.getElementById('btnTopoTapiocas').classList.add('active-nav'); } 
             if(idTela === 'view-espelho') { carregarEspelhoPlanilha(); }
+            if(idTela === 'view-combustivel') { carregarHistoricoCombustivel(); }
+            if(idTela === 'view-rankings') { gerarRankingAtual(); }
         }
 
-        // 6. Carrinho e UI do Catálogo
-        function trocarAba(categoria, elementoBtn) { document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active')); if(elementoBtn) elementoBtn.classList.add('active'); abaAtivaCatalogo = categoria; baseSelecionadaMonte = null; renderizarCatalogo(categoria); }
-        function clickProduto(prod) { adicionarAoCarrinho(prod); }
-        const gerarHtmlProduto = (prod) => { let badge = carrinho.filter(i => i.nome === prod.nome).length > 0 ? `<div class="badge-qtd">${carrinho.filter(i => i.nome === prod.nome).reduce((acc, obj) => acc + obj.quantidade, 0)}</div>` : ''; return `<div class="produto-btn" onclick='clickProduto(${JSON.stringify(prod)})'>${badge}<span class="produto-nome">${prod.nome}</span><span class="produto-preco">${formatarMoeda(prod.preco)}</span></div>`; };
+        // --- 6. LÓGICA DE CATÁLOGO E PESQUISA ---
+        function trocarAba(cat, btn) { document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); if(btn) btn.classList.add('active'); abaAtivaCatalogo = cat; baseSelecionadaMonte = null; limparPesquisaVisual(); renderizarCatalogo(cat); }
+        function limparPesquisaVisual() { let i=document.getElementById('inputPesquisa'); if(i.value!=='') { i.value=''; termoPesquisa=''; document.getElementById('containerAbas').style.display='flex'; document.getElementById('btnLimparPesquisa').style.display='none'; } }
+        function limparPesquisa() { limparPesquisaVisual(); renderizarCatalogo(abaAtivaCatalogo); }
+        
+        function pesquisarProdutos() { 
+            termoPesquisa = document.getElementById('inputPesquisa').value.trim().toLowerCase(); 
+            if (termoPesquisa.length > 0) { 
+                document.getElementById('containerAbas').style.display = 'none'; document.getElementById('btnLimparPesquisa').style.display = 'block'; 
+                let todos = [].concat(bdCatalogo.salgadas, bdCatalogo.especiais, bdCatalogo.doces_tradicionais, bdCatalogo.doces_avela, bdCatalogo.doces_nutella, bdCatalogo.bebidas); 
+                let filt = todos.filter(p => p.nome.toLowerCase().includes(termoPesquisa) || (p.ing && p.ing.toLowerCase().includes(termoPesquisa))); 
+                const grid = document.getElementById('gridProdutos');
+                if (filt.length === 0) grid.innerHTML = `<p style="color:var(--text-muted); grid-column: 1/-1; text-align:center;">Nada encontrado.</p>`; 
+                else grid.innerHTML = filt.map(gerarHtmlProduto).join(''); 
+            } else { limparPesquisa(); } 
+        }
 
-        function renderizarCatalogo(categoria) {
+        const gerarHtmlProduto = (p) => { let b = carrinho.filter(i => i.nome === p.nome).length > 0 ? `<div class="badge-qtd" style="position:absolute;top:-8px;right:-8px;background:var(--success);color:white;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:0.95rem;border:2px solid var(--bg);">${carrinho.filter(i => i.nome === p.nome).reduce((acc, obj) => acc + obj.quantidade, 0)}</div>` : ''; let sel = b ? 'border-color:var(--success); background:#1a3320;' : ''; return `<div class="produto-btn" style="${sel}" onclick='adicionarAoCarrinho(${JSON.stringify(p)})'>${b}<span class="produto-nome">${p.nome}</span><span class="produto-preco">${formatarMoeda(p.preco)}</span></div>`; };
+
+        function renderizarCatalogo(cat) {
+            if(termoPesquisa.length > 0) return;
             const grid = document.getElementById('gridProdutos'); grid.innerHTML = '';
-            if (!categoria) { grid.innerHTML = '<p style="text-align:center; color:var(--text-muted); grid-column: 1/-1;">👆 Selecione uma categoria acima.</p>'; return; }
-            if (categoria === 'salgadas') { grid.innerHTML = bdCatalogo.salgadas.map(gerarHtmlProduto).join(''); } 
-            else if (categoria === 'especiais') { grid.innerHTML = bdCatalogo.especiais.map(gerarHtmlProduto).join(''); } 
-            else if (categoria === 'doces') { grid.innerHTML = bdCatalogo.doces_tradicionais.map(gerarHtmlProduto).join(''); } 
-            else if (categoria === 'bebidas') { grid.innerHTML = bdCatalogo.bebidas.map(gerarHtmlProduto).join(''); } 
+            if (!cat) { grid.innerHTML = '<p style="text-align:center; color:var(--text-muted); grid-column: 1/-1;">👆 Selecione uma categoria acima.</p>'; return; }
+            
+            const btnAdic = `<button class="produto-btn" style="border:2px dashed var(--primary);" onclick="lancarAdicionalComNome()"><span class="produto-nome">+ Adicional</span><span class="produto-preco">R$ 4,00</span></button>`;
+            const btnAvulso = `<button class="produto-btn" style="border:2px dashed var(--edit);" onclick="abrirModalAvulso()"><span class="produto-nome" style="color:var(--edit);">➕ Avulso</span></button>`;
+            
+            if (cat === 'salgadas') { grid.innerHTML = bdCatalogo.salgadas.map(gerarHtmlProduto).join('') + btnAdic + btnAvulso; } 
+            else if (cat === 'especiais') { grid.innerHTML = bdCatalogo.especiais.map(gerarHtmlProduto).join('') + btnAdic + btnAvulso; } 
+            else if (cat === 'doces') { grid.innerHTML = `<div style="grid-column:1/-1;color:var(--primary);font-weight:bold;">Tradicionais</div>` + bdCatalogo.doces_tradicionais.map(gerarHtmlProduto).join('') + `<div style="grid-column:1/-1;color:var(--primary);font-weight:bold;">Avelã</div>` + bdCatalogo.doces_avela.map(gerarHtmlProduto).join('') + `<div style="grid-column:1/-1;color:var(--primary);font-weight:bold;">Nutella</div>` + bdCatalogo.doces_nutella.map(gerarHtmlProduto).join('') + btnAdic + btnAvulso; } 
+            else if (cat === 'bebidas') { grid.innerHTML = bdCatalogo.bebidas.map(gerarHtmlProduto).join(''); } 
+            else if (cat === 'monte') {
+                if(!baseSelecionadaMonte) {
+                    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;">Passo 1: Carne</div>` + ['Calabresa', 'Frango', 'Carne Seca', 'Salame', 'Bacon', 'Peito de Peru'].map(c => `<button class="produto-btn" onclick="selecionarBaseMonteUI('${c}')"><span class="produto-nome">${c}</span></button>`).join('');
+                } else {
+                    let h = `<div style="grid-column:1/-1;text-align:center;">Passo 2: Queijo para ${baseSelecionadaMonte}</div>`;
+                    ['Catupiry (Orig.)', 'Cheddar', 'Cream Cheese', 'Muçarela', 'Queijo Branco'].forEach(q => { h += `<button class="produto-btn" onclick="lancarMonte('${q}', ${precosMonteSua[baseSelecionadaMonte][q]})"><span class="produto-nome" style="color:var(--success);">${q}</span><span class="produto-preco">${formatarMoeda(precosMonteSua[baseSelecionadaMonte][q])}</span></button>`; });
+                    h += `<button class="produto-btn" style="border:2px dashed var(--edit);" onclick="lancarMonteSemQueijo()"><span class="produto-nome" style="color:var(--edit);">🚫 Sem Queijo</span></button><button class="btn-acao btn-limpar" style="grid-column:1/-1;" onclick="baseSelecionadaMonte=null; renderizarCatalogo('monte');">Voltar</button>`;
+                    grid.innerHTML = h;
+                }
+            }
         }
 
-        function adicionarAoCarrinho(produto) { let index = carrinho.findIndex(item => item.nome === produto.nome && item.obs === (produto.obs || '')); if (index !== -1) { carrinho[index].quantidade += 1; } else { let novoItem = JSON.parse(JSON.stringify(produto)); novoItem.quantidade = 1; novoItem.obs = ''; carrinho.push(novoItem); } atualizarCarrinho(); mostrarToast(`✅ Adicionado!`); }
-        function removerItemCarrinho(index) { carrinho.splice(index, 1); atualizarCarrinho(); }
+        // --- 7. LÓGICA DE CARRINHO E ADICIONAIS ---
+        function selecionarBaseMonteUI(c) { baseSelecionadaMonte=c; renderizarCatalogo('monte'); }
+        function lancarMonte(q, p) { adicionarAoCarrinho({nome:`Monte: ${baseSelecionadaMonte} c/ ${q}`, preco:p, tipo:'tapioca', ing:`${baseSelecionadaMonte} e ${q}`}); baseSelecionadaMonte=null; renderizarCatalogo('monte'); }
+        function lancarMonteSemQueijo() { document.getElementById('tituloCarneSemQueijo').textContent=baseSelecionadaMonte; document.getElementById('inputPrecoSemQueijo').value=''; document.getElementById('modalPrecoSemQueijo').style.display='flex'; }
+        function confirmarMonteSemQueijo() { let v=parseDinheiro(document.getElementById('inputPrecoSemQueijo').value); if(v<=0) return mostrarAlerta("Valor inválido."); adicionarAoCarrinho({nome:`Monte: ${baseSelecionadaMonte} (Sem Queijo)`, preco:v, tipo:'tapioca', ing:`${baseSelecionadaMonte}`}); fecharModais(); baseSelecionadaMonte=null; renderizarCatalogo('monte'); }
+        
+        function abrirModalAvulso() { document.getElementById('inputNomeAvulso').value=''; document.getElementById('inputPrecoAvulso').value=''; document.getElementById('modalAvulso').style.display='flex'; }
+        function lancarAvulsoCarrinho() { let n=document.getElementById('inputNomeAvulso').value.trim(); let v=parseDinheiro(document.getElementById('inputPrecoAvulso').value); if(!n||v<=0) return mostrarAlerta("Dados inválidos."); adicionarAoCarrinho({nome:`Avulso: ${n}`, preco:v, tipo:'tapioca', ing:''}); fecharModais(); }
+        
+        function lancarAdicionalComNome() { document.getElementById('inputDescAdicional').value=''; document.getElementById('modalAdicional').style.display='flex'; }
+        function confirmarAdicional() { let d=document.getElementById('inputDescAdicional').value.trim()||"Adicional"; adicionarAoCarrinho({nome:"+ Adicional", preco:4.00, tipo:"extra", ing:"", obs:d}); fecharModais(); }
+
+        function adicionarAoCarrinho(prod) { let i = carrinho.findIndex(x => x.nome === prod.nome && x.obs === (prod.obs||'')); if(i !== -1) { carrinho[i].quantidade++; } else { let novo = JSON.parse(JSON.stringify(prod)); novo.quantidade=1; novo.obs=''; carrinho.push(novo); } atualizarCarrinho(); mostrarToast(`✅ Adicionado!`); }
+        function removerItemCarrinho(i) { carrinho.splice(i, 1); atualizarCarrinho(); }
+        function mudarQtd(i, d) { carrinho[i].quantidade += d; if(carrinho[i].quantidade <= 0) removerItemCarrinho(i); else atualizarCarrinho(); }
+        function atualizarObs(i, v) { carrinho[i].obs = v; }
+
         function atualizarCarrinho() {
             const box = document.getElementById('boxCarrinho'); const lista = document.getElementById('listaCarrinho'); const spanTotal = document.getElementById('valorTotal');
             lista.innerHTML = '';
@@ -456,81 +668,105 @@
             box.style.display = 'block'; let total = 0;
             carrinho.forEach((item, index) => {
                 total += item.preco * item.quantidade;
-                lista.innerHTML += `<div class="item-carrinho"><div style="display:flex; justify-content:space-between;"><strong>${item.quantidade}x ${item.nome}</strong><span>${formatarMoeda(item.preco * item.quantidade)}</span></div><button onclick="removerItemCarrinho(${index})" style="background:transparent; color:var(--text-muted); border:1px solid var(--border); border-radius:4px;">🗑️ Remover</button></div>`;
+                lista.innerHTML += `<div class="item-carrinho"><div style="display:flex; justify-content:space-between; align-items:center;"><strong style="color:var(--primary);">${item.nome}</strong><span style="font-weight:bold;">${formatarMoeda(item.preco * item.quantidade)}</span></div><div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;"><div style="display:flex; align-items:center; gap:10px;"><button style="background:var(--danger); color:white; border:none; padding:5px 10px; border-radius:4px;" onclick="mudarQtd(${index}, -1)">-</button><span style="font-size:1.1rem; font-weight:bold;">${item.quantidade}</span><button style="background:var(--success); color:white; border:none; padding:5px 10px; border-radius:4px;" onclick="mudarQtd(${index}, 1)">+</button></div><button onclick="removerItemCarrinho(${index})" style="background:transparent; color:var(--text-muted); border:1px solid var(--border); border-radius:4px;">🗑️</button></div><input type="text" class="input-obs" placeholder="Observação" value="${item.obs}" onchange="atualizarObs(${index}, this.value)"></div>`;
             });
             spanTotal.textContent = formatarMoeda(total); renderizarCatalogo(abaAtivaCatalogo); 
         }
-        function limparCarrinho() { carrinho = []; atualizarCarrinho(); }
+        function limparCarrinho() { carrinho = []; pedidoEmEdicao=null; document.getElementById('tituloCarrinho').textContent="Pedido em Andamento"; document.getElementById('btnLancar').textContent="Lançar para Produção"; atualizarCarrinho(); }
 
-        // 7. Lógica de Pedidos e Pagamento
+        // --- 8. FLUXO DE PEDIDOS ---
         function lancarPedido() {
             if (carrinho.length === 0) return alert("Carrinho vazio!");
-            const totalCarrinho = carrinho.reduce((acc, item) => acc + (item.preco * item.quantidade), 0);
+            let audioCampainha = document.getElementById('somCampainha'); if(audioCampainha) audioCampainha.play().catch(e=>console.log(e));
+            
+            const total = carrinho.reduce((acc, item) => acc + (item.preco * item.quantidade), 0);
             const isPronto = carrinho.every(item => item.pronto === true);
 
-            let novoPedido = { 
-                numero: contadorPedidos++, origem: "PDV", itens: JSON.parse(JSON.stringify(carrinho)), total: totalCarrinho, 
-                hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), produzido: isPronto, timestampCriacao: new Date().getTime() 
-            };
-            historicoNuvem.push(novoPedido);
-            
-            if(typeof google !== 'undefined') {
-                google.script.run.lancarPedidoPlanilha(JSON.stringify(novoPedido));
-                google.script.run.withSuccessHandler(function() { limparCarrinho(); atualizarTudo(); }).salvarVendaRealTime(JSON.stringify(novoPedido));
-            } else { limparCarrinho(); atualizarTudo(); }
-        }
-
-        function abrirModalPagamento(numero) { pedidoAguardandoPagamento = numero; document.getElementById('numeroPedidoPagamento').textContent = numero; document.getElementById('modalPagamento').style.display = 'flex'; }
-        
-        function processarPagamento(forma) {
-            travarSyncTemporariamente();
-            const index = historicoNuvem.findIndex(p => p.numero == pedidoAguardandoPagamento);
-            if (index === -1) return;
-            const pedido = historicoNuvem[index];
-            pedido.formaPagamento = forma; pedido.timestamp = new Date().getTime(); pedido.dataExibicao = new Date().toLocaleString('pt-BR');
-            fecharModais(); atualizarTudo();
-            if(typeof google !== 'undefined') {
-                google.script.run.moverParaHistorico(JSON.stringify(pedido));
-                google.script.run.atualizarVendaRealTime(JSON.stringify(pedido));
-            }
-            document.getElementById('avisoPagamento').style.display = 'flex';
-            setTimeout(() => { document.getElementById('avisoPagamento').style.display = 'none'; }, 3000);
-        }
-
-        // 8. Telas de Cozinha, Caixa e Historico (Resumo)
-        function renderizarProducao() { const lista = document.getElementById('listaProducao'); lista.innerHTML = ''; let fila = historicoNuvem.filter(p => !p.produzido && (ehHoje(p.timestamp) || ehHoje(p.timestampCriacao))); if(fila.length === 0) { lista.innerHTML = '<p>Nenhum pedido na fila.</p>'; return; } fila.forEach(pedido => { let itens = pedido.itens.filter(i => !i.pronto).map((item, idx) => `<div class="item-producao"><strong>${item.quantidade}x ${item.nome}</strong><button class="btn-check-item" onclick="marcarItemEExtrasPronto('${pedido.numero}', ${idx})">✅ Concluir</button></div>`).join(''); if(itens) { lista.innerHTML += `<div class="card-producao"><h3>Pedido #${pedido.numero}</h3>${itens}</div>`; } else { pedido.produzido = true; } }); }
-        function marcarItemEExtrasPronto(numeroPedido, idx) { travarSyncTemporariamente(); let p = historicoNuvem.find(x => x.numero == numeroPedido); if(p) { p.itens[idx].pronto = true; p.produzido = p.itens.filter(i => i.tipo !== 'bebida').every(i => i.pronto === true); if(typeof google !== 'undefined') google.script.run.atualizarVendaRealTime(JSON.stringify(p)); atualizarTudo(); } }
-        function renderizarPainelPedidos() { const lista = document.getElementById('listaPainelPedidos'); lista.innerHTML = ''; let pendentes = historicoNuvem.filter(p => !p.timestamp && ehHoje(p.timestampCriacao)); if(pendentes.length === 0) { lista.innerHTML = '<p>Nenhum pedido aguardando pagamento.</p>'; return; } pendentes.forEach(pedido => { const itensTxt = pedido.itens.map(i => `${i.quantidade}x ${i.nome}`).join(', '); lista.innerHTML += `<div class="card-painel"><div class="card-painel-header"><span>#${pedido.numero}</span><span>${formatarMoeda(pedido.total)}</span></div><div>${itensTxt}</div><button class="btn-p-pagar" onclick="abrirModalPagamento('${pedido.numero}')">💳 Pagar</button></div>`; }); }
-        function renderizarHistorico() { const lista = document.getElementById('listaHistoricoHoje'); lista.innerHTML = ''; const vendas = historicoNuvem.filter(v => v.timestamp && ehHoje(v.timestamp)).reverse(); if(vendas.length === 0) { lista.innerHTML = '<p>Nenhuma venda na lista.</p>'; return; } vendas.forEach(v => { lista.innerHTML += `<div class="card-historico"><div style="display:flex; justify-content:space-between; font-weight:bold;"><span>Pedido #${v.numero}</span><span>${formatarMoeda(v.total)}</span></div></div>`; }); }
-
-        // 9. Inicialização e Sincronização
-        function sincronizarContadorGlobal() { let maxNum = 0; historicoNuvem.forEach(p => { if(p.numero > maxNum && (ehHoje(p.timestamp) || ehHoje(p.timestampCriacao))) maxNum = parseInt(p.numero); }); if (maxNum >= contadorPedidos) contadorPedidos = maxNum + 1; }
-        
-        function iniciarSyncEmTempoReal() {
-            if (syncAtivo) clearInterval(syncAtivo);
-            syncAtivo = setInterval(() => {
-                if (pausarSync) return; 
-                if(typeof google !== 'undefined') {
-                    google.script.run.withSuccessHandler(function(resposta) {
-                        if (pausarSync) return; 
-                        let novaNuvem = JSON.parse(resposta) || [];
-                        if(JSON.stringify(historicoNuvem) !== JSON.stringify(novaNuvem)) { historicoNuvem = novaNuvem; sincronizarContadorGlobal(); atualizarTudo(); }
-                    }).carregarDadosNuvem();
+            if (pedidoEmEdicao !== null) {
+                const i = historicoNuvem.findIndex(p => p.numero == pedidoEmEdicao);
+                if (i !== -1) {
+                    historicoNuvem[i].itens = JSON.parse(JSON.stringify(carrinho)); historicoNuvem[i].total = total; historicoNuvem[i].produzido = isPronto;
+                    if(typeof google !== 'undefined') google.script.run.withSuccessHandler(()=>{limparCarrinho();atualizarTudo();}).atualizarVendaRealTime(JSON.stringify(historicoNuvem[i]));
                 }
-            }, 3000); 
+            } else {
+                let novo = { numero: contadorPedidos++, origem: "PDV", itens: JSON.parse(JSON.stringify(carrinho)), total: total, hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), produzido: isPronto, timestampCriacao: new Date().getTime() };
+                historicoNuvem.push(novo);
+                if(typeof google !== 'undefined') {
+                    google.script.run.lancarPedidoPlanilha(JSON.stringify(novo));
+                    google.script.run.withSuccessHandler(()=>{limparCarrinho();atualizarTudo();}).salvarVendaRealTime(JSON.stringify(novo));
+                } else { limparCarrinho(); atualizarTudo(); }
+            }
         }
 
+        function carregarParaEdicao(num) { const p = historicoNuvem.find(x => x.numero == num); if(!p) return; carrinho = JSON.parse(JSON.stringify(p.itens)); pedidoEmEdicao = num; document.getElementById('tituloCarrinho').textContent = `✏️ Editando #${num}`; document.getElementById('btnLancar').textContent = 'Salvar'; mudarTela('view-catalogo'); atualizarCarrinho(); }
+        function cancelarPedido(num) { mostrarConfirmacao("Deseja CANCELAR o pedido #" + num + "?", function() { travarSyncTemporariamente(); const i = historicoNuvem.findIndex(p => p.numero == num); if(i !== -1) { const p = historicoNuvem[i]; p.status = "Cancelado"; historicoNuvem.splice(i, 1); atualizarTudo(); if(typeof google !== 'undefined') { google.script.run.moverParaCancelados(JSON.stringify(p)); google.script.run.excluirVendaRealTime(p.numero); google.script.run.removerDaBaseDeVendasBackend(p.numero); } } }); }
+        function reabrirPedido(num) { mostrarConfirmacao("Deseja ESTORNAR o pedido #" + num + "?", function() { travarSyncTemporariamente(); const i = historicoNuvem.findIndex(p => p.numero == num); if(i !== -1) { const p = historicoNuvem[i]; delete p.timestamp; delete p.formaPagamento; atualizarTudo(); if(typeof google !== 'undefined') { google.script.run.reabrirPedidoBackend(JSON.stringify(p)); google.script.run.atualizarVendaRealTime(JSON.stringify(p)); } mudarTela('view-painel'); } }); }
+
+        function abrirModalPagamento(num) { pedidoAguardandoPagamento = num; document.getElementById('numeroPedidoPagamento').textContent = num; document.getElementById('modalPagamento').style.display = 'flex'; }
+        function processarPagamento(f) { const p = historicoNuvem.find(x => x.numero == pedidoAguardandoPagamento); if(!p) return; if(f === 'Dinheiro') { fecharModais(); document.getElementById('trocoTotalPedido').textContent = formatarMoeda(p.total); document.getElementById('inputValorRecebido').value=''; document.getElementById('valorDoTroco').textContent='R$ 0,00'; document.getElementById('btnConfirmarDinheiro').disabled=true; document.getElementById('modalTroco').style.display='flex'; } else { finalizarVenda(f); } }
+        function preencherValorExato() { const p = historicoNuvem.find(x => x.numero == pedidoAguardandoPagamento); if(!p) return; document.getElementById('inputValorRecebido').value = p.total.toFixed(2).replace('.',','); calcularTroco(); }
+        function calcularTroco() { const p = historicoNuvem.find(x => x.numero == pedidoAguardandoPagamento); if(!p) return; let r = parseDinheiro(document.getElementById('inputValorRecebido').value); let t = r - p.total; let span = document.getElementById('valorDoTroco'); let btn = document.getElementById('btnConfirmarDinheiro'); if(r===0){span.textContent='R$ 0,00'; btn.disabled=true; return;} if(t>=0){span.textContent=formatarMoeda(t); btn.disabled=false;}else{span.textContent="Faltam "+formatarMoeda(Math.abs(t)); btn.disabled=true;} }
+        
+        function finalizarVenda(f) {
+            travarSyncTemporariamente(); const i = historicoNuvem.findIndex(p => p.numero == pedidoAguardandoPagamento); if (i === -1) return;
+            let audioCaixa = document.getElementById('somCaixa'); if(audioCaixa) audioCaixa.play().catch(e=>console.log(e));
+            const p = historicoNuvem[i]; p.formaPagamento = f; p.timestamp = new Date().getTime(); p.dataExibicao = new Date().toLocaleString('pt-BR');
+            fecharModais(); atualizarTudo();
+            if(typeof google !== 'undefined') { google.script.run.moverParaHistorico(JSON.stringify(p)); google.script.run.atualizarVendaRealTime(JSON.stringify(p)); google.script.run.removerDaBaseDeVendasBackend(p.numero); }
+            document.getElementById('avisoPagamento').style.display = 'flex'; setTimeout(() => { document.getElementById('avisoPagamento').style.display = 'none'; }, 3000);
+        }
+
+        // --- 9. RENDERIZAÇÃO DE TELAS ---
+        function renderizarProducao() { const lista = document.getElementById('listaProducao'); lista.innerHTML = ''; let fila = historicoNuvem.filter(p => !p.produzido && (ehHoje(p.timestamp) || ehHoje(p.timestampCriacao))); fila.sort((a,b)=>a.numero-b.numero); if(fila.length === 0) { lista.innerHTML = '<p style="color:var(--text-muted);">Nenhum pedido na fila.</p>'; return; } fila.forEach(pedido => { let html = ''; pedido.itens.forEach((item, idx) => { if(item.tipo === 'bebida' || item.pronto) return; let ing = item.ing ? `<span style="display:block;font-size:0.8rem;color:var(--success);">${item.ing}</span>` : ''; let obs = item.obs ? `<span style="display:block;font-size:0.85rem;color:#ffc107;">OBS: ${item.obs}</span>` : ''; html += `<div class="item-producao"><div><strong>${item.quantidade}x ${item.nome}</strong>${ing}${obs}</div><button class="btn-check-item" onclick="marcarItemPronto('${pedido.numero}', ${idx})">✅ Concluir</button></div>`; }); if(html) { lista.innerHTML += `<div class="card-producao"><h3>Pedido #${pedido.numero}</h3>${html}</div>`; } else { pedido.produzido=true; } }); }
+        function marcarItemPronto(num, idx) { travarSyncTemporariamente(); let p = historicoNuvem.find(x => x.numero == num); if(p) { p.itens[idx].pronto = true; p.produzido = p.itens.filter(i => i.tipo !== 'bebida').every(i => i.pronto === true); if(typeof google !== 'undefined') google.script.run.atualizarVendaRealTime(JSON.stringify(p)); atualizarTudo(); } }
+        
+        function renderizarPainelPedidos() { const lista = document.getElementById('listaPainelPedidos'); lista.innerHTML = ''; let pendentes = historicoNuvem.filter(p => !p.timestamp && ehHoje(p.timestampCriacao)); pendentes.sort((a,b)=>b.numero-a.numero); if(pendentes.length === 0) { lista.innerHTML = '<p style="color:var(--text-muted);">Nenhum pedido aguardando pagamento.</p>'; return; } pendentes.forEach(p => { const status = p.produzido ? '<span style="background:var(--success);padding:4px 8px;border-radius:6px;font-size:0.8rem;color:white;">PRONTO</span>' : '<span style="background:var(--danger);padding:4px 8px;border-radius:6px;font-size:0.8rem;color:white;">COZINHA</span>'; const itensTxt = p.itens.map(i => `${i.quantidade}x ${i.nome}`).join(', '); lista.innerHTML += `<div class="card-painel"><div style="display:flex; justify-content:space-between; font-weight:bold; border-bottom:1px solid var(--border); padding-bottom:8px;"><span>#${p.numero} - ${status}</span><span>${formatarMoeda(p.total)}</span></div><div style="font-size:0.9rem;color:var(--text-muted);margin:8px 0;">${itensTxt}</div><div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;"><button style="background:var(--edit);color:white;border:none;padding:10px;border-radius:6px;font-weight:bold;cursor:pointer;" onclick="carregarParaEdicao('${p.numero}')">✏️ Editar</button><button style="background:var(--danger);color:white;border:none;padding:10px;border-radius:6px;font-weight:bold;cursor:pointer;" onclick="cancelarPedido('${p.numero}')">🗑️ Cancelar</button><button style="background:var(--success);color:white;border:none;padding:15px;border-radius:6px;font-weight:bold;grid-column:span 2;font-size:1.1rem;cursor:pointer;" onclick="abrirModalPagamento('${p.numero}')">💳 Pagar</button></div></div>`; }); }
+        
+        function renderizarHistorico() { const lista = document.getElementById('listaHistoricoHoje'); lista.innerHTML = ''; const vendas = historicoNuvem.filter(v => v.timestamp && ehHoje(v.timestamp) && !v.oculta).reverse(); if(vendas.length === 0) { lista.innerHTML = '<p style="color:var(--text-muted);">Nenhuma venda hoje.</p>'; return; } vendas.forEach(v => { const itensTxt = v.itens.map(i => `${i.quantidade}x ${i.nome}`).join(', '); lista.innerHTML += `<div class="card-historico"><div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom:4px;"><span>Pedido #${v.numero}</span><span>${formatarMoeda(v.total)}</span></div><div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:6px;">${itensTxt}</div><div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:0.8rem;">${v.formaPagamento} às ${new Date(v.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span><button onclick="reabrirPedido('${v.numero}')" style="background:var(--edit);color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;">🔄 Estornar</button></div></div>`; }); }
+
+        // --- 10. GESTÃO E FECHAMENTOS ---
+        function zerarContadorPlanilha() { mostrarConfirmacao("Deseja apagar a linha de Tapiocas de Hoje?", function() { if(typeof google !== 'undefined') google.script.run.excluirContadorTapiocasHoje(new Date().toLocaleDateString('pt-BR')); mostrarToast("Contador de tapiocas reiniciado!"); }); }
+        function limparHistoricoVendasHoje() { mostrarConfirmacao("Ocultar vendas na tela?", function() { historicoNuvem.forEach(v => { if(v.timestamp && ehHoje(v.timestamp)) v.oculta=true; }); renderizarHistorico(); }); }
+
+        function abrirModalRelatorio() { let td=0,tp=0,tc=0,tdb=0,tvr=0,tot=0,qtd=0; historicoNuvem.filter(v => v.timestamp && ehHoje(v.timestamp)).forEach(v => { tot += v.total; v.itens.forEach(i => { if(i.tipo==='tapioca'||i.tipo==='extra') qtd+=i.quantidade; }); if(v.formaPagamento==='Dinheiro') td+=v.total; if(v.formaPagamento==='PIX') tp+=v.total; if(v.formaPagamento==='Cartão de Crédito') tc+=v.total; if(v.formaPagamento==='Cartão de Débito') tdb+=v.total; if(v.formaPagamento==='VR') tvr+=v.total; }); document.getElementById('relFaturamento').textContent=formatarMoeda(tot); document.getElementById('relDin').textContent=formatarMoeda(td); document.getElementById('relPix').textContent=formatarMoeda(tp); document.getElementById('relCred').textContent=formatarMoeda(tc); document.getElementById('relDeb').textContent=formatarMoeda(tdb); document.getElementById('relVR').textContent=formatarMoeda(tvr); document.getElementById('relQtdTapiocas').textContent=qtd+" un"; let h = new Date(); document.getElementById('dataFechamentoPrint').textContent=`${("0"+h.getDate()).slice(-2)}/${("0"+(h.getMonth()+1)).slice(-2)}`; document.getElementById('modalRelatorio').style.display='flex'; }
+        function baixarPrintFechamento() { const b=document.getElementById('btnSalvarPrint'); b.innerHTML='Gerando...'; html2canvas(document.getElementById('areaPrintRelatorio'), {scale:2,backgroundColor:"#1e1e1e"}).then(c=>{ let l=document.createElement('a'); l.download=`Fechamento_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.png`; l.href=c.toDataURL('image/png'); l.click(); b.innerHTML='📸 Salvar Print'; }); }
+        function registrarFechamentoDia() { let q=parseInt(document.getElementById('relQtdTapiocas').textContent)||0; let res={data:new Date().toLocaleDateString('pt-BR'), total:document.getElementById('relFaturamento').textContent, dinheiro:document.getElementById('relDin').textContent, pix:document.getElementById('relPix').textContent, credito:document.getElementById('relCred').textContent, debito:document.getElementById('relDeb').textContent, vr:document.getElementById('relVR').textContent, qtdTapiocas:q}; document.getElementById('loadingScreen').style.display='flex'; if(typeof google !== 'undefined') { google.script.run.withSuccessHandler(r=>{ document.getElementById('loadingScreen').style.display='none'; if(r==="OK"){ historicoNuvem=[]; carrinho=[]; google.script.run.salvarNuvemCompleta("[]"); atualizarTudo(); fecharModais(); mostrarAlerta("✅ Fechamento salvo!"); }else{ mostrarAlerta("Erro: "+r); } }).salvarFechamentoDiaPlanilha(JSON.stringify(res)); } }
+
+        let fatMesG = 0, combMesG = 0;
+        function abrirModalLiquidez() { const h=new Date(); const m=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"]; document.getElementById('mesReferenciaPDF').textContent=`${m[h.getMonth()]} ${h.getFullYear()}`; document.getElementById('modalLiquidez').style.display='flex'; document.getElementById('conteudoLiquidez').style.display='none'; document.getElementById('loadingLiquidez').style.display='block'; if(typeof google !== 'undefined'){ google.script.run.withSuccessHandler(r=>{ let d=JSON.parse(r); fatMesG=d.total; combMesG=d.combustivel; document.getElementById('liqQtdTapiocasTxt').textContent=(d.qtdTapiocas||0)+" un"; recalcularLiquidez(); document.getElementById('loadingLiquidez').style.display='none'; document.getElementById('conteudoLiquidez').style.display='block'; }).obterResumoMesPlanilha(); } }
+        function recalcularLiquidez() { let sc=parseDinheiro(document.getElementById('inpSalCozinha').value); let scar=parseDinheiro(document.getElementById('inpSalCarro').value); document.getElementById('liqTotalGeralTxt').textContent=formatarMoeda(fatMesG); document.getElementById('liqCombustivelTxt').textContent="- "+formatarMoeda(combMesG); let mat=fatMesG*0.60; let sob=fatMesG-mat-(combMesG+sc+scar); let b=Math.max(0,sob); document.getElementById('liqMaterialTxt').textContent="- "+formatarMoeda(mat); document.getElementById('liqSobraLiquida').textContent=formatarMoeda(sob); document.getElementById('liqSobraLiquida').style.color=sob>=0?"var(--success)":"var(--danger)"; document.getElementById('liqLucas').setAttribute('data-v', b*0.90); document.getElementById('liqEliel').setAttribute('data-v', b*0.10); document.getElementById('liqLucas').textContent='R$ ****'; document.getElementById('liqEliel').textContent='R$ ****'; document.getElementById('icon-liqLucas').textContent='👁️'; document.getElementById('icon-liqEliel').textContent='👁️'; }
+        function toggleVis(id) { let el=document.getElementById(id); let ic=document.getElementById('icon-'+id); if(el.textContent==='R$ ****'){ el.textContent=formatarMoeda(parseFloat(el.getAttribute('data-v'))); ic.textContent='🙈'; }else{ el.textContent='R$ ****'; ic.textContent='👁️'; } }
+        function confirmarFechamentoMes() { let ab = historicoNuvem.filter(p => (!p.produzido || !p.timestamp) && (ehHoje(p.timestamp) || ehHoje(p.timestampCriacao))); if(ab.length>0) return mostrarAlerta("Finalize pedidos abertos antes de fechar o mês!"); mostrarConfirmacao("Salvar mês no Google Drive?", ()=>{ document.getElementById('loadingScreen').style.display='flex'; let pac={mesReferencia:document.getElementById('mesReferenciaPDF').textContent, qtdTapiocas:document.getElementById('liqQtdTapiocasTxt').textContent, totalGeral:document.getElementById('liqTotalGeralTxt').textContent, material:document.getElementById('liqMaterialTxt').textContent, lucroLucas:formatarMoeda(parseFloat(document.getElementById('liqLucas').getAttribute('data-v')||0)), lucroEliel:formatarMoeda(parseFloat(document.getElementById('liqEliel').getAttribute('data-v')||0))}; if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{document.getElementById('loadingScreen').style.display='none'; fecharModais(); mostrarAlerta("Mês salvo!");}).fecharMesESalvarDrive(JSON.stringify(pac)); }); }
+
+        function abrirModalEstimativa() { document.getElementById('modalEstimativa').style.display='flex'; document.getElementById('conteudoEstimativa').style.display='none'; document.getElementById('loadingEstimativa').style.display='block'; if(typeof google !== 'undefined') google.script.run.withSuccessHandler(r=>{ let d=JSON.parse(r); document.getElementById('loadingEstimativa').style.display='none'; document.getElementById('conteudoEstimativa').style.display='block'; document.getElementById('estMes').textContent=d.mes; document.getElementById('estTotalDias').textContent=d.diasUteisTotal; document.getElementById('estPassados').textContent=d.diasUteisPassados; document.getElementById('estRestantes').textContent=d.diasUteisRestantes; document.getElementById('estMedia').textContent=formatarMoeda(d.mediaDiaria); document.getElementById('estLucasAtual').textContent=formatarMoeda(d.lucasAtual); document.getElementById('estLucasProjetado').textContent=formatarMoeda(d.lucasProjetado); }).calcularEstimativaSalarioLucas(); }
+        
+        function abrirModalDiaSemTrabalho() { let h=new Date(); document.getElementById('inputDataSemTrabalho').value=`${h.getFullYear()}-${("0"+(h.getMonth()+1)).slice(-2)}-${("0"+h.getDate()).slice(-2)}`; mudarAbaFolga('registrar'); document.getElementById('modalDiaSemTrabalho').style.display='flex'; }
+        function mudarAbaFolga(a) { if(a==='registrar'){ document.getElementById('viewRegistrarFolga').style.display='block'; document.getElementById('viewHistoricoFolga').style.display='none'; document.getElementById('btnAbaRegFolga').style.background='var(--edit)'; document.getElementById('btnAbaHistFolga').style.background='transparent'; }else{ document.getElementById('viewRegistrarFolga').style.display='none'; document.getElementById('viewHistoricoFolga').style.display='block'; document.getElementById('btnAbaHistFolga').style.background='var(--edit)'; document.getElementById('btnAbaRegFolga').style.background='transparent'; let h=new Date(); document.getElementById('filtroMesFolga').value=("0"+(h.getMonth()+1)).slice(-2); document.getElementById('filtroAnoFolga').innerHTML=`<option value="${h.getFullYear()}">${h.getFullYear()}</option>`; } }
+        function registrarDiaSemTrabalho() { let d=document.getElementById('inputDataSemTrabalho').value; let m=document.getElementById('inputMotivoSemTrabalho').value; if(!d||!m) return mostrarAlerta("Preencha tudo."); let p=d.split("-"); document.getElementById('loadingScreen').style.display='flex'; if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{document.getElementById('loadingScreen').style.display='none'; fecharModais(); mostrarToast("Folga Salva!");}).registrarDiaSemTrabalhoPlanilha(JSON.stringify({data:`${p[2]}/${p[1]}/${p[0]}`, motivo:m})); }
+        function buscarHistoricoFolgas() { document.getElementById('loadingFolgas').style.display='block'; document.getElementById('resultadoFolgas').innerHTML=''; if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{ document.getElementById('loadingFolgas').style.display='none'; let d=JSON.parse(r); if(d.length===0) return document.getElementById('resultadoFolgas').innerHTML='Nenhuma folga.'; let html=''; d.forEach(x=>html+=`<p><b>${x.data}</b> - ${x.motivo}</p>`); document.getElementById('resultadoFolgas').innerHTML=html; }).buscarFolgasBackend(document.getElementById('filtroMesFolga').value, document.getElementById('filtroAnoFolga').value); }
+
+        function registrarCombustivel() { let d=document.getElementById('inputDataCombustivel').value; let v=parseDinheiro(document.getElementById('inputValorCombustivel').value); let l=parseFloat(document.getElementById('inputLitrosCombustivel').value); if(!d||v<=0||isNaN(l)) return mostrarAlerta("Preencha corretamente."); let p=d.split("-"); document.getElementById('loadingScreen').style.display='flex'; if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{document.getElementById('loadingScreen').style.display='none'; mostrarToast("Salvo!"); document.getElementById('inputValorCombustivel').value=''; document.getElementById('inputLitrosCombustivel').value=''; carregarHistoricoCombustivel();}).salvarCombustivelPlanilha(JSON.stringify({data:`${p[2]}/${p[1]}/${p[0]}`, valor:v, litros:l})); }
+        function carregarHistoricoCombustivel() { let h=new Date(); document.getElementById('listaCombustivel').innerHTML='<div class="spinner" style="margin:0 auto;"></div>'; if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{ let d=JSON.parse(r); document.getElementById('combResumoGasto').textContent=formatarMoeda(d.totalGasto); document.getElementById('combResumoLitros').textContent=d.totalLitros.toFixed(1)+" L"; let html=''; d.itens.forEach(i=>html+=`<div style="display:flex;justify-content:space-between;padding:10px;background:var(--stat-bg);margin-bottom:8px;border-radius:6px;"><div><b style="color:#ff922b;">${i.data}</b><br><small>${i.litros} L</small></div><b style="color:var(--danger);">${formatarMoeda(i.valor)}</b></div>`); document.getElementById('listaCombustivel').innerHTML=html||'Vazio.'; }).buscarHistoricoCombustivel(("0"+(h.getMonth()+1)).slice(-2), h.getFullYear().toString()); }
+
+        function carregarEspelhoPlanilha() { document.getElementById('loadingEspelho').style.display='block'; document.getElementById('containerTabelaEspelho').style.display='none'; if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{ document.getElementById('loadingEspelho').style.display='none'; document.getElementById('containerTabelaEspelho').style.display='block'; let d=JSON.parse(r); if(d.length===0) return document.getElementById('bodyEspelho').innerHTML='<tr><td>Vazio</td></tr>'; let head='<tr>'; d[0].forEach(c=>head+=`<th>${c}</th>`); head+='</tr>'; document.getElementById('headEspelho').innerHTML=head; let body=''; for(let i=1;i<d.length;i++){ body+='<tr>'; d[i].forEach(c=>body+=`<td>${c!==null?c:''}</td>`); body+='</tr>'; } document.getElementById('bodyEspelho').innerHTML=body; }).buscarDadosEspelhoBackend(document.getElementById('selectAbaEspelho').value); }
+
+        function mudarAbaRanking(a) { abaAtivaRanking=a; document.getElementById('btnAbaTop').style.background=a==='top'?'var(--primary)':'transparent'; document.getElementById('btnAbaRotas').style.background=a==='rotas'?'#ffd43b':'transparent'; document.getElementById('btnGerarRanking').textContent=a==='top'?'Gerar Top Tapiocas':'Gerar Ranking Rotas'; }
+        function gerarRankingAtual() { document.getElementById('loadingRankings').style.display='block'; document.getElementById('resultadoRankings').innerHTML=''; let m=document.getElementById('filtroMesRankings').value; let a=document.getElementById('filtroAnoRankings').value; if(abaAtivaRanking==='top'){ if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{document.getElementById('loadingRankings').style.display='none'; let d=JSON.parse(r); let html=''; d.forEach((i,idx)=>html+=`<div style="background:var(--stat-bg);padding:10px;margin-bottom:8px;border-radius:6px;display:flex;justify-content:space-between;"><div><b>#${idx+1} ${i.produto}</b><br><small>${i.quantidade} un</small></div><b style="color:var(--success);">${formatarMoeda(i.totalArrecadado)}</b></div>`); document.getElementById('resultadoRankings').innerHTML=html||'Sem dados.';}).buscarTopProdutosBackend(m, a); } else { if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{document.getElementById('loadingRankings').style.display='none'; let d=JSON.parse(r); let html=''; d.forEach((i,idx)=>html+=`<div style="background:var(--stat-bg);padding:10px;margin-bottom:8px;border-radius:6px;display:flex;justify-content:space-between;"><div><b>#${idx+1} ${i.rota}</b></div><b style="color:var(--success);">${formatarMoeda(i.total)}</b></div>`); document.getElementById('resultadoRankings').innerHTML=html||'Sem dados.';}).buscarRankingRotasBackend(m, a); } }
+
+        // --- 11. INICIALIZAÇÃO ---
+        function sincronizarContadorGlobal() { let max = 0; historicoNuvem.forEach(p => { if(p.numero > max && (ehHoje(p.timestamp) || ehHoje(p.timestampCriacao))) max = parseInt(p.numero); }); if (max >= contadorPedidos) contadorPedidos = max + 1; }
+        function iniciarSyncEmTempoReal() { if(syncAtivo) clearInterval(syncAtivo); syncAtivo = setInterval(()=>{ if(pausarSync) return; if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{ if(pausarSync) return; let nova = JSON.parse(r)||[]; if(JSON.stringify(historicoNuvem)!==JSON.stringify(nova)) { historicoNuvem=nova; sincronizarContadorGlobal(); atualizarTudo(); } }).carregarDadosNuvem(); }, 3000); }
         function atualizarTudo() { 
-            let qtdHoje = 0; 
-            historicoNuvem.forEach(v => { if(v.timestamp && ehHoje(v.timestamp)) { v.itens.forEach(i => { if(i.tipo === 'tapioca' || i.tipo === 'extra') qtdHoje += i.quantidade; }); } let itensCozinha = v.itens.filter(i => i.tipo !== 'bebida'); if (itensCozinha.length === 0 || itensCozinha.every(i => i.pronto === true)) { v.produzido = true; } }); 
-            document.getElementById('btnTopoTapiocas').textContent = `🌮 ${qtdHoje}`; 
-            
-            let pendentesCozinha = historicoNuvem.filter(p => !p.produzido && (ehHoje(p.timestamp) || ehHoje(p.timestampCriacao))).length;
-            let pendentesCaixa = historicoNuvem.filter(p => !p.timestamp && ehHoje(p.timestampCriacao)).length;
-            
-            document.getElementById('btnTopoProd').innerHTML = pendentesCozinha > 0 ? `👨‍🍳 Prod. <span style="background:var(--danger); color:white; border-radius:10px; padding:2px 6px; font-size:0.75rem;">${pendentesCozinha}</span>` : `👨‍🍳 Prod.`;
-            document.getElementById('btnTopoCaixa').innerHTML = pendentesCaixa > 0 ? `📝 Caixa <span style="background:#f59f00; color:white; border-radius:10px; padding:2px 6px; font-size:0.75rem;">${pendentesCaixa}</span>` : `📝 Caixa`;
-            
+            let qtd=0, pc=0, px=0; 
+            historicoNuvem.forEach(v => { 
+                if(v.timestamp && ehHoje(v.timestamp)) { v.itens.forEach(i => { if(i.tipo==='tapioca'||i.tipo==='extra') qtd+=i.quantidade; }); } 
+                let ic = v.itens.filter(i=>i.tipo!=='bebida'); if(ic.length===0 || ic.every(i=>i.pronto)) v.produzido=true; 
+                if(!v.produzido && (ehHoje(v.timestamp)||ehHoje(v.timestampCriacao))) pc++;
+                if(!v.timestamp && ehHoje(v.timestampCriacao)) px++;
+            }); 
+            document.getElementById('btnTopoTapiocas').textContent = `🌮 ${qtd}`;
+            document.getElementById('btnTopoProd').innerHTML = pc>0 ? `👨‍🍳 Prod. <span style="background:var(--danger);color:white;border-radius:10px;padding:2px 6px;font-size:0.75rem;">${pc}</span>` : `👨‍🍳 Prod.`;
+            document.getElementById('btnTopoCaixa').innerHTML = px>0 ? `📝 Caixa <span style="background:#f59f00;color:white;border-radius:10px;padding:2px 6px;font-size:0.75rem;">${px}</span>` : `📝 Caixa`;
             if(document.getElementById('view-painel').classList.contains('active')) renderizarPainelPedidos(); 
             if(document.getElementById('view-historico').classList.contains('active')) renderizarHistorico(); 
             if(document.getElementById('view-producao').classList.contains('active')) renderizarProducao(); 
@@ -538,18 +774,16 @@
 
         window.onload = function() {
             try {
+                let h=new Date(); let yr=h.getFullYear();
+                if(document.getElementById('filtroAnoRankings')) document.getElementById('filtroAnoRankings').innerHTML = `<option value="${yr}">${yr}</option><option value="${yr-1}">${yr-1}</option>`;
+                if(document.getElementById('filtroAnoFolga')) document.getElementById('filtroAnoFolga').innerHTML = `<option value="${yr}">${yr}</option>`;
                 if(typeof google !== 'undefined') {
-                    google.script.run.withSuccessHandler(function(resposta) {
-                        try { historicoNuvem = JSON.parse(resposta) || []; } catch(e) { historicoNuvem = []; }
-                        document.getElementById('loadingScreen').style.display = 'none';
-                        atualizarTudo(); iniciarSyncEmTempoReal(); 
-                    }).withFailureHandler(function(erro) {
-                        document.getElementById('loadingText').innerHTML = "Falha de Conexão.<br><small>" + erro.message + "</small>";
-                    }).carregarDadosNuvem();
-                } else { 
-                    document.getElementById('loadingScreen').style.display = 'none'; atualizarTudo(); 
-                }
-            } catch (fatalError) { console.error(fatalError); }
+                    google.script.run.withSuccessHandler(r=>{
+                        try { historicoNuvem = JSON.parse(r) || []; } catch(e) { historicoNuvem = []; }
+                        document.getElementById('loadingScreen').style.display='none'; atualizarTudo(); iniciarSyncEmTempoReal(); 
+                    }).withFailureHandler(e=>{ document.getElementById('loadingText').innerHTML = "Falha de Conexão.<br><small>"+e.message+"</small>"; }).carregarDadosNuvem();
+                } else { document.getElementById('loadingScreen').style.display='none'; atualizarTudo(); }
+            } catch (e) { console.error(e); }
         };
     </script>
 </body>
