@@ -19,7 +19,6 @@
             --radius-default: 12px;
         }
 
-        /* Estrutura base da página */
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         header { background: var(--panel-bg); display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 2px solid var(--border); flex-shrink: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
         .menu-btn { background: none; border: none; color: var(--primary); font-size: 1.8rem; cursor: pointer; padding: 0 10px 0 0; }
@@ -31,14 +30,9 @@
         .btn-top.btn-tapioca { border-color: var(--primary); color: var(--primary); }
         .btn-top.btn-tapioca.active-nav { color: white; border-color: var(--success); }
 
-        @keyframes piscarVerde {
-            0% { background-color: var(--stat-bg); border-color: var(--border); color: var(--text); }
-            50% { background-color: var(--success); border-color: var(--success); color: white; box-shadow: 0 0 15px rgba(64, 192, 87, 0.6); transform: scale(1.05); }
-            100% { background-color: var(--stat-bg); border-color: var(--border); color: var(--text); }
-        }
+        @keyframes piscarVerde { 0% { background-color: var(--stat-bg); border-color: var(--border); color: var(--text); } 50% { background-color: var(--success); border-color: var(--success); color: white; box-shadow: 0 0 15px rgba(64, 192, 87, 0.6); transform: scale(1.05); } 100% { background-color: var(--stat-bg); border-color: var(--border); color: var(--text); } }
         .piscar-alerta { animation: piscarVerde 1.2s infinite !important; }
 
-        /* Sidebar e Modais */
         .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(3px); z-index: 2000; }
         .sidebar { position: fixed; top: 0; left: -280px; width: 260px; height: 100%; background: var(--panel-bg); z-index: 2001; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 2px 0 15px rgba(0,0,0,0.8); padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 15px; overflow-y: auto;}
         .sidebar.open { left: 0; }
@@ -80,11 +74,17 @@
         .item-producao { background: var(--stat-bg); padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border);}
         .btn-check-item { background: var(--success); color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s;}
         
-        /* NOVO: Modal de Carregamento 0-100% */
+        /* Modal de Carregamento 0-100% */
         #loadingScreen { display: flex; flex-direction: column; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18,18,18,0.95); backdrop-filter: blur(5px); z-index: 9999; justify-content: center; align-items: center; color: var(--primary); }
         .spinner { border: 5px solid var(--border); border-top: 5px solid var(--primary); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 10px;}
         .progress-bar-container { width: 80%; max-width: 300px; background: var(--border); border-radius: 10px; height: 10px; overflow: hidden; margin-top: 15px;}
         .progress-bar-fill { height: 100%; background: var(--success); width: 0%; transition: width 0.3s ease; }
+        
+        /* Toast de Lançamento Cozinha */
+        .toast-lancamento { display:none; position: fixed; top: 20px; right: 20px; background: #fff; color: #121212; padding: 15px; border-radius: 8px; border-left: 5px solid var(--primary); box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 10000; width: 220px; }
+        .toast-bar-container { width: 100%; height: 4px; background: #e0e0e0; border-radius: 2px; overflow: hidden; position: relative; margin-top: 8px;}
+        .toast-bar { width: 50%; height: 100%; background: var(--primary); position: absolute; left: 0; animation: bounceBar 1s infinite alternate ease-in-out; }
+        @keyframes bounceBar { 0% { left: -10%; } 100% { left: 60%; } }
         
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -102,6 +102,7 @@
         .tabela-espelho th { background: var(--stat-bg); padding: 12px; color: #20c997; border-bottom: 2px solid var(--border); border-right: 1px solid var(--border); position: sticky; top: 0; }
         .tabela-espelho td { padding: 10px; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
         
+        @media print { body * { visibility: hidden; } #areaPrintRelatorio, #areaPrintRelatorio * { visibility: visible; } #areaPrintRelatorio { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; background: white; color: black; padding: 20px; box-sizing: border-box; z-index: 99999; } .modal-overlay { background: none; position: static; display: block !important; } .modal-content { box-shadow: none; border: none; padding: 0; background: transparent; } .btn-acao, .nav-voltar { display: none !important; } }
     </style>
 </head>
 <body>
@@ -112,10 +113,15 @@
         <div class="progress-bar-container">
             <div id="loadingProgress" class="progress-bar-fill"></div>
         </div>
-        <button id="btnFecharLoading" class="btn-acao btn-limpar" style="display:none; max-width: 200px;" onclick="fecharLoading()">Forçar Fechamento</button>
+        <button id="btnFecharLoading" class="btn-acao btn-limpar" style="display:none; max-width: 250px;" onclick="forcarRetornoTelaInicial()">Forçar Fechamento / Voltar</button>
     </div>
 
     <div id="toast-container"></div> 
+    
+    <div id="toast-lancamento" class="toast-lancamento">
+        <div style="display: flex; align-items: center; gap: 8px;"><span>👨‍🍳</span> Lançando Cozinha...</div>
+        <div class="toast-bar-container"><div class="toast-bar"></div></div>
+    </div>
 
     <div id="modalAlerta" class="modal-overlay" style="z-index: 4000;">
         <div class="modal-content" style="max-width: 350px; text-align: center; border-top: 5px solid var(--primary);">
@@ -136,6 +142,15 @@
                 <button id="btnCancelarConfirm" class="btn-acao btn-limpar" style="margin: 0;">Cancelar</button>
                 <button id="btnOkConfirm" class="btn-acao" style="background: var(--edit);">Sim, Confirmar</button>
             </div>
+        </div>
+    </div>
+
+    <div id="modalErroCritico" class="modal-overlay" style="z-index: 5000;">
+        <div class="modal-content" style="max-width: 380px; text-align: center; border-top: 5px solid var(--danger);">
+            <div style="font-size: 3rem; margin-bottom: 10px;">❌</div>
+            <h3 style="margin-top: 0;">Falha de Comunicação</h3>
+            <p id="textoErroCritico" style="font-size: 1rem; margin-bottom: 25px; color: var(--text-muted);">Não foi possível carregar as informações. Verifique sua internet.</p>
+            <button class="btn-acao" style="background: var(--danger);" onclick="forcarRetornoTelaInicial()">Forçar Fechamento / Voltar</button>
         </div>
     </div>
 
@@ -162,7 +177,7 @@
         <div class="menu-grupo">
             <button class="btn-categoria" onclick="toggleSubmenu('sub-planilhas')">📑 Planilhas ▼</button>
             <div id="sub-planilhas" class="submenu">
-                <button onclick="window.open('https://docs.google.com/spreadsheets/d/16LojKYyWZOXWeXA72hC44SQ35uC7lxR2rpUGldhHj5w/edit?gid=119374938#gid=119374938', '_blank');">📈 Planilha Real</button>
+                <button onclick="window.open('https://docs.google.com/spreadsheets/d/16LojKYyWZOXWeXA72hC44SQ35uC7lxR2rpUGldhHj5w/edit?gid=1361897027#gid=1361897027', '_blank');">📈 Planilha Real</button>
                 <button onclick="abrirRestrito('espelho')">🪞 Planilha (App)</button>
             </div>
         </div>
@@ -398,7 +413,7 @@
                     <p style="display: flex; justify-content: space-between;">Lucro (90%): <span><strong id="liqLucas">R$ ****</strong> <span id="icon-liqLucas" style="cursor:pointer;" onclick="toggleVis('liqLucas')">👁️</span></span></p>
                     <p style="display: flex; justify-content: space-between;">Lucro (10%): <span><strong id="liqEliel">R$ ****</strong> <span id="icon-liqEliel" style="cursor:pointer;" onclick="toggleVis('liqEliel')">👁️</span></span></p>
                 </div>
-                <button class="btn-acao btn-limpar" onclick="fecharModais()">Fechar</button>
+                <button class="btn-acao btn-limpar" onclick="fecharModais()">Fechar Janela</button>
             </div>
         </div>
     </div>
@@ -414,7 +429,7 @@
                 <hr style="border-color: var(--border);">
                 <p style="font-size: 1.1rem;">Garantido Agora: <strong id="estLucasAtual" style="color:var(--success);"></strong></p>
                 <p style="font-size: 1.2rem;">Projeção Fim do Mês: <strong id="estLucasProjetado" style="color:var(--edit);"></strong></p>
-                <button class="btn-acao btn-limpar" onclick="fecharModais()">Fechar</button>
+                <button class="btn-acao btn-limpar" onclick="fecharModais()">Fechar Janela</button>
             </div>
         </div>
     </div>
@@ -441,7 +456,7 @@
                 <button class="btn-acao" style="background: var(--stat-bg); border: 1px solid var(--border); color: var(--text);" onclick="buscarHistoricoFolgas()">Buscar Histórico</button>
                 <div id="resultadoFolgas" style="margin-top: 10px; background: var(--stat-bg); border-radius: 6px; padding: 10px;"></div>
             </div>
-            <button class="btn-acao btn-limpar" onclick="fecharModais()">Fechar</button>
+            <button class="btn-acao btn-limpar" onclick="fecharModais()">Fechar Janela</button>
         </div>
     </div>
 
@@ -480,9 +495,9 @@
             funcoes.forEach(funcName => {
                 runner[funcName] = function(...args) {
                     
-                    // Adicionando um controlador de Tempo limite (Timeout)
+                    // Controlador de Tempo limite (Timeout de 15 Segundos máximo)
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 Segundos máximo
+                    const timeoutId = setTimeout(() => controller.abort(), 15000); 
 
                     fetch(API_URL, {
                         method: 'POST', mode: 'cors',
@@ -492,27 +507,29 @@
                     })
                     .then(async response => {
                         clearTimeout(timeoutId);
-                        let text = await response.text(); // Pega a resposta pura primeiro
+                        let text = await response.text(); 
                         try {
-                            // Tenta ler como JSON estruturado
                             let result = JSON.parse(text);
                             if (result && result.status) {
                                 if (result.status === 'success' && handler.success) { handler.success(result.data); } 
                                 else if (result.status === 'error' && handler.failure) { handler.failure(new Error(result.message)); }
                             } else {
-                                // Se for um JSON mas sem estrutura status/data, devolve ele puro
                                 if (handler.success) handler.success(result);
                             }
                         } catch(e) {
-                            // SE CAIR AQUI: A resposta foi texto puro (ex: "OK") que não é JSON. Isso resolve o seu erro!
+                            // Se a resposta for um texto puro (como "OK"), ele aceita sem quebrar!
                             if (handler.success) handler.success(text);
                         }
                     })
                     .catch(err => { 
                         clearTimeout(timeoutId);
                         let msgErro = err.name === 'AbortError' ? "Tempo de conexão esgotado (Internet Lenta)." : err.message;
-                        if (handler.failure) handler.failure(new Error(msgErro)); 
-                        else console.error("Falha API:", msgErro); 
+                        if (handler.failure) {
+                            handler.failure(new Error(msgErro)); 
+                        } else {
+                            console.error("Falha API:", msgErro); 
+                            mostrarErroCritico(msgErro);
+                        }
                     });
                 };
             });
@@ -522,8 +539,8 @@
 
         // --- B. VARIÁVEIS GLOBAIS E BANCO DE DADOS ---
         let historicoNuvem = []; let carrinho = []; let contadorPedidos = 1; let pedidoEmEdicao = null; let pedidoAguardandoPagamento = null; 
-        let abaAtivaCatalogo = null; let baseSelecionadaMonte = null; let syncAtivo = null; let ultimoQtdHojeEnviado = -1;
-        let itensIndisponiveis = []; let termoPesquisa = ""; let pausarSync = false; 
+        let abaAtivaCatalogo = null; let baseSelecionadaMonte = null; let syncAtivo = null; 
+        let termoPesquisa = ""; let pausarSync = false; let timestampUltimaAcao = 0; // Trava contra lentidão
 
         const bdCatalogo = {
             salgadas: [ 
@@ -598,12 +615,16 @@
         const formatarMoeda = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         const ehHoje = (t) => { if(!t) return false; let d = new Date(t), h = new Date(); return d.getDate()===h.getDate() && d.getMonth()===h.getMonth() && d.getFullYear()===h.getFullYear(); };
         
-        // Tratamento numérico blindado para o botão Dinheiro
+        // Função utilitária para garantir que o retorno não quebre (parseSafe)
+        function parseSafe(data) { return typeof data === 'string' ? JSON.parse(data) : data; }
+        
+        // Tratamento numérico para o botão Dinheiro (Remove a formatação e converte limpo)
         function parseDinheiro(val) { 
             if (!val) return 0; 
             let clean = String(val).replace(/\./g, '').replace(',', '.'); 
             return parseFloat(clean) || 0; 
         }
+        
         function maskCurrency(e) { 
             let v = e.target.value.replace(/\D/g, ''); 
             if(v===''){e.target.value=''; if(e.target.id==='inputValorRecebido') calcularTroco(); return;} 
@@ -627,29 +648,44 @@
                 document.getElementById('loadingProgress').style.width = p + '%';
             }, 300);
             
-            // Se travar por 8 segundos, o botão de forçar fechamento aparece
+            // Se a internet demorar mais de 8s, ele libera o botão para cancelar
             setTimeout(() => { document.getElementById('btnFecharLoading').style.display='block'; }, 8000); 
         }
+        
         function hideLoading() {
             if(simInterval) clearInterval(simInterval);
             document.getElementById('loadingPercent').innerText = '100%';
             document.getElementById('loadingProgress').style.width = '100%';
             setTimeout(() => { document.getElementById('loadingScreen').style.display='none'; }, 300);
         }
-        function fecharLoading() { hideLoading(); }
+        
+        function forcarRetornoTelaInicial() { 
+            hideLoading(); 
+            fecharModais(); 
+            mudarTela('view-catalogo'); 
+        }
+
+        function mostrarErroCritico(msg) {
+            hideLoading();
+            document.getElementById('textoErroCritico').innerText = msg;
+            document.getElementById('modalErroCritico').style.display = 'flex';
+        }
 
         function mostrarToast(m) { let c = document.getElementById('toast-container'); let t = document.createElement('div'); t.className='toast'; t.innerHTML=m; c.appendChild(t); setTimeout(()=>{ t.style.animation='fadeOut 0.3s forwards'; setTimeout(()=>t.remove(),300);},2000); }
         function fecharModais() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display='none'); pedidoAguardandoPagamento=null; }
         function mostrarAlerta(m, cb) { document.getElementById('textoAlerta').innerHTML=m; document.getElementById('modalAlerta').style.display='flex'; document.getElementById('btnOkAlerta').onclick = function(){ document.getElementById('modalAlerta').style.display='none'; if(cb) cb();}; }
         function mostrarConfirmacao(m, cbSim) { document.getElementById('textoConfirm').innerHTML=m; document.getElementById('modalConfirm').style.display='flex'; document.getElementById('btnCancelarConfirm').onclick=()=>document.getElementById('modalConfirm').style.display='none'; document.getElementById('btnOkConfirm').onclick=()=>{ document.getElementById('modalConfirm').style.display='none'; if(cbSim) cbSim(); }; }
-        function travarSyncTemporariamente() { pausarSync = true; setTimeout(() => { pausarSync = false; }, 4000); }
+        
+        // Bloqueia a consulta da nuvem por 12 segundos após você executar uma ação. Deixa rápido!
+        function travarSyncTemporariamente() { 
+            timestampUltimaAcao = Date.now(); 
+        }
 
-        // --- D. NAVEGAÇÃO E ACESSO RÁPIDO (SEM SENHA) ---
+        // --- D. NAVEGAÇÃO E ACESSO RÁPIDO ---
         function abrirMenuLateral() { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebarOverlay').style.display='block'; }
         function fecharMenuLateral() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').style.display='none'; }
         function toggleSubmenu(id) { const s = document.getElementById(id); s.style.display = s.style.display === "flex" ? "none" : "flex"; }
         
-        // Acesso liberado!
         function abrirRestrito(acao) {
             fecharMenuLateral();
             if(acao === 'espelho') mudarTela('view-espelho');
@@ -753,8 +789,14 @@
             if (carrinho.length === 0) return alert("Carrinho vazio!");
             let audioCampainha = document.getElementById('somCampainha'); if(audioCampainha) audioCampainha.play().catch(e=>console.log(e));
             
+            // Exibe o Toast de Lançamento
+            document.getElementById('toast-lancamento').style.display = 'block';
+            setTimeout(() => { document.getElementById('toast-lancamento').style.display = 'none'; }, 2500);
+
             const total = carrinho.reduce((acc, item) => acc + (item.preco * item.quantidade), 0);
             const isPronto = carrinho.every(item => item.pronto === true);
+
+            travarSyncTemporariamente(); // Bloqueia leitura pra não ficar lento ou sumir
 
             if (pedidoEmEdicao !== null) {
                 const i = historicoNuvem.findIndex(p => p.numero == pedidoEmEdicao);
@@ -773,11 +815,42 @@
         }
 
         function carregarParaEdicao(num) { const p = historicoNuvem.find(x => x.numero == num); if(!p) return; carrinho = JSON.parse(JSON.stringify(p.itens)); pedidoEmEdicao = num; document.getElementById('tituloCarrinho').textContent = `✏️ Editando #${num}`; document.getElementById('btnLancar').textContent = 'Salvar'; mudarTela('view-catalogo'); atualizarCarrinho(); }
-        function cancelarPedido(num) { mostrarConfirmacao("Deseja CANCELAR o pedido #" + num + "?", function() { travarSyncTemporariamente(); const i = historicoNuvem.findIndex(p => p.numero == num); if(i !== -1) { const p = historicoNuvem[i]; p.status = "Cancelado"; historicoNuvem.splice(i, 1); atualizarTudo(); if(typeof google !== 'undefined') { google.script.run.moverParaCancelados(JSON.stringify(p)); google.script.run.excluirVendaRealTime(p.numero); google.script.run.removerDaBaseDeVendasBackend(p.numero); } } }); }
-        function reabrirPedido(num) { mostrarConfirmacao("Deseja ESTORNAR o pedido #" + num + "?", function() { travarSyncTemporariamente(); const i = historicoNuvem.findIndex(p => p.numero == num); if(i !== -1) { const p = historicoNuvem[i]; delete p.timestamp; delete p.formaPagamento; atualizarTudo(); if(typeof google !== 'undefined') { google.script.run.reabrirPedidoBackend(JSON.stringify(p)); google.script.run.atualizarVendaRealTime(JSON.stringify(p)); } mudarTela('view-painel'); } }); }
+        
+        function cancelarPedido(num) { 
+            mostrarConfirmacao("Deseja CANCELAR o pedido #" + num + "?", function() { 
+                travarSyncTemporariamente(); 
+                const i = historicoNuvem.findIndex(p => p.numero == num); 
+                if(i !== -1) { 
+                    const p = historicoNuvem[i]; p.status = "Cancelado"; historicoNuvem.splice(i, 1); 
+                    atualizarTudo(); 
+                    if(typeof google !== 'undefined') { 
+                        google.script.run.moverParaCancelados(JSON.stringify(p)); 
+                        google.script.run.excluirVendaRealTime(p.numero); 
+                        google.script.run.removerDaBaseDeVendasBackend(p.numero); 
+                    } 
+                } 
+            }); 
+        }
+        
+        function reabrirPedido(num) { 
+            mostrarConfirmacao("Deseja ESTORNAR o pedido #" + num + "?", function() { 
+                travarSyncTemporariamente(); 
+                const i = historicoNuvem.findIndex(p => p.numero == num); 
+                if(i !== -1) { 
+                    const p = historicoNuvem[i]; delete p.timestamp; delete p.formaPagamento; 
+                    atualizarTudo(); 
+                    if(typeof google !== 'undefined') { 
+                        google.script.run.reabrirPedidoBackend(JSON.stringify(p)); 
+                        google.script.run.atualizarVendaRealTime(JSON.stringify(p)); 
+                    } 
+                    mudarTela('view-painel'); 
+                } 
+            }); 
+        }
 
         function abrirModalPagamento(num) { pedidoAguardandoPagamento = num; document.getElementById('numeroPedidoPagamento').textContent = num; document.getElementById('modalPagamento').style.display = 'flex'; }
         
+        // CÁLCULO E PAGAMENTO DE DINHEIRO BLINDADO
         function processarPagamento(f) { 
             const p = historicoNuvem.find(x => x.numero == pedidoAguardandoPagamento); 
             if(!p) return; 
@@ -797,6 +870,7 @@
         function preencherValorExato() { 
             const p = historicoNuvem.find(x => x.numero == pedidoAguardandoPagamento); 
             if(!p) return; 
+            // Preenche o input sem a formatação pesada, assim o cálculo entende perfeitamente
             document.getElementById('inputValorRecebido').value = p.total.toFixed(2).replace('.',','); 
             calcularTroco(); 
         }
@@ -804,14 +878,24 @@
         function calcularTroco() { 
             const p = historicoNuvem.find(x => x.numero == pedidoAguardandoPagamento); 
             if(!p) return; 
-            let r = parseDinheiro(document.getElementById('inputValorRecebido').value); 
+            
+            // Lógica blindada: Remove todos os pontos e vírgulas falsas antes de analisar o número
+            let valStr = document.getElementById('inputValorRecebido').value.replace(/\./g, '').replace(',', '.');
+            let r = parseFloat(valStr) || 0; 
+            
             let t = r - p.total; 
             let span = document.getElementById('valorDoTroco'); 
             let btn = document.getElementById('btnConfirmarDinheiro'); 
             
-            if(r===0){span.textContent='R$ 0,00'; btn.disabled=true; return;} 
-            if(t>=0){span.textContent=formatarMoeda(t); btn.disabled=false;}
-            else{span.textContent="Faltam "+formatarMoeda(Math.abs(t)); btn.disabled=true;} 
+            if(r === 0) { span.textContent='R$ 0,00'; btn.disabled=true; return; } 
+            
+            if(t >= -0.01) { // -0.01 é uma pequena margem de erro invisível do Javascript
+                span.textContent = formatarMoeda(t); 
+                btn.disabled = false;
+            } else { 
+                span.textContent = "Faltam " + formatarMoeda(Math.abs(t)); 
+                btn.disabled = true;
+            } 
         }
         
         function finalizarVenda(f) {
@@ -820,12 +904,14 @@
             if (i === -1) return;
             
             let audioCaixa = document.getElementById('somCaixa'); if(audioCaixa) audioCaixa.play().catch(e=>console.log(e));
+            
             const p = historicoNuvem[i]; 
             p.formaPagamento = f; p.timestamp = new Date().getTime(); p.dataExibicao = new Date().toLocaleString('pt-BR');
-            fecharModais(); atualizarTudo();
+            fecharModais(); 
+            atualizarTudo(); // Atualiza a tela imediatamente (Optimistic UI)
             
             if(typeof google !== 'undefined') { 
-                google.script.run.moverParaHistorico(JSON.stringify(p)); 
+                google.script.run.withFailureHandler(e => mostrarErroCritico("Aviso: Falha ao salvar no histórico. "+e.message)).moverParaHistorico(JSON.stringify(p)); 
                 google.script.run.atualizarVendaRealTime(JSON.stringify(p)); 
                 google.script.run.removerDaBaseDeVendasBackend(p.numero); 
             }
@@ -834,7 +920,7 @@
             setTimeout(() => { document.getElementById('avisoPagamento').style.display = 'none'; }, 3000);
         }
 
-        // --- G. FUNÇÕES DE RENDERIZAÇÃO DAS TELAS PRINCIPAIS ---
+        // --- G. RENDERIZAÇÃO DAS TELAS ---
         function renderizarProducao() { 
             const lista = document.getElementById('listaProducao'); lista.innerHTML = ''; 
             let fila = historicoNuvem.filter(p => !p.produzido && (ehHoje(p.timestamp) || ehHoje(p.timestampCriacao))); 
@@ -843,34 +929,28 @@
             
             fila.forEach(pedido => { 
                 let html = ''; 
-                // Usando for normal para garantir o index verdadeiro do item na matriz original (isso corrige o botão Concluir)
-                for(let idx = 0; idx < pedido.itens.length; idx++) {
+                // Laço for tradicional garante a preservação do índice correto da nuvem, resolvendo o "fantasma"
+                for (let idx = 0; idx < pedido.itens.length; idx++) {
                     let item = pedido.itens[idx];
                     if(item.tipo === 'bebida' || item.pronto) continue; 
-                    
                     let ing = item.ing ? `<span style="display:block;font-size:0.8rem;color:var(--success);">${item.ing}</span>` : ''; 
                     let obs = item.obs ? `<span style="display:block;font-size:0.85rem;color:#ffc107;">OBS: ${item.obs}</span>` : ''; 
                     html += `<div class="item-producao"><div><strong>${item.quantidade}x ${item.nome}</strong>${ing}${obs}</div><button class="btn-check-item" onclick="marcarItemPronto('${pedido.numero}', ${idx})">✅ Concluir</button></div>`; 
                 }
-                
                 if(html) { lista.innerHTML += `<div class="card-producao"><h3>Pedido #${pedido.numero}</h3>${html}</div>`; } 
                 else { pedido.produzido=true; } 
             }); 
         }
 
         function marcarItemPronto(num, idxOriginal) { 
-            try {
-                travarSyncTemporariamente(); 
-                let p = historicoNuvem.find(x => x.numero == num); 
-                if(p && p.itens[idxOriginal]) { 
-                    p.itens[idxOriginal].pronto = true; 
-                    p.produzido = p.itens.filter(i => i.tipo !== 'bebida').every(i => i.pronto === true); 
-                    if(typeof google !== 'undefined') google.script.run.atualizarVendaRealTime(JSON.stringify(p)); 
-                    atualizarTudo(); 
-                }
-            } catch (e) {
-                mostrarAlerta("Erro ao concluir: " + e.message);
-            }
+            travarSyncTemporariamente(); 
+            let p = historicoNuvem.find(x => x.numero == num); 
+            if(p && p.itens[idxOriginal]) { 
+                p.itens[idxOriginal].pronto = true; 
+                p.produzido = p.itens.filter(i => i.tipo !== 'bebida').every(i => i.pronto === true); 
+                if(typeof google !== 'undefined') google.script.run.atualizarVendaRealTime(JSON.stringify(p)); 
+                atualizarTudo(); 
+            } 
         }
         
         function renderizarPainelPedidos() { 
@@ -915,41 +995,39 @@
 
         function baixarPrintFechamento() { 
             const botoes = document.getElementById('botoesRelatorio');
-            botoes.style.display = 'none'; // Esconde os botões para o print
+            botoes.style.display = 'none'; // Esconde para o print
             
-            html2canvas(document.getElementById('areaPrintRelatorio'), {scale:2, backgroundColor:"#1e1e1e"}).then(c=>{ 
-                let l=document.createElement('a'); 
-                l.download=`Fechamento_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.png`; 
-                l.href=c.toDataURL('image/png'); l.click(); 
-                
-                botoes.style.display = 'flex'; // Volta a exibir os botões
-            }).catch(e => {
-                botoes.style.display = 'flex';
-                mostrarAlerta("Erro ao salvar print.");
-            }); 
+            // Timeout de 100ms garante que os botões tenham sumido de fato
+            setTimeout(() => {
+                html2canvas(document.getElementById('areaPrintRelatorio'), {scale:2, backgroundColor:"#1e1e1e"}).then(c=>{ 
+                    let l=document.createElement('a'); 
+                    l.download=`Fechamento_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.png`; 
+                    l.href=c.toDataURL('image/png'); l.click(); 
+                    botoes.style.display = 'flex'; // Volta a exibir
+                }).catch(e => {
+                    botoes.style.display = 'flex';
+                    mostrarAlerta("Erro ao salvar print.");
+                }); 
+            }, 100);
         }
 
         function registrarFechamentoDia() { 
             let q=parseInt(document.getElementById('relQtdTapiocas').textContent)||0; 
             let res={data:new Date().toLocaleDateString('pt-BR'), total:document.getElementById('relFaturamento').textContent, dinheiro:document.getElementById('relDin').textContent, pix:document.getElementById('relPix').textContent, credito:document.getElementById('relCred').textContent, debito:document.getElementById('relDeb').textContent, vr:document.getElementById('relVR').textContent, qtdTapiocas:q}; 
+            
             showLoading("Registrando na Planilha..."); 
             if(typeof google !== 'undefined') { 
-                google.script.run.withSuccessHandler(r=>{ 
+                google.script.run.withSuccessHandler(r => { 
                     hideLoading(); 
-                    if(r==="OK"){ 
+                    if(r === "OK" || r.includes("OK") || r.includes("sucesso")){ 
                         historicoNuvem=[]; carrinho=[]; google.script.run.salvarNuvemCompleta("[]"); 
                         atualizarTudo(); fecharModais(); mostrarAlerta("✅ Fechamento salvo!"); 
-                    }else{ 
-                        // Tratamento a prova de falhas caso ele devolva OK sem formato de erro do google
-                        if(r.includes("OK") || r.includes("sucesso")) {
-                           historicoNuvem=[]; carrinho=[]; google.script.run.salvarNuvemCompleta("[]"); 
-                           atualizarTudo(); fecharModais(); mostrarAlerta("✅ Fechamento salvo!"); 
-                        } else {
-                           mostrarAlerta("Resposta inesperada do Servidor: "+r); 
-                        }
+                    } else { 
+                        mostrarAlerta("Aviso do servidor: "+r); 
                     } 
-                }).withFailureHandler(e=>{
-                    hideLoading(); mostrarAlerta("Erro: " + e.message);
+                }).withFailureHandler(e => {
+                    hideLoading();
+                    mostrarErroCritico("Erro ao salvar fechamento: " + e.message);
                 }).salvarFechamentoDiaPlanilha(JSON.stringify(res)); 
             } 
         }
@@ -966,11 +1044,14 @@
                 google.script.run.withSuccessHandler(r=>{ 
                     hideLoading();
                     try {
-                        let d=JSON.parse(r); fatMesG=d.total; combMesG=d.combustivel; document.getElementById('liqQtdTapiocasTxt').textContent=(d.qtdTapiocas||0)+" un"; recalcularLiquidez(); document.getElementById('conteudoLiquidez').style.display='block';
+                        let d = parseSafe(r); 
+                        fatMesG=d.total; combMesG=d.combustivel; document.getElementById('liqQtdTapiocasTxt').textContent=(d.qtdTapiocas||0)+" un"; 
+                        recalcularLiquidez(); 
+                        document.getElementById('conteudoLiquidez').style.display='block';
                     } catch(e) {
                         mostrarAlerta("Erro ao interpretar dados do mês.");
                     }
-                }).withFailureHandler(e=>{hideLoading(); mostrarAlerta("Erro ao carregar liquidez.");}).obterResumoMesPlanilha(); 
+                }).withFailureHandler(e=>{ hideLoading(); mostrarAlerta("Erro ao carregar liquidez."); }).obterResumoMesPlanilha(); 
             } 
         }
         
@@ -997,7 +1078,8 @@
                 google.script.run.withSuccessHandler(r=>{ 
                     hideLoading();
                     try {
-                        let d=JSON.parse(r); document.getElementById('conteudoEstimativa').style.display='block'; document.getElementById('estMes').textContent=d.mes; document.getElementById('estTotalDias').textContent=d.diasUteisTotal; document.getElementById('estPassados').textContent=d.diasUteisPassados; document.getElementById('estRestantes').textContent=d.diasUteisRestantes; document.getElementById('estMedia').textContent=formatarMoeda(d.mediaDiaria); document.getElementById('estLucasAtual').textContent=formatarMoeda(d.lucasAtual); document.getElementById('estLucasProjetado').textContent=formatarMoeda(d.lucasProjetado); 
+                        let d = parseSafe(r); 
+                        document.getElementById('conteudoEstimativa').style.display='block'; document.getElementById('estMes').textContent=d.mes; document.getElementById('estTotalDias').textContent=d.diasUteisTotal; document.getElementById('estPassados').textContent=d.diasUteisPassados; document.getElementById('estRestantes').textContent=d.diasUteisRestantes; document.getElementById('estMedia').textContent=formatarMoeda(d.mediaDiaria); document.getElementById('estLucasAtual').textContent=formatarMoeda(d.lucasAtual); document.getElementById('estLucasProjetado').textContent=formatarMoeda(d.lucasProjetado); 
                     } catch(e) { mostrarAlerta("Erro ao gerar projeção."); }
                 }).withFailureHandler(e=>{ hideLoading(); mostrarAlerta("Falha: " + e.message);}).calcularEstimativaSalarioLucas(); 
             }
@@ -1030,7 +1112,7 @@
                 google.script.run.withSuccessHandler(r=>{ 
                     hideLoading(); 
                     try {
-                        let d=JSON.parse(r); 
+                        let d = parseSafe(r); 
                         if(d.length===0) return document.getElementById('resultadoFolgas').innerHTML='Nenhuma folga.'; 
                         let html=''; d.forEach(x=>html+=`<p><b>${x.data}</b> - ${x.motivo}</p>`); document.getElementById('resultadoFolgas').innerHTML=html; 
                     } catch(e) {
@@ -1041,9 +1123,28 @@
         }
 
         function registrarCombustivel() { let d=document.getElementById('inputDataCombustivel').value; let v=parseDinheiro(document.getElementById('inputValorCombustivel').value); let l=parseFloat(document.getElementById('inputLitrosCombustivel').value); if(!d||v<=0||isNaN(l)) return mostrarAlerta("Preencha corretamente."); let p=d.split("-"); showLoading("Registrando..."); if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{hideLoading(); mostrarToast("Salvo!"); document.getElementById('inputValorCombustivel').value=''; document.getElementById('inputLitrosCombustivel').value=''; carregarHistoricoCombustivel();}).withFailureHandler(e=>{hideLoading(); mostrarAlerta("Erro: " + e.message);}).salvarCombustivelPlanilha(JSON.stringify({data:`${p[2]}/${p[1]}/${p[0]}`, valor:v, litros:l})); }
-        function carregarHistoricoCombustivel() { let h=new Date(); document.getElementById('listaCombustivel').innerHTML='<p>Carregando...</p>'; if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{ try{let d=JSON.parse(r); document.getElementById('combResumoGasto').textContent=formatarMoeda(d.totalGasto); document.getElementById('combResumoLitros').textContent=d.totalLitros.toFixed(1)+" L"; let html=''; d.itens.forEach(i=>html+=`<div style="display:flex;justify-content:space-between;padding:10px;background:var(--stat-bg);margin-bottom:8px;border-radius:6px;"><div><b style="color:#ff922b;">${i.data}</b><br><small>${i.litros} L</small></div><b style="color:var(--danger);">${formatarMoeda(i.valor)}</b></div>`); document.getElementById('listaCombustivel').innerHTML=html||'Vazio.';}catch(e){document.getElementById('listaCombustivel').innerHTML='Erro.';} }).buscarHistoricoCombustivel(("0"+(h.getMonth()+1)).slice(-2), h.getFullYear().toString()); }
+        
+        function carregarHistoricoCombustivel() { 
+            let h=new Date(); document.getElementById('listaCombustivel').innerHTML='<p>Carregando...</p>'; 
+            if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{ 
+                try{
+                    let d = parseSafe(r); 
+                    document.getElementById('combResumoGasto').textContent=formatarMoeda(d.totalGasto); document.getElementById('combResumoLitros').textContent=d.totalLitros.toFixed(1)+" L"; 
+                    let html=''; d.itens.forEach(i=>html+=`<div style="display:flex;justify-content:space-between;padding:10px;background:var(--stat-bg);margin-bottom:8px;border-radius:6px;"><div><b style="color:#ff922b;">${i.data}</b><br><small>${i.litros} L</small></div><b style="color:var(--danger);">${formatarMoeda(i.valor)}</b></div>`); document.getElementById('listaCombustivel').innerHTML=html||'Vazio.';
+                }catch(e){document.getElementById('listaCombustivel').innerHTML='Erro.';} 
+            }).buscarHistoricoCombustivel(("0"+(h.getMonth()+1)).slice(-2), h.getFullYear().toString()); 
+        }
 
-        function carregarEspelhoPlanilha() { showLoading("Puxando Tabela..."); document.getElementById('containerTabelaEspelho').style.display='none'; if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{ hideLoading(); document.getElementById('containerTabelaEspelho').style.display='block'; try {let d=JSON.parse(r); if(d.length===0) return document.getElementById('bodyEspelho').innerHTML='<tr><td>Vazio</td></tr>'; let head='<tr>'; d[0].forEach(c=>head+=`<th>${c}</th>`); head+='</tr>'; document.getElementById('headEspelho').innerHTML=head; let body=''; for(let i=1;i<d.length;i++){ body+='<tr>'; d[i].forEach(c=>body+=`<td>${c!==null?c:''}</td>`); body+='</tr>'; } document.getElementById('bodyEspelho').innerHTML=body; } catch(e){mostrarAlerta("Erro ao desenhar planilha.");} }).withFailureHandler(e=>{hideLoading(); mostrarAlerta("Erro: "+e.message);}).buscarDadosEspelhoBackend(document.getElementById('selectAbaEspelho').value); }
+        function carregarEspelhoPlanilha() { 
+            showLoading("Puxando Tabela..."); document.getElementById('containerTabelaEspelho').style.display='none'; 
+            if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{ 
+                hideLoading(); document.getElementById('containerTabelaEspelho').style.display='block'; 
+                try {
+                    let d = parseSafe(r); 
+                    if(d.length===0) return document.getElementById('bodyEspelho').innerHTML='<tr><td>Vazio</td></tr>'; let head='<tr>'; d[0].forEach(c=>head+=`<th>${c}</th>`); head+='</tr>'; document.getElementById('headEspelho').innerHTML=head; let body=''; for(let i=1;i<d.length;i++){ body+='<tr>'; d[i].forEach(c=>body+=`<td>${c!==null?c:''}</td>`); body+='</tr>'; } document.getElementById('bodyEspelho').innerHTML=body; 
+                } catch(e){mostrarAlerta("Erro ao desenhar planilha.");} 
+            }).withFailureHandler(e=>{hideLoading(); mostrarAlerta("Erro: "+e.message);}).buscarDadosEspelhoBackend(document.getElementById('selectAbaEspelho').value); 
+        }
 
         function mudarAbaRanking(a) { abaAtivaRanking=a; document.getElementById('btnAbaTop').style.background=a==='top'?'var(--primary)':'transparent'; document.getElementById('btnAbaRotas').style.background=a==='rotas'?'#ffd43b':'transparent'; document.getElementById('btnGerarRanking').textContent=a==='top'?'Gerar Top Tapiocas':'Gerar Ranking Rotas'; }
         
@@ -1051,13 +1152,14 @@
             document.getElementById('resultadoRankings').innerHTML=''; 
             let m=document.getElementById('filtroMesRankings').value; let a=document.getElementById('filtroAnoRankings').value; 
             showLoading("Gerando Inteligência...");
+            
             if(abaAtivaRanking==='top'){ 
                 if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{
-                    hideLoading(); try{let d=JSON.parse(r); let html=''; d.forEach((i,idx)=>html+=`<div style="background:var(--stat-bg);padding:10px;margin-bottom:8px;border-radius:6px;display:flex;justify-content:space-between;"><div><b>#${idx+1} ${i.produto}</b><br><small>${i.quantidade} un</small></div><b style="color:var(--success);">${formatarMoeda(i.totalArrecadado)}</b></div>`); document.getElementById('resultadoRankings').innerHTML=html||'Sem dados.';}catch(e){mostrarAlerta("Falha.");}
+                    hideLoading(); try{let d=parseSafe(r); let html=''; d.forEach((i,idx)=>html+=`<div style="background:var(--stat-bg);padding:10px;margin-bottom:8px;border-radius:6px;display:flex;justify-content:space-between;"><div><b>#${idx+1} ${i.produto}</b><br><small>${i.quantidade} un</small></div><b style="color:var(--success);">${formatarMoeda(i.totalArrecadado)}</b></div>`); document.getElementById('resultadoRankings').innerHTML=html||'Sem dados.';}catch(e){mostrarAlerta("Falha.");}
                 }).withFailureHandler(e=>{hideLoading(); mostrarAlerta("Erro.");}).buscarTopProdutosBackend(m, a); 
             } else { 
                 if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{
-                    hideLoading(); try{let d=JSON.parse(r); let html=''; d.forEach((i,idx)=>html+=`<div style="background:var(--stat-bg);padding:10px;margin-bottom:8px;border-radius:6px;display:flex;justify-content:space-between;"><div><b>#${idx+1} ${i.rota}</b></div><b style="color:var(--success);">${formatarMoeda(i.total)}</b></div>`); document.getElementById('resultadoRankings').innerHTML=html||'Sem dados.';}catch(e){mostrarAlerta("Falha.");}
+                    hideLoading(); try{let d=parseSafe(r); let html=''; d.forEach((i,idx)=>html+=`<div style="background:var(--stat-bg);padding:10px;margin-bottom:8px;border-radius:6px;display:flex;justify-content:space-between;"><div><b>#${idx+1} ${i.rota}</b></div><b style="color:var(--success);">${formatarMoeda(i.total)}</b></div>`); document.getElementById('resultadoRankings').innerHTML=html||'Sem dados.';}catch(e){mostrarAlerta("Falha.");}
                 }).withFailureHandler(e=>{hideLoading(); mostrarAlerta("Erro.");}).buscarRankingRotasBackend(m, a); 
             } 
         }
@@ -1068,11 +1170,14 @@
         function iniciarSyncEmTempoReal() { 
             if(syncAtivo) clearInterval(syncAtivo); 
             syncAtivo = setInterval(()=>{ 
-                if(pausarSync) return; 
+                // A Proteção Definitiva contra travamento/lentidão local
+                // Se vc fez algo há menos de 12 segundos, ele bloqueia a leitura da nuvem!
+                if(Date.now() - timestampUltimaAcao < 12000) return; 
+
                 if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{ 
-                    if(pausarSync) return; 
+                    if(Date.now() - timestampUltimaAcao < 12000) return; // Checa novamente antes de aplicar
                     try {
-                        let nova = JSON.parse(r)||[]; 
+                        let nova = parseSafe(r) || []; 
                         if(JSON.stringify(historicoNuvem)!==JSON.stringify(nova)) { historicoNuvem=nova; sincronizarContadorGlobal(); atualizarTudo(); } 
                     } catch(e) {}
                 }).carregarDadosNuvem(); 
@@ -1104,7 +1209,7 @@
                 if(typeof google !== 'undefined') {
                     showLoading("Conectando Servidor...");
                     google.script.run.withSuccessHandler(r=>{
-                        try { historicoNuvem = JSON.parse(r) || []; } catch(e) { historicoNuvem = []; }
+                        try { historicoNuvem = parseSafe(r) || []; } catch(e) { historicoNuvem = []; }
                         hideLoading(); atualizarTudo(); iniciarSyncEmTempoReal(); 
                     }).withFailureHandler(e=>{ hideLoading(); document.getElementById('loadingText').innerHTML = "Falha de Conexão.<br><small>"+e.message+"</small>"; document.getElementById('loadingScreen').style.display='flex'; }).carregarDadosNuvem();
                 } else { hideLoading(); atualizarTudo(); }
