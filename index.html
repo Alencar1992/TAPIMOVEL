@@ -74,7 +74,7 @@
         .item-producao { background: var(--stat-bg); padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border);}
         .btn-check-item { background: var(--success); color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s;}
         
-        /* Modal de Carregamento 0-100% */
+        /* Modal de Carregamento */
         #loadingScreen { display: flex; flex-direction: column; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18,18,18,0.95); backdrop-filter: blur(5px); z-index: 9999; justify-content: center; align-items: center; color: var(--primary); }
         .spinner { border: 5px solid var(--border); border-top: 5px solid var(--primary); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 10px;}
         .progress-bar-container { width: 80%; max-width: 300px; background: var(--border); border-radius: 10px; height: 10px; overflow: hidden; margin-top: 15px;}
@@ -150,7 +150,7 @@
         <div class="modal-content" style="max-width: 380px; text-align: center; border-top: 5px solid var(--danger);">
             <div style="font-size: 3rem; margin-bottom: 10px;">❌</div>
             <h3 style="margin-top: 0;">Falha de Comunicação</h3>
-            <p id="textoErroCritico" style="font-size: 1rem; margin-bottom: 25px; color: var(--text-muted);">Não foi possível carregar as informações. Verifique sua internet.</p>
+            <p id="textoErroCritico" style="font-size: 1rem; margin-bottom: 25px; color: var(--text-muted);">Não foi possível carregar as informações.</p>
             <button class="btn-acao" style="background: var(--danger);" onclick="forcarRetornoTelaInicial()">Forçar Fechamento / Voltar</button>
         </div>
     </div>
@@ -178,7 +178,7 @@
         <div class="menu-grupo">
             <button class="btn-categoria" onclick="toggleSubmenu('sub-planilhas')">📑 Planilhas ▼</button>
             <div id="sub-planilhas" class="submenu">
-                <button onclick="window.open('https://docs.google.com/spreadsheets/d/16LojKYyWZOXWeXA72hC44SQ35uC7lxR2rpUGldhHj5w/edit?gid=119374938#gid=119374938', '_blank');">📈 Planilha Real</button>
+                <button onclick="window.open('https://docs.google.com/spreadsheets/d/16LojKYyWZOXWeXA72hC44SQ35uC7lxR2rpUGldhHj5w/edit?gid=1361897027#gid=1361897027', '_blank');">📈 Planilha Real</button>
                 <button onclick="abrirRestrito('espelho')">🪞 Planilha (App)</button>
             </div>
         </div>
@@ -612,7 +612,7 @@
 
         // --- C. FUNÇÕES DE PROTEÇÃO E ÚTEIS ---
         
-        // 🔒 Função blindada para evitar erros ao ler os dados do Google
+        // Proteção contra falhas de leitura do Google
         function parseSafe(data) { 
             if (typeof data !== 'string') return data;
             try { return JSON.parse(data); } catch(e) { return data; } 
@@ -621,12 +621,17 @@
         const formatarMoeda = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         const ehHoje = (t) => { if(!t) return false; let d = new Date(t), h = new Date(); return d.getDate()===h.getDate() && d.getMonth()===h.getMonth() && d.getFullYear()===h.getFullYear(); };
         
+        // Máscara Blindada
         function maskCurrency(e) { 
-            let v = e.target.value.replace(/\D/g, ''); 
-            if(v===''){e.target.value=''; if(e.target.id==='inputValorRecebido') calcularTroco(); return;} 
-            v=(parseInt(v)/100).toFixed(2).replace('.',',').replace(/(\d)(?=(\d{3})+(?!\d))/g,'$1.'); 
-            e.target.value=v; 
-            if(e.target.id==='inputValorRecebido') calcularTroco(); 
+            let value = e.target.value.replace(/\D/g, ''); 
+            if (value === '') {
+                e.target.value = '';
+                if (e.target.id === 'inputValorRecebido') calcularTroco();
+                return;
+            }
+            let numericValue = parseInt(value, 10) / 100;
+            e.target.value = numericValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            if (e.target.id === 'inputValorRecebido') calcularTroco(); 
         }
         
         let simInterval;
@@ -747,17 +752,18 @@
         function lancarMonteSemQueijo() { document.getElementById('tituloCarneSemQueijo').textContent=baseSelecionadaMonte; document.getElementById('inputPrecoSemQueijo').value=''; document.getElementById('modalPrecoSemQueijo').style.display='flex'; }
         
         function confirmarMonteSemQueijo() { 
-            let v = document.getElementById('inputPrecoSemQueijo').value.replace(/\./g, '').replace(',', '.');
-            v = parseFloat(v) || 0;
+            let valRaw = document.getElementById('inputPrecoSemQueijo').value.replace(/[^\d,]/g, '').replace(',', '.');
+            let v = parseFloat(valRaw) || 0;
             if(v<=0) return mostrarAlerta("Valor inválido."); 
             adicionarAoCarrinho({nome:`Monte: ${baseSelecionadaMonte} (Sem Queijo)`, preco:v, tipo:'tapioca', ing:`${baseSelecionadaMonte}`}); fecharModais(); baseSelecionadaMonte=null; renderizarCatalogo('monte'); 
         }
         
         function abrirModalAvulso() { document.getElementById('inputNomeAvulso').value=''; document.getElementById('inputPrecoAvulso').value=''; document.getElementById('modalAvulso').style.display='flex'; }
+        
         function lancarAvulsoCarrinho() { 
             let n=document.getElementById('inputNomeAvulso').value.trim(); 
-            let v = document.getElementById('inputPrecoAvulso').value.replace(/\./g, '').replace(',', '.');
-            v = parseFloat(v) || 0;
+            let valRaw = document.getElementById('inputPrecoAvulso').value.replace(/[^\d,]/g, '').replace(',', '.');
+            let v = parseFloat(valRaw) || 0;
             if(!n||v<=0) return mostrarAlerta("Dados inválidos."); 
             adicionarAoCarrinho({nome:`Avulso: ${n}`, preco:v, tipo:'tapioca', ing:''}); fecharModais(); 
         }
@@ -861,15 +867,12 @@
             } else { finalizarVenda(f); } 
         }
 
+        // PREECHIMENTO EXATO E CÁLCULO DE TROCO TOTALMENTE BLINDADO
         function preencherValorExato() { 
             const p = historicoNuvem.find(x => x.numero == pedidoAguardandoPagamento); 
             if(!p) return; 
-            
-            // Coloca a máscara corretamente pra não confundir a matemática
-            let formatado = p.total.toFixed(2).replace('.', ',');
-            if(p.total >= 1000) formatado = p.total.toLocaleString('pt-BR', {minimumFractionDigits: 2});
-            
-            document.getElementById('inputValorRecebido').value = formatado; 
+            let exato = p.total.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('inputValorRecebido').value = exato; 
             calcularTroco(); 
         }
 
@@ -881,18 +884,21 @@
             let btn = document.getElementById('btnConfirmarDinheiro'); 
             let span = document.getElementById('valorDoTroco'); 
 
-            if (valRaw === '') {
+            if (!valRaw || valRaw.trim() === '') {
                 span.textContent = 'R$ 0,00';
                 btn.disabled = true;
                 return;
             }
 
-            // Matemática Blindada (remove pontos e converte vírgula pra ponto de verdade)
-            let cleanStr = valRaw.replace(/\./g, '').replace(',', '.');
-            let recebido = parseFloat(cleanStr) || 0; 
+            // Remove TUDO que não for número e vírgula, depois troca a vírgula por ponto
+            let cleanStr = valRaw.replace(/[^\d,]/g, '').replace(',', '.');
+            let recebido = parseFloat(cleanStr);
+            if (isNaN(recebido)) recebido = 0;
+            
             let troco = recebido - p.total; 
             
-            if(troco >= -0.05) { 
+            // Tolerância para não dar bug de milissegundos matemáticos (-0.01)
+            if(troco >= -0.01) { 
                 span.textContent = formatarMoeda(Math.abs(troco)); 
                 btn.disabled = false;
             } else { 
@@ -911,7 +917,7 @@
             const p = historicoNuvem[i]; 
             p.formaPagamento = f; p.timestamp = new Date().getTime(); p.dataExibicao = new Date().toLocaleString('pt-BR');
             fecharModais(); 
-            atualizarTudo(); 
+            atualizarTudo(); // Atualização Otimista local
             
             if(typeof google !== 'undefined') { 
                 google.script.run.withFailureHandler(e => mostrarErroCritico("Aviso: Falha ao salvar no histórico. "+e.message)).moverParaHistorico(JSON.stringify(p)); 
@@ -919,11 +925,13 @@
                 google.script.run.removerDaBaseDeVendasBackend(p.numero); 
             }
             
-            // Exibir o Modal de Pagamento Realizado com a Barra Progressiva
+            // Exibir a Barra Progressiva Minimalista Animada (2.5 Segundos)
             document.getElementById('avisoPagamento').style.display = 'flex'; 
             let bar = document.getElementById('avisoPagamentoBar');
+            bar.style.transition = 'none'; // Reseta a transição
             bar.style.width = '0%';
-            void bar.offsetWidth; // Força re-render para ativar animação CSS
+            void bar.offsetWidth; // Força re-render do navegador
+            bar.style.transition = 'width 2.5s linear'; // Aplica o tempo de enchimento
             bar.style.width = '100%';
             
             setTimeout(() => { document.getElementById('avisoPagamento').style.display = 'none'; bar.style.width = '0%'; }, 2500);
@@ -1026,7 +1034,7 @@
             if(typeof google !== 'undefined') { 
                 google.script.run.withSuccessHandler(r => { 
                     hideLoading(); 
-                    // Limpa imediatamente no cliente
+                    // Limpa e zera independente do texto de retorno, assumindo sucesso (Anti-travamento)
                     historicoNuvem=[]; carrinho=[]; 
                     google.script.run.salvarNuvemCompleta("[]"); 
                     atualizarTudo(); fecharModais(); 
@@ -1051,7 +1059,9 @@
                     hideLoading();
                     try {
                         let d = parseSafe(r); 
-                        if(typeof d !== 'object' || d === null) d = {};
+                        if(typeof d !== 'object' || d === null) {
+                            return mostrarAlerta("Dados de liquidez incompatíveis na planilha.");
+                        }
                         fatMesG = parseFloat(d.total) || 0; 
                         combMesG = parseFloat(d.combustivel) || 0; 
                         document.getElementById('liqQtdTapiocasTxt').textContent=(d.qtdTapiocas||0)+" un"; 
@@ -1064,7 +1074,7 @@
             } 
         }
         
-        function recalcularLiquidez() { let sc=parseDinheiro(document.getElementById('inpSalCozinha').value); let scar=parseDinheiro(document.getElementById('inpSalCarro').value); document.getElementById('liqTotalGeralTxt').textContent=formatarMoeda(fatMesG); document.getElementById('liqCombustivelTxt').textContent="- "+formatarMoeda(combMesG); let mat=fatMesG*0.60; let sob=fatMesG-mat-(combMesG+sc+scar); let b=Math.max(0,sob); document.getElementById('liqMaterialTxt').textContent="- "+formatarMoeda(mat); document.getElementById('liqSobraLiquida').textContent=formatarMoeda(sob); document.getElementById('liqSobraLiquida').style.color=sob>=0?"var(--success)":"var(--danger)"; document.getElementById('liqLucas').setAttribute('data-v', b*0.90); document.getElementById('liqEliel').setAttribute('data-v', b*0.10); document.getElementById('liqLucas').textContent='R$ ****'; document.getElementById('liqEliel').textContent='R$ ****'; document.getElementById('icon-liqLucas').textContent='👁️'; document.getElementById('icon-liqEliel').textContent='👁️'; }
+        function recalcularLiquidez() { let sc=parseFloat(document.getElementById('inpSalCozinha').value.replace(/[^\d,]/g, '').replace(',', '.'))||0; let scar=parseFloat(document.getElementById('inpSalCarro').value.replace(/[^\d,]/g, '').replace(',', '.'))||0; document.getElementById('liqTotalGeralTxt').textContent=formatarMoeda(fatMesG); document.getElementById('liqCombustivelTxt').textContent="- "+formatarMoeda(combMesG); let mat=fatMesG*0.60; let sob=fatMesG-mat-(combMesG+sc+scar); let b=Math.max(0,sob); document.getElementById('liqMaterialTxt').textContent="- "+formatarMoeda(mat); document.getElementById('liqSobraLiquida').textContent=formatarMoeda(sob); document.getElementById('liqSobraLiquida').style.color=sob>=0?"var(--success)":"var(--danger)"; document.getElementById('liqLucas').setAttribute('data-v', b*0.90); document.getElementById('liqEliel').setAttribute('data-v', b*0.10); document.getElementById('liqLucas').textContent='R$ ****'; document.getElementById('liqEliel').textContent='R$ ****'; document.getElementById('icon-liqLucas').textContent='👁️'; document.getElementById('icon-liqEliel').textContent='👁️'; }
         function toggleVis(id) { let el=document.getElementById(id); let ic=document.getElementById('icon-'+id); if(el.textContent==='R$ ****'){ el.textContent=formatarMoeda(parseFloat(el.getAttribute('data-v'))); ic.textContent='🙈'; }else{ el.textContent='R$ ****'; ic.textContent='👁️'; } }
         
         function confirmarFechamentoMes() { 
@@ -1143,7 +1153,7 @@
 
         function registrarCombustivel() { 
             let d = document.getElementById('inputDataCombustivel').value; 
-            let valRaw = document.getElementById('inputValorCombustivel').value.replace(/\./g, '').replace(',', '.');
+            let valRaw = document.getElementById('inputValorCombustivel').value.replace(/[^\d,]/g, '').replace(',', '.');
             let v = parseFloat(valRaw) || 0; 
             let l = parseFloat(document.getElementById('inputLitrosCombustivel').value); 
             if(!d||v<=0||isNaN(l)) return mostrarAlerta("Preencha corretamente."); let p=d.split("-"); 
@@ -1191,19 +1201,39 @@
             } 
         }
 
-        // --- I. SINCRONIZAÇÃO EM TEMPO REAL ---
+        // --- I. SINCRONIZAÇÃO EM TEMPO REAL COM MESCLA INTELIGENTE ---
         function sincronizarContadorGlobal() { let max = 0; historicoNuvem.forEach(p => { if(p.numero > max && (ehHoje(p.timestamp) || ehHoje(p.timestampCriacao))) max = parseInt(p.numero); }); if (max >= contadorPedidos) contadorPedidos = max + 1; }
         
         function iniciarSyncEmTempoReal() { 
             if(syncAtivo) clearInterval(syncAtivo); 
             syncAtivo = setInterval(()=>{ 
-                if(Date.now() - timestampUltimaAcao < 12000) return; 
-
                 if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{ 
-                    if(Date.now() - timestampUltimaAcao < 12000) return; 
                     try {
                         let nova = parseSafe(r) || []; 
-                        if(JSON.stringify(historicoNuvem)!==JSON.stringify(nova)) { historicoNuvem=nova; sincronizarContadorGlobal(); atualizarTudo(); } 
+                        if(!Array.isArray(nova)) nova = [];
+                        
+                        // Mescla Inteligente: Respeita os cliques que você acabou de dar na tela
+                        nova.forEach(cloudItem => {
+                            let localItem = historicoNuvem.find(x => x.numero === cloudItem.numero);
+                            if (localItem) {
+                                // Preserva o "Pago" local mesmo que a nuvem ainda não tenha atualizado
+                                if (localItem.timestamp && !cloudItem.timestamp) {
+                                    cloudItem.timestamp = localItem.timestamp;
+                                    cloudItem.formaPagamento = localItem.formaPagamento;
+                                }
+                                // Preserva o "Concluído" local
+                                if (localItem.produzido && !cloudItem.produzido) {
+                                    cloudItem.produzido = localItem.produzido;
+                                    cloudItem.itens = localItem.itens;
+                                }
+                            }
+                        });
+
+                        if(JSON.stringify(historicoNuvem) !== JSON.stringify(nova)) { 
+                            historicoNuvem = nova; 
+                            sincronizarContadorGlobal(); 
+                            atualizarTudo(); 
+                        } 
                     } catch(e) {}
                 }).carregarDadosNuvem(); 
             }, 3000); 
