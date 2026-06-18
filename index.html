@@ -88,6 +88,7 @@
         
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes popIn { 0% { transform: scale(0.5); opacity: 0;} 100% { transform: scale(1); opacity: 1;} }
         
         #toast-container { position: fixed; top: 80px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none;}
         .toast { background: var(--success); color: white; padding: 12px 24px; border-radius: 8px; font-weight: bold; box-shadow: 0 6px 15px rgba(0,0,0,0.3); animation: slideIn 0.3s forwards; }
@@ -177,7 +178,7 @@
         <div class="menu-grupo">
             <button class="btn-categoria" onclick="toggleSubmenu('sub-planilhas')">📑 Planilhas ▼</button>
             <div id="sub-planilhas" class="submenu">
-                <button onclick="window.open('https://docs.google.com/spreadsheets/d/16LojKYyWZOXWeXA72hC44SQ35uC7lxR2rpUGldhHj5w/edit?gid=1361897027#gid=1361897027', '_blank');">📈 Planilha Real</button>
+                <button onclick="window.open('https://docs.google.com/spreadsheets/d/1_XkhvERb8BrJCFGau7djN0A_0MBEgLZhgmvnzv4Zmz0/edit', '_blank');">📈 Planilha Real</button>
                 <button onclick="abrirRestrito('espelho')">🪞 Planilha (App)</button>
             </div>
         </div>
@@ -460,18 +461,19 @@
         </div>
     </div>
 
-    <div id="avisoPagamento" onclick="this.style.display='none'" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 10000; justify-content: center; align-items: center; backdrop-filter: blur(2px);">
-        <div style="background: var(--success); color: white; padding: 30px; border-radius: 15px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: popIn 0.3s forwards;">
+    <div id="avisoPagamento" onclick="this.style.display='none'" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; justify-content: center; align-items: center; backdrop-filter: blur(2px);">
+        <div style="background: var(--success); color: white; padding: 30px; border-radius: 15px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: popIn 0.3s forwards; width: 80%; max-width: 320px;">
             <div style="font-size: 4rem; margin-bottom: 10px;">✅</div>
             <h2 style="margin: 0; font-size: 1.8rem;">Pagamento Realizado!</h2>
+            <div style="width: 100%; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; margin-top: 20px; overflow: hidden;">
+                <div id="avisoPagamentoBar" style="height: 100%; background: #ffffff; width: 0%; transition: width 2.5s linear;"></div>
+            </div>
         </div>
     </div>
 
     <script>
-        // --- A. A PONTE DE API (POLYFILL) E PROTEÇÃO DE FALHAS ---
-        
-        // ⚠️ INSIRA AQUI A SUA URL GERADA NO APPS SCRIPT! ⚠️
-        const API_URL = "https://script.google.com/macros/s/AKfycbweCn7s4GjVqem7sOAjp5UAfrMHUbCRSjOzNaNEsidNS3YOy2plyAnRvogAlegBsawy9g/exec"; 
+        // --- A. A PONTE DE API (POLYFILL) ---
+        const API_URL = "https://docs.google.com/spreadsheets/d/16LojKYyWZOXWeXA72hC44SQ35uC7lxR2rpUGldhHj5w/edit?gid=119374938#gid=119374938"; 
 
         const google = { script: { run: {} } };
 
@@ -494,8 +496,6 @@
 
             funcoes.forEach(funcName => {
                 runner[funcName] = function(...args) {
-                    
-                    // Controlador de Tempo limite (Timeout de 15 Segundos máximo)
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 15000); 
 
@@ -517,7 +517,6 @@
                                 if (handler.success) handler.success(result);
                             }
                         } catch(e) {
-                            // Se a resposta for um texto puro (como "OK"), ele aceita sem quebrar!
                             if (handler.success) handler.success(text);
                         }
                     })
@@ -540,7 +539,7 @@
         // --- B. VARIÁVEIS GLOBAIS E BANCO DE DADOS ---
         let historicoNuvem = []; let carrinho = []; let contadorPedidos = 1; let pedidoEmEdicao = null; let pedidoAguardandoPagamento = null; 
         let abaAtivaCatalogo = null; let baseSelecionadaMonte = null; let syncAtivo = null; 
-        let termoPesquisa = ""; let pausarSync = false; let timestampUltimaAcao = 0; // Trava contra lentidão
+        let termoPesquisa = ""; let pausarSync = false; let timestampUltimaAcao = 0;
 
         const bdCatalogo = {
             salgadas: [ 
@@ -611,19 +610,16 @@
             'Peito de Peru': { 'Catupiry (Orig.)': 16.00, 'Cheddar': 15.00, 'Cream Cheese': 15.00, 'Muçarela': 15.00, 'Queijo Branco': 16.00 }
         };
 
-        // --- C. UTILITÁRIOS E BARRA DE PROGRESSO ---
+        // --- C. FUNÇÕES DE PROTEÇÃO E ÚTEIS ---
+        
+        // 🔒 Função blindada para evitar erros ao ler os dados do Google
+        function parseSafe(data) { 
+            if (typeof data !== 'string') return data;
+            try { return JSON.parse(data); } catch(e) { return data; } 
+        }
+        
         const formatarMoeda = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         const ehHoje = (t) => { if(!t) return false; let d = new Date(t), h = new Date(); return d.getDate()===h.getDate() && d.getMonth()===h.getMonth() && d.getFullYear()===h.getFullYear(); };
-        
-        // Função utilitária para garantir que o retorno não quebre (parseSafe)
-        function parseSafe(data) { return typeof data === 'string' ? JSON.parse(data) : data; }
-        
-        // Tratamento numérico para o botão Dinheiro (Remove a formatação e converte limpo)
-        function parseDinheiro(val) { 
-            if (!val) return 0; 
-            let clean = String(val).replace(/\./g, '').replace(',', '.'); 
-            return parseFloat(clean) || 0; 
-        }
         
         function maskCurrency(e) { 
             let v = e.target.value.replace(/\D/g, ''); 
@@ -633,7 +629,6 @@
             if(e.target.id==='inputValorRecebido') calcularTroco(); 
         }
         
-        // Sistema de Loading Visual
         let simInterval;
         function showLoading(text) {
             document.getElementById('loadingText').innerHTML = text + ' <span id="loadingPercent">0%</span>';
@@ -647,8 +642,6 @@
                 document.getElementById('loadingPercent').innerText = p + '%';
                 document.getElementById('loadingProgress').style.width = p + '%';
             }, 300);
-            
-            // Se a internet demorar mais de 8s, ele libera o botão para cancelar
             setTimeout(() => { document.getElementById('btnFecharLoading').style.display='block'; }, 8000); 
         }
         
@@ -660,9 +653,7 @@
         }
         
         function forcarRetornoTelaInicial() { 
-            hideLoading(); 
-            fecharModais(); 
-            mudarTela('view-catalogo'); 
+            hideLoading(); fecharModais(); mudarTela('view-catalogo'); 
         }
 
         function mostrarErroCritico(msg) {
@@ -675,11 +666,7 @@
         function fecharModais() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display='none'); pedidoAguardandoPagamento=null; }
         function mostrarAlerta(m, cb) { document.getElementById('textoAlerta').innerHTML=m; document.getElementById('modalAlerta').style.display='flex'; document.getElementById('btnOkAlerta').onclick = function(){ document.getElementById('modalAlerta').style.display='none'; if(cb) cb();}; }
         function mostrarConfirmacao(m, cbSim) { document.getElementById('textoConfirm').innerHTML=m; document.getElementById('modalConfirm').style.display='flex'; document.getElementById('btnCancelarConfirm').onclick=()=>document.getElementById('modalConfirm').style.display='none'; document.getElementById('btnOkConfirm').onclick=()=>{ document.getElementById('modalConfirm').style.display='none'; if(cbSim) cbSim(); }; }
-        
-        // Bloqueia a consulta da nuvem por 12 segundos após você executar uma ação. Deixa rápido!
-        function travarSyncTemporariamente() { 
-            timestampUltimaAcao = Date.now(); 
-        }
+        function travarSyncTemporariamente() { timestampUltimaAcao = Date.now(); }
 
         // --- D. NAVEGAÇÃO E ACESSO RÁPIDO ---
         function abrirMenuLateral() { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebarOverlay').style.display='block'; }
@@ -758,10 +745,22 @@
         function selecionarBaseMonteUI(c) { baseSelecionadaMonte=c; renderizarCatalogo('monte'); }
         function lancarMonte(q, p) { adicionarAoCarrinho({nome:`Monte: ${baseSelecionadaMonte} c/ ${q}`, preco:p, tipo:'tapioca', ing:`${baseSelecionadaMonte} e ${q}`}); baseSelecionadaMonte=null; renderizarCatalogo('monte'); }
         function lancarMonteSemQueijo() { document.getElementById('tituloCarneSemQueijo').textContent=baseSelecionadaMonte; document.getElementById('inputPrecoSemQueijo').value=''; document.getElementById('modalPrecoSemQueijo').style.display='flex'; }
-        function confirmarMonteSemQueijo() { let v=parseDinheiro(document.getElementById('inputPrecoSemQueijo').value); if(v<=0) return mostrarAlerta("Valor inválido."); adicionarAoCarrinho({nome:`Monte: ${baseSelecionadaMonte} (Sem Queijo)`, preco:v, tipo:'tapioca', ing:`${baseSelecionadaMonte}`}); fecharModais(); baseSelecionadaMonte=null; renderizarCatalogo('monte'); }
+        
+        function confirmarMonteSemQueijo() { 
+            let v = document.getElementById('inputPrecoSemQueijo').value.replace(/\./g, '').replace(',', '.');
+            v = parseFloat(v) || 0;
+            if(v<=0) return mostrarAlerta("Valor inválido."); 
+            adicionarAoCarrinho({nome:`Monte: ${baseSelecionadaMonte} (Sem Queijo)`, preco:v, tipo:'tapioca', ing:`${baseSelecionadaMonte}`}); fecharModais(); baseSelecionadaMonte=null; renderizarCatalogo('monte'); 
+        }
         
         function abrirModalAvulso() { document.getElementById('inputNomeAvulso').value=''; document.getElementById('inputPrecoAvulso').value=''; document.getElementById('modalAvulso').style.display='flex'; }
-        function lancarAvulsoCarrinho() { let n=document.getElementById('inputNomeAvulso').value.trim(); let v=parseDinheiro(document.getElementById('inputPrecoAvulso').value); if(!n||v<=0) return mostrarAlerta("Dados inválidos."); adicionarAoCarrinho({nome:`Avulso: ${n}`, preco:v, tipo:'tapioca', ing:''}); fecharModais(); }
+        function lancarAvulsoCarrinho() { 
+            let n=document.getElementById('inputNomeAvulso').value.trim(); 
+            let v = document.getElementById('inputPrecoAvulso').value.replace(/\./g, '').replace(',', '.');
+            v = parseFloat(v) || 0;
+            if(!n||v<=0) return mostrarAlerta("Dados inválidos."); 
+            adicionarAoCarrinho({nome:`Avulso: ${n}`, preco:v, tipo:'tapioca', ing:''}); fecharModais(); 
+        }
         
         function lancarAdicionalComNome() { document.getElementById('inputDescAdicional').value=''; document.getElementById('modalAdicional').style.display='flex'; }
         function confirmarAdicional() { let d=document.getElementById('inputDescAdicional').value.trim()||"Adicional"; adicionarAoCarrinho({nome:"+ Adicional", preco:4.00, tipo:"extra", ing:"", obs:d}); fecharModais(); }
@@ -789,14 +788,13 @@
             if (carrinho.length === 0) return alert("Carrinho vazio!");
             let audioCampainha = document.getElementById('somCampainha'); if(audioCampainha) audioCampainha.play().catch(e=>console.log(e));
             
-            // Exibe o Toast de Lançamento
             document.getElementById('toast-lancamento').style.display = 'block';
             setTimeout(() => { document.getElementById('toast-lancamento').style.display = 'none'; }, 2500);
 
             const total = carrinho.reduce((acc, item) => acc + (item.preco * item.quantidade), 0);
             const isPronto = carrinho.every(item => item.pronto === true);
 
-            travarSyncTemporariamente(); // Bloqueia leitura pra não ficar lento ou sumir
+            travarSyncTemporariamente(); 
 
             if (pedidoEmEdicao !== null) {
                 const i = historicoNuvem.findIndex(p => p.numero == pedidoEmEdicao);
@@ -850,11 +848,9 @@
 
         function abrirModalPagamento(num) { pedidoAguardandoPagamento = num; document.getElementById('numeroPedidoPagamento').textContent = num; document.getElementById('modalPagamento').style.display = 'flex'; }
         
-        // CÁLCULO E PAGAMENTO DE DINHEIRO BLINDADO
         function processarPagamento(f) { 
             const p = historicoNuvem.find(x => x.numero == pedidoAguardandoPagamento); 
             if(!p) return; 
-            
             if(f === 'Dinheiro') { 
                 fecharModais(); 
                 document.getElementById('trocoTotalPedido').textContent = formatarMoeda(p.total); 
@@ -862,16 +858,18 @@
                 document.getElementById('valorDoTroco').textContent='R$ 0,00'; 
                 document.getElementById('btnConfirmarDinheiro').disabled=true; 
                 document.getElementById('modalTroco').style.display='flex'; 
-            } else { 
-                finalizarVenda(f); 
-            } 
+            } else { finalizarVenda(f); } 
         }
 
         function preencherValorExato() { 
             const p = historicoNuvem.find(x => x.numero == pedidoAguardandoPagamento); 
             if(!p) return; 
-            // Preenche o input sem a formatação pesada, assim o cálculo entende perfeitamente
-            document.getElementById('inputValorRecebido').value = p.total.toFixed(2).replace('.',','); 
+            
+            // Coloca a máscara corretamente pra não confundir a matemática
+            let formatado = p.total.toFixed(2).replace('.', ',');
+            if(p.total >= 1000) formatado = p.total.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+            
+            document.getElementById('inputValorRecebido').value = formatado; 
             calcularTroco(); 
         }
 
@@ -879,21 +877,26 @@
             const p = historicoNuvem.find(x => x.numero == pedidoAguardandoPagamento); 
             if(!p) return; 
             
-            // Lógica blindada: Remove todos os pontos e vírgulas falsas antes de analisar o número
-            let valStr = document.getElementById('inputValorRecebido').value.replace(/\./g, '').replace(',', '.');
-            let r = parseFloat(valStr) || 0; 
-            
-            let t = r - p.total; 
-            let span = document.getElementById('valorDoTroco'); 
+            let valRaw = document.getElementById('inputValorRecebido').value;
             let btn = document.getElementById('btnConfirmarDinheiro'); 
+            let span = document.getElementById('valorDoTroco'); 
+
+            if (valRaw === '') {
+                span.textContent = 'R$ 0,00';
+                btn.disabled = true;
+                return;
+            }
+
+            // Matemática Blindada (remove pontos e converte vírgula pra ponto de verdade)
+            let cleanStr = valRaw.replace(/\./g, '').replace(',', '.');
+            let recebido = parseFloat(cleanStr) || 0; 
+            let troco = recebido - p.total; 
             
-            if(r === 0) { span.textContent='R$ 0,00'; btn.disabled=true; return; } 
-            
-            if(t >= -0.01) { // -0.01 é uma pequena margem de erro invisível do Javascript
-                span.textContent = formatarMoeda(t); 
+            if(troco >= -0.05) { 
+                span.textContent = formatarMoeda(Math.abs(troco)); 
                 btn.disabled = false;
             } else { 
-                span.textContent = "Faltam " + formatarMoeda(Math.abs(t)); 
+                span.textContent = "Faltam " + formatarMoeda(Math.abs(troco)); 
                 btn.disabled = true;
             } 
         }
@@ -908,7 +911,7 @@
             const p = historicoNuvem[i]; 
             p.formaPagamento = f; p.timestamp = new Date().getTime(); p.dataExibicao = new Date().toLocaleString('pt-BR');
             fecharModais(); 
-            atualizarTudo(); // Atualiza a tela imediatamente (Optimistic UI)
+            atualizarTudo(); 
             
             if(typeof google !== 'undefined') { 
                 google.script.run.withFailureHandler(e => mostrarErroCritico("Aviso: Falha ao salvar no histórico. "+e.message)).moverParaHistorico(JSON.stringify(p)); 
@@ -916,8 +919,14 @@
                 google.script.run.removerDaBaseDeVendasBackend(p.numero); 
             }
             
+            // Exibir o Modal de Pagamento Realizado com a Barra Progressiva
             document.getElementById('avisoPagamento').style.display = 'flex'; 
-            setTimeout(() => { document.getElementById('avisoPagamento').style.display = 'none'; }, 3000);
+            let bar = document.getElementById('avisoPagamentoBar');
+            bar.style.width = '0%';
+            void bar.offsetWidth; // Força re-render para ativar animação CSS
+            bar.style.width = '100%';
+            
+            setTimeout(() => { document.getElementById('avisoPagamento').style.display = 'none'; bar.style.width = '0%'; }, 2500);
         }
 
         // --- G. RENDERIZAÇÃO DAS TELAS ---
@@ -929,7 +938,6 @@
             
             fila.forEach(pedido => { 
                 let html = ''; 
-                // Laço for tradicional garante a preservação do índice correto da nuvem, resolvendo o "fantasma"
                 for (let idx = 0; idx < pedido.itens.length; idx++) {
                     let item = pedido.itens[idx];
                     if(item.tipo === 'bebida' || item.pronto) continue; 
@@ -977,7 +985,7 @@
             }); 
         }
 
-        // --- H. GESTÃO E FECHAMENTOS DE CAIXA E MÊS ---
+        // --- H. GESTÃO E FECHAMENTOS ---
         function zerarContadorPlanilha() { mostrarConfirmacao("Deseja apagar a linha de Tapiocas de Hoje?", function() { if(typeof google !== 'undefined') google.script.run.excluirContadorTapiocasHoje(new Date().toLocaleDateString('pt-BR')); mostrarToast("Contador de tapiocas reiniciado!"); }); }
         function limparHistoricoVendasHoje() { mostrarConfirmacao("Ocultar vendas na tela?", function() { historicoNuvem.forEach(v => { if(v.timestamp && ehHoje(v.timestamp)) v.oculta=true; }); renderizarHistorico(); }); }
 
@@ -995,15 +1003,14 @@
 
         function baixarPrintFechamento() { 
             const botoes = document.getElementById('botoesRelatorio');
-            botoes.style.display = 'none'; // Esconde para o print
+            botoes.style.display = 'none'; 
             
-            // Timeout de 100ms garante que os botões tenham sumido de fato
             setTimeout(() => {
                 html2canvas(document.getElementById('areaPrintRelatorio'), {scale:2, backgroundColor:"#1e1e1e"}).then(c=>{ 
                     let l=document.createElement('a'); 
                     l.download=`Fechamento_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.png`; 
                     l.href=c.toDataURL('image/png'); l.click(); 
-                    botoes.style.display = 'flex'; // Volta a exibir
+                    botoes.style.display = 'flex'; 
                 }).catch(e => {
                     botoes.style.display = 'flex';
                     mostrarAlerta("Erro ao salvar print.");
@@ -1019,12 +1026,11 @@
             if(typeof google !== 'undefined') { 
                 google.script.run.withSuccessHandler(r => { 
                     hideLoading(); 
-                    if(r === "OK" || r.includes("OK") || r.includes("sucesso")){ 
-                        historicoNuvem=[]; carrinho=[]; google.script.run.salvarNuvemCompleta("[]"); 
-                        atualizarTudo(); fecharModais(); mostrarAlerta("✅ Fechamento salvo!"); 
-                    } else { 
-                        mostrarAlerta("Aviso do servidor: "+r); 
-                    } 
+                    // Limpa imediatamente no cliente
+                    historicoNuvem=[]; carrinho=[]; 
+                    google.script.run.salvarNuvemCompleta("[]"); 
+                    atualizarTudo(); fecharModais(); 
+                    mostrarAlerta("✅ Fechamento salvo e sistema zerado!"); 
                 }).withFailureHandler(e => {
                     hideLoading();
                     mostrarErroCritico("Erro ao salvar fechamento: " + e.message);
@@ -1045,7 +1051,10 @@
                     hideLoading();
                     try {
                         let d = parseSafe(r); 
-                        fatMesG=d.total; combMesG=d.combustivel; document.getElementById('liqQtdTapiocasTxt').textContent=(d.qtdTapiocas||0)+" un"; 
+                        if(typeof d !== 'object' || d === null) d = {};
+                        fatMesG = parseFloat(d.total) || 0; 
+                        combMesG = parseFloat(d.combustivel) || 0; 
+                        document.getElementById('liqQtdTapiocasTxt').textContent=(d.qtdTapiocas||0)+" un"; 
                         recalcularLiquidez(); 
                         document.getElementById('conteudoLiquidez').style.display='block';
                     } catch(e) {
@@ -1079,7 +1088,15 @@
                     hideLoading();
                     try {
                         let d = parseSafe(r); 
-                        document.getElementById('conteudoEstimativa').style.display='block'; document.getElementById('estMes').textContent=d.mes; document.getElementById('estTotalDias').textContent=d.diasUteisTotal; document.getElementById('estPassados').textContent=d.diasUteisPassados; document.getElementById('estRestantes').textContent=d.diasUteisRestantes; document.getElementById('estMedia').textContent=formatarMoeda(d.mediaDiaria); document.getElementById('estLucasAtual').textContent=formatarMoeda(d.lucasAtual); document.getElementById('estLucasProjetado').textContent=formatarMoeda(d.lucasProjetado); 
+                        if(typeof d !== 'object' || d === null) d = {};
+                        document.getElementById('conteudoEstimativa').style.display='block'; 
+                        document.getElementById('estMes').textContent=d.mes || 'N/A'; 
+                        document.getElementById('estTotalDias').textContent=d.diasUteisTotal || 0; 
+                        document.getElementById('estPassados').textContent=d.diasUteisPassados || 0; 
+                        document.getElementById('estRestantes').textContent=d.diasUteisRestantes || 0; 
+                        document.getElementById('estMedia').textContent=formatarMoeda(d.mediaDiaria || 0); 
+                        document.getElementById('estLucasAtual').textContent=formatarMoeda(d.lucasAtual || 0); 
+                        document.getElementById('estLucasProjetado').textContent=formatarMoeda(d.lucasProjetado || 0); 
                     } catch(e) { mostrarAlerta("Erro ao gerar projeção."); }
                 }).withFailureHandler(e=>{ hideLoading(); mostrarAlerta("Falha: " + e.message);}).calcularEstimativaSalarioLucas(); 
             }
@@ -1113,8 +1130,10 @@
                     hideLoading(); 
                     try {
                         let d = parseSafe(r); 
-                        if(d.length===0) return document.getElementById('resultadoFolgas').innerHTML='Nenhuma folga.'; 
-                        let html=''; d.forEach(x=>html+=`<p><b>${x.data}</b> - ${x.motivo}</p>`); document.getElementById('resultadoFolgas').innerHTML=html; 
+                        if(!Array.isArray(d)) d = [];
+                        if(d.length===0) return document.getElementById('resultadoFolgas').innerHTML='<p style="text-align:center; color:var(--text-muted);">Nenhuma folga encontrada.</p>'; 
+                        let html=''; d.forEach(x=>html+=`<p><b>${x.data || ''}</b> - ${x.motivo || ''}</p>`); 
+                        document.getElementById('resultadoFolgas').innerHTML=html; 
                     } catch(e) {
                          document.getElementById('resultadoFolgas').innerHTML='Nenhum Histórico Localizado.';
                     }
@@ -1122,7 +1141,15 @@
             }
         }
 
-        function registrarCombustivel() { let d=document.getElementById('inputDataCombustivel').value; let v=parseDinheiro(document.getElementById('inputValorCombustivel').value); let l=parseFloat(document.getElementById('inputLitrosCombustivel').value); if(!d||v<=0||isNaN(l)) return mostrarAlerta("Preencha corretamente."); let p=d.split("-"); showLoading("Registrando..."); if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{hideLoading(); mostrarToast("Salvo!"); document.getElementById('inputValorCombustivel').value=''; document.getElementById('inputLitrosCombustivel').value=''; carregarHistoricoCombustivel();}).withFailureHandler(e=>{hideLoading(); mostrarAlerta("Erro: " + e.message);}).salvarCombustivelPlanilha(JSON.stringify({data:`${p[2]}/${p[1]}/${p[0]}`, valor:v, litros:l})); }
+        function registrarCombustivel() { 
+            let d = document.getElementById('inputDataCombustivel').value; 
+            let valRaw = document.getElementById('inputValorCombustivel').value.replace(/\./g, '').replace(',', '.');
+            let v = parseFloat(valRaw) || 0; 
+            let l = parseFloat(document.getElementById('inputLitrosCombustivel').value); 
+            if(!d||v<=0||isNaN(l)) return mostrarAlerta("Preencha corretamente."); let p=d.split("-"); 
+            showLoading("Registrando..."); 
+            if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{hideLoading(); mostrarToast("Salvo!"); document.getElementById('inputValorCombustivel').value=''; document.getElementById('inputLitrosCombustivel').value=''; carregarHistoricoCombustivel();}).withFailureHandler(e=>{hideLoading(); mostrarAlerta("Erro: " + e.message);}).salvarCombustivelPlanilha(JSON.stringify({data:`${p[2]}/${p[1]}/${p[0]}`, valor:v, litros:l})); 
+        }
         
         function carregarHistoricoCombustivel() { 
             let h=new Date(); document.getElementById('listaCombustivel').innerHTML='<p>Carregando...</p>'; 
@@ -1141,7 +1168,7 @@
                 hideLoading(); document.getElementById('containerTabelaEspelho').style.display='block'; 
                 try {
                     let d = parseSafe(r); 
-                    if(d.length===0) return document.getElementById('bodyEspelho').innerHTML='<tr><td>Vazio</td></tr>'; let head='<tr>'; d[0].forEach(c=>head+=`<th>${c}</th>`); head+='</tr>'; document.getElementById('headEspelho').innerHTML=head; let body=''; for(let i=1;i<d.length;i++){ body+='<tr>'; d[i].forEach(c=>body+=`<td>${c!==null?c:''}</td>`); body+='</tr>'; } document.getElementById('bodyEspelho').innerHTML=body; 
+                    if(!Array.isArray(d) || d.length===0) return document.getElementById('bodyEspelho').innerHTML='<tr><td>Vazio</td></tr>'; let head='<tr>'; d[0].forEach(c=>head+=`<th>${c}</th>`); head+='</tr>'; document.getElementById('headEspelho').innerHTML=head; let body=''; for(let i=1;i<d.length;i++){ body+='<tr>'; d[i].forEach(c=>body+=`<td>${c!==null?c:''}</td>`); body+='</tr>'; } document.getElementById('bodyEspelho').innerHTML=body; 
                 } catch(e){mostrarAlerta("Erro ao desenhar planilha.");} 
             }).withFailureHandler(e=>{hideLoading(); mostrarAlerta("Erro: "+e.message);}).buscarDadosEspelhoBackend(document.getElementById('selectAbaEspelho').value); 
         }
@@ -1170,12 +1197,10 @@
         function iniciarSyncEmTempoReal() { 
             if(syncAtivo) clearInterval(syncAtivo); 
             syncAtivo = setInterval(()=>{ 
-                // A Proteção Definitiva contra travamento/lentidão local
-                // Se vc fez algo há menos de 12 segundos, ele bloqueia a leitura da nuvem!
                 if(Date.now() - timestampUltimaAcao < 12000) return; 
 
                 if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{ 
-                    if(Date.now() - timestampUltimaAcao < 12000) return; // Checa novamente antes de aplicar
+                    if(Date.now() - timestampUltimaAcao < 12000) return; 
                     try {
                         let nova = parseSafe(r) || []; 
                         if(JSON.stringify(historicoNuvem)!==JSON.stringify(nova)) { historicoNuvem=nova; sincronizarContadorGlobal(); atualizarTudo(); } 
@@ -1200,7 +1225,7 @@
             if(document.getElementById('view-producao').classList.contains('active')) renderizarProducao(); 
         }
 
-        // --- J. INICIALIZAÇÃO INICIAL DO SISTEMA ---
+        // --- J. INICIALIZAÇÃO DO SISTEMA ---
         window.onload = function() {
             try {
                 let h=new Date(); let yr=h.getFullYear();
