@@ -467,7 +467,7 @@
 
     <script>
         // --- A. A PONTE DE API (POLYFILL BLINDADO) ---
-        const API_URL = "https://script.google.com/macros/s/AKfycbweCn7s4GjVqem7sOAjp5UAfrMHUbCRSjOzNaNEsidNS3YOy2plyAnRvogAlegBsawy9g/exec"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbx3q16Olv5NBBGSnyTvEFB8PC8e8H8CkWXpiLOLb7Q8IJ7TjEQDoqYQG-yW_HBZIHl0eA/exec"; 
 
         const google = { script: { run: {} } };
 
@@ -494,8 +494,10 @@
                     const timeoutId = setTimeout(() => controller.abort(), 15000); 
 
                     fetch(API_URL, {
-                        method: 'POST', mode: 'cors',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                        method: 'POST', 
+                        // Removemos o 'headers' para evitar o bloqueio de CORS (OPTIONS)
+                        // Adicionamos o redirect para seguir o redirecionamento 302 do Google
+                        redirect: 'follow',
                         body: JSON.stringify({ action: funcName, args: args }),
                         signal: controller.signal
                     })
