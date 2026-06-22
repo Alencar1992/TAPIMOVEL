@@ -471,7 +471,6 @@
 
         const google = {
             script: {
-                // Usar 'get run()' cria um contexto novo para CADA requisição, impedindo que respostas se misturem!
                 get run() {
                     const handler = { success: null, failure: null };
                     const runner = {
@@ -496,7 +495,7 @@
 
                             fetch(API_URL, {
                                 method: 'POST', 
-                                redirect: 'follow', // Essencial para o Google Apps Script
+                                redirect: 'follow',
                                 body: JSON.stringify({ action: funcName, args: args }),
                                 signal: controller.signal
                             })
@@ -529,28 +528,6 @@
                 }
             }
         };
-                        
-                        let data;
-                        try { data = JSON.parse(text); } catch(e) { data = text; }
-                        
-                        if (data && data.status) {
-                            if (data.status === 'success' && handler.success) setTimeout(() => handler.success(data.data), 0);
-                            else if (data.status === 'error' && handler.failure) setTimeout(() => handler.failure(new Error(data.message)), 0);
-                        } else {
-                            if (handler.success) setTimeout(() => handler.success(data), 0);
-                        }
-                    })
-                    .catch(err => {
-                        clearTimeout(timeoutId);
-                        let msgErro = err.name === 'AbortError' ? "Tempo de conexão esgotado (Internet Lenta)." : err.message;
-                        if (handler.failure) setTimeout(() => handler.failure(new Error(msgErro)), 0);
-                        else mostrarErroCritico(msgErro);
-                    });
-                };
-            });
-            return runner;
-        }
-        google.script.run = criarPonteGoogleScript();
 
         // --- B. VARIÁVEIS GLOBAIS E BANCO DE DADOS ---
         let historicoNuvem = []; let carrinho = []; let contadorPedidos = 1; let pedidoEmEdicao = null; let pedidoAguardandoPagamento = null; 
