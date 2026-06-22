@@ -466,49 +466,69 @@
     </div>
 
     <script>
-        // --- A. A PONTE DE API (POLYFILL BLINDADO) ---
-        const API_URL = "https://script.google.com/macros/s/AKfycbx3q16Olv5NBBGSnyTvEFB8PC8e8H8CkWXpiLOLb7Q8IJ7TjEQDoqYQG-yW_HBZIHl0eA/exec"; 
+        // --- A. A PONTE DE API (POLYFILL BLINDADO E ISOLADO) ---
+        const API_URL = "https://script.google.com/macros/s/AKfycbx3q16Olv5NBBGSnyTvEFB8PC8e8H8CkWXpiLOLb7Q8IJ7TjEQDoqYQG-yW_HBZIHl0eA/exec"; // Mantenha sua URL aqui!
 
-        const google = { script: { run: {} } };
+        const google = {
+            script: {
+                // Usar 'get run()' cria um contexto novo para CADA requisição, impedindo que respostas se misturem!
+                get run() {
+                    const handler = { success: null, failure: null };
+                    const runner = {
+                        withSuccessHandler: function(cb) { handler.success = cb; return runner; },
+                        withFailureHandler: function(cb) { handler.failure = cb; return runner; }
+                    };
 
-        function criarPonteGoogleScript() {
-            const handler = { success: null, failure: null };
-            const runner = {
-                withSuccessHandler: function(cb) { handler.success = cb; return runner; },
-                withFailureHandler: function(cb) { handler.failure = cb; return runner; }
-            };
+                    const funcoes = [
+                        'carregarDadosNuvem', 'salvarNuvemCompleta', 'salvarVendaRealTime', 'atualizarVendaRealTime', 
+                        'excluirVendaRealTime', 'removerDaBaseDeVendasBackend', 'lancarPedidoPlanilha', 'moverParaHistorico', 
+                        'moverParaCancelados', 'reabrirPedidoBackend', 'obterResumoMesPlanilha', 'fecharMesESalvarDrive', 
+                        'calcularEstimativaSalarioLucas', 'registrarDiaSemTrabalhoPlanilha', 'buscarFolgasBackend', 
+                        'salvarCombustivelPlanilha', 'buscarHistoricoCombustivel', 'buscarRankingRotasBackend', 
+                        'buscarTopProdutosBackend', 'buscarDadosEspelhoBackend', 'salvarFechamentoDiaPlanilha', 
+                        'excluirContadorTapiocasHoje'
+                    ];
 
-            const funcoes = [
-                'carregarDadosNuvem', 'salvarNuvemCompleta', 'salvarVendaRealTime', 'atualizarVendaRealTime', 
-                'excluirVendaRealTime', 'removerDaBaseDeVendasBackend', 'lancarPedidoPlanilha', 'moverParaHistorico', 
-                'moverParaCancelados', 'reabrirPedidoBackend', 'obterResumoMesPlanilha', 'fecharMesESalvarDrive', 
-                'calcularEstimativaSalarioLucas', 'registrarDiaSemTrabalhoPlanilha', 'buscarFolgasBackend', 
-                'salvarCombustivelPlanilha', 'buscarHistoricoCombustivel', 'buscarRankingRotasBackend', 
-                'buscarTopProdutosBackend', 'buscarDadosEspelhoBackend', 'salvarFechamentoDiaPlanilha', 
-                'excluirContadorTapiocasHoje'
-            ];
+                    funcoes.forEach(funcName => {
+                        runner[funcName] = function(...args) {
+                            const controller = new AbortController();
+                            const timeoutId = setTimeout(() => controller.abort(), 15000); 
 
-            funcoes.forEach(funcName => {
-                runner[funcName] = function(...args) {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 15000); 
-
-                    fetch(API_URL, {
-                        method: 'POST', 
-                        // Removemos o 'headers' para evitar o bloqueio de CORS (OPTIONS)
-                        // Adicionamos o redirect para seguir o redirecionamento 302 do Google
-                        redirect: 'follow',
-                        body: JSON.stringify({ action: funcName, args: args }),
-                        signal: controller.signal
-                    })
-                    .then(async response => {
-                        clearTimeout(timeoutId);
-                        const text = await response.text();
-                        if (!response.ok) {
-                            if(handler.failure) handler.failure(new Error(`Erro HTTP ${response.status}`));
-                            else mostrarErroCritico(`Erro HTTP ${response.status}`);
-                            return;
-                        }
+                            fetch(API_URL, {
+                                method: 'POST', 
+                                redirect: 'follow', // Essencial para o Google Apps Script
+                                body: JSON.stringify({ action: funcName, args: args }),
+                                signal: controller.signal
+                            })
+                            .then(async response => {
+                                clearTimeout(timeoutId);
+                                const text = await response.text();
+                                if (!response.ok) {
+                                    if(handler.failure) handler.failure(new Error(`Erro HTTP ${response.status}`));
+                                    return;
+                                }
+                                
+                                let data;
+                                try { data = JSON.parse(text); } catch(e) { data = text; }
+                                
+                                if (data && data.status) {
+                                    if (data.status === 'success' && handler.success) setTimeout(() => handler.success(data.data), 0);
+                                    else if (data.status === 'error' && handler.failure) setTimeout(() => handler.failure(new Error(data.message)), 0);
+                                } else {
+                                    if (handler.success) setTimeout(() => handler.success(data), 0);
+                                }
+                            })
+                            .catch(err => {
+                                clearTimeout(timeoutId);
+                                let msgErro = err.name === 'AbortError' ? "Tempo de conexão esgotado." : err.message;
+                                if (handler.failure) setTimeout(() => handler.failure(new Error(msgErro)), 0);
+                            });
+                        };
+                    });
+                    return runner;
+                }
+            }
+        };
                         
                         let data;
                         try { data = JSON.parse(text); } catch(e) { data = text; }
