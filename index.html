@@ -467,69 +467,74 @@
 
     <script>
         // --- A. A PONTE DE API (POLYFILL BLINDADO E ISOLADO) ---
-        const API_URL = "https://script.google.com/macros/s/AKfycbx3q16Olv5NBBGSnyTvEFB8PC8e8H8CkWXpiLOLb7Q8IJ7TjEQDoqYQG-yW_HBZIHl0eA/exec"; // Mantenha sua URL aqui!
+        // Configuração da URL da API de backend
+        const API_URL = "https://script.google.com/macros/s/AKfycbx3q16Olv5NBBGSnyTvEFB8PC8e8H8CkWXpiLOLb7Q8IJ7TjEQDoqYQG-yW_HBZIHl0eA/exec"; 
 
-        const google = {
-            script: {
-                get run() {
-                    const handler = { success: null, failure: null };
-                    const runner = {
-                        withSuccessHandler: function(cb) { handler.success = cb; return runner; },
-                        withFailureHandler: function(cb) { handler.failure = cb; return runner; }
-                    };
-
-                    const funcoes = [
-                        'carregarDadosNuvem', 'salvarNuvemCompleta', 'salvarVendaRealTime', 'atualizarVendaRealTime', 
-                        'excluirVendaRealTime', 'removerDaBaseDeVendasBackend', 'lancarPedidoPlanilha', 'moverParaHistorico', 
-                        'moverParaCancelados', 'reabrirPedidoBackend', 'obterResumoMesPlanilha', 'fecharMesESalvarDrive', 
-                        'calcularEstimativaSalarioLucas', 'registrarDiaSemTrabalhoPlanilha', 'buscarFolgasBackend', 
-                        'salvarCombustivelPlanilha', 'buscarHistoricoCombustivel', 'buscarRankingRotasBackend', 
-                        'buscarTopProdutosBackend', 'buscarDadosEspelhoBackend', 'salvarFechamentoDiaPlanilha', 
-                        'excluirContadorTapiocasHoje'
-                    ];
-
-                    funcoes.forEach(funcName => {
-                        runner[funcName] = function(...args) {
-                            const controller = new AbortController();
-                            const timeoutId = setTimeout(() => controller.abort(), 15000); 
-
-                            fetch(API_URL, {
-                                method: 'POST', 
-                                redirect: 'follow',
-                                body: JSON.stringify({ action: funcName, args: args }),
-                                signal: controller.signal
-                            })
-                            .then(async response => {
-                                clearTimeout(timeoutId);
-                                const text = await response.text();
-                                if (!response.ok) {
-                                    if(handler.failure) handler.failure(new Error(`Erro HTTP ${response.status}`));
-                                    return;
-                                }
-                                
-                                let data;
-                                try { data = JSON.parse(text); } catch(e) { data = text; }
-                                
-                                if (data && data.status) {
-                                    if (data.status === 'success' && handler.success) setTimeout(() => handler.success(data.data), 0);
-                                    else if (data.status === 'error' && handler.failure) setTimeout(() => handler.failure(new Error(data.message)), 0);
-                                } else {
-                                    if (handler.success) setTimeout(() => handler.success(data), 0);
-                                }
-                            })
-                            .catch(err => {
-                                clearTimeout(timeoutId);
-                                let msgErro = err.name === 'AbortError' ? "Tempo de conexão esgotado." : err.message;
-                                if (handler.failure) setTimeout(() => handler.failure(new Error(msgErro)), 0);
-                            });
+        // Função de Proteção: Injetamos o polyfill APENAS se o ambiente Google nativo não existir
+        if (typeof google === 'undefined') {
+            window.google = {
+                script: {
+                    get run() {
+                        const handler = { success: null, failure: null };
+                        const runner = {
+                            withSuccessHandler: function(cb) { handler.success = cb; return runner; },
+                            withFailureHandler: function(cb) { handler.failure = cb; return runner; }
                         };
-                    });
-                    return runner;
+
+                        const funcoes = [
+                            'carregarDadosNuvem', 'salvarNuvemCompleta', 'salvarVendaRealTime', 'atualizarVendaRealTime', 
+                            'excluirVendaRealTime', 'removerDaBaseDeVendasBackend', 'lancarPedidoPlanilha', 'moverParaHistorico', 
+                            'moverParaCancelados', 'reabrirPedidoBackend', 'obterResumoMesPlanilha', 'fecharMesESalvarDrive', 
+                            'calcularEstimativaSalarioLucas', 'registrarDiaSemTrabalhoPlanilha', 'buscarFolgasBackend', 
+                            'salvarCombustivelPlanilha', 'buscarHistoricoCombustivel', 'buscarRankingRotasBackend', 
+                            'buscarTopProdutosBackend', 'buscarDadosEspelhoBackend', 'salvarFechamentoDiaPlanilha', 
+                            'excluirContadorTapiocasHoje'
+                        ];
+
+                        funcoes.forEach(funcName => {
+                            runner[funcName] = function(...args) {
+                                const controller = new AbortController();
+                                const timeoutId = setTimeout(() => controller.abort(), 15000); 
+
+                                fetch(API_URL, {
+                                    method: 'POST', 
+                                    redirect: 'follow',
+                                    body: JSON.stringify({ action: funcName, args: args }),
+                                    signal: controller.signal
+                                })
+                                .then(async response => {
+                                    clearTimeout(timeoutId);
+                                    const text = await response.text();
+                                    if (!response.ok) {
+                                        if(handler.failure) handler.failure(new Error(`Erro HTTP ${response.status}`));
+                                        return;
+                                    }
+                                    
+                                    let data;
+                                    try { data = JSON.parse(text); } catch(e) { data = text; }
+                                    
+                                    if (data && data.status) {
+                                        if (data.status === 'success' && handler.success) setTimeout(() => handler.success(data.data), 0);
+                                        else if (data.status === 'error' && handler.failure) setTimeout(() => handler.failure(new Error(data.message)), 0);
+                                    } else {
+                                        if (handler.success) setTimeout(() => handler.success(data), 0);
+                                    }
+                                })
+                                .catch(err => {
+                                    clearTimeout(timeoutId);
+                                    let msgErro = err.name === 'AbortError' ? "Tempo de conexão esgotado." : err.message;
+                                    if (handler.failure) setTimeout(() => handler.failure(new Error(msgErro)), 0);
+                                });
+                            };
+                        });
+                        return runner;
+                    }
                 }
-            }
-        };
+            };
+        }
 
         // --- B. VARIÁVEIS GLOBAIS E BANCO DE DADOS ---
+        // Variáveis de estado global para controlar o ciclo de vida do PDV
         let historicoNuvem = []; let carrinho = []; let contadorPedidos = 1; let pedidoEmEdicao = null; let pedidoAguardandoPagamento = null; 
         let abaAtivaCatalogo = null; let baseSelecionadaMonte = null; let syncAtivo = null; 
         let termoPesquisa = ""; let pausarSync = false; let timestampUltimaAcao = 0;
@@ -537,6 +542,7 @@
         let abaAtivaRanking = 'top'; 
         let operacoesPendentes = new Set(); // Trava mágica que impede o fantasma do "concluir"
 
+        // Banco de dados local para exibir os produtos de forma rápida e offline
         const bdCatalogo = {
             salgadas: [ 
                 { nome: "Bauru", preco: 14.00, tipo: "tapioca", ing: "Presunto, muçarela, tomate e orégano" }, 
@@ -608,14 +614,17 @@
 
         // --- C. FUNÇÕES DE PROTEÇÃO E ÚTEIS ---
         
+        // Função para realizar conversão segura de JSON, evitando travamentos do app
         function parseSafe(data) { 
             if (typeof data !== 'string') return data;
             try { return JSON.parse(data); } catch(e) { return data; } 
         }
         
+        // Funções simples para padronização visual
         const formatarMoeda = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         const ehHoje = (t) => { if(!t) return false; let d = new Date(t), h = new Date(); return d.getDate()===h.getDate() && d.getMonth()===h.getMonth() && d.getFullYear()===h.getFullYear(); };
         
+        // Função para criar a máscara de moeda (real brasileiro) enquanto o usuário digita
         function maskCurrency(e) { 
             let value = e.target.value.replace(/\D/g, ''); 
             if (value === '') {
@@ -628,6 +637,7 @@
             if (e.target.id === 'inputValorRecebido') calcularTroco(); 
         }
         
+        // Funções para controle de tela de carregamento simulado/real
         let simInterval;
         function showLoading(text) {
             document.getElementById('loadingText').innerHTML = text + ' <span id="loadingPercent">0%</span>';
@@ -651,6 +661,7 @@
             setTimeout(() => { document.getElementById('loadingScreen').style.display='none'; }, 300);
         }
         
+        // Função de "Panic Button" para destrancar a tela no caso de erro de rede
         function forcarRetornoTelaInicial() { 
             hideLoading(); fecharModais(); mudarTela('view-catalogo'); 
         }
@@ -661,6 +672,7 @@
             document.getElementById('modalErroCritico').style.display = 'flex';
         }
 
+        // Funções de feedback de IU (Toast e modais)
         function mostrarToast(m) { let c = document.getElementById('toast-container'); let t = document.createElement('div'); t.className='toast'; t.innerHTML=m; c.appendChild(t); setTimeout(()=>{ t.style.animation='fadeOut 0.3s forwards'; setTimeout(()=>t.remove(),300);},2000); }
         function fecharModais() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display='none'); pedidoAguardandoPagamento=null; }
         function mostrarAlerta(m, cb) { document.getElementById('textoAlerta').innerHTML=m; document.getElementById('modalAlerta').style.display='flex'; document.getElementById('btnOkAlerta').onclick = function(){ document.getElementById('modalAlerta').style.display='none'; if(cb) cb();}; }
@@ -681,6 +693,7 @@
             else if(acao === 'combustivel') mudarTela('view-combustivel');
         }
 
+        // Alternador central de telas (Controla visibilidade das divs)
         function mudarTela(idTela) { 
             document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active')); 
             document.getElementById(idTela).classList.add('active'); 
@@ -698,6 +711,7 @@
         }
 
         // --- E. CATÁLOGO E CARRINHO ---
+        // Funções para controle visual do catálogo
         function trocarAba(cat, btn) { document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); if(btn) btn.classList.add('active'); abaAtivaCatalogo = cat; baseSelecionadaMonte = null; limparPesquisaVisual(); renderizarCatalogo(cat); }
         function limparPesquisaVisual() { let i=document.getElementById('inputPesquisa'); if(i.value!=='') { i.value=''; termoPesquisa=''; document.getElementById('containerAbas').style.display='flex'; document.getElementById('btnLimparPesquisa').style.display='none'; } }
         function limparPesquisa() { limparPesquisaVisual(); renderizarCatalogo(abaAtivaCatalogo); }
@@ -740,6 +754,7 @@
             }
         }
 
+        // Funções para gerenciar adição de produtos customizados
         function selecionarBaseMonteUI(c) { baseSelecionadaMonte=c; renderizarCatalogo('monte'); }
         function lancarMonte(q, p) { adicionarAoCarrinho({nome:`Monte: ${baseSelecionadaMonte} c/ ${q}`, preco:p, tipo:'tapioca', ing:`${baseSelecionadaMonte} e ${q}`}); baseSelecionadaMonte=null; renderizarCatalogo('monte'); }
         function lancarMonteSemQueijo() { document.getElementById('tituloCarneSemQueijo').textContent=baseSelecionadaMonte; document.getElementById('inputPrecoSemQueijo').value=''; document.getElementById('modalPrecoSemQueijo').style.display='flex'; }
@@ -764,6 +779,7 @@
         function lancarAdicionalComNome() { document.getElementById('inputDescAdicional').value=''; document.getElementById('modalAdicional').style.display='flex'; }
         function confirmarAdicional() { let d=document.getElementById('inputDescAdicional').value.trim()||"Adicional"; adicionarAoCarrinho({nome:"+ Adicional", preco:4.00, tipo:"extra", ing:"", obs:d}); fecharModais(); }
 
+        // Gestão fundamental do array de itens do carrinho
         function adicionarAoCarrinho(prod) { let i = carrinho.findIndex(x => x.nome === prod.nome && x.obs === (prod.obs||'')); if(i !== -1) { carrinho[i].quantidade++; } else { let novo = JSON.parse(JSON.stringify(prod)); novo.quantidade=1; novo.obs=''; carrinho.push(novo); } atualizarCarrinho(); mostrarToast(`✅ Adicionado!`); }
         function removerItemCarrinho(i) { carrinho.splice(i, 1); atualizarCarrinho(); }
         function mudarQtd(i, d) { carrinho[i].quantidade += d; if(carrinho[i].quantidade <= 0) removerItemCarrinho(i); else atualizarCarrinho(); }
@@ -783,6 +799,7 @@
         function limparCarrinho() { carrinho = []; pedidoEmEdicao=null; document.getElementById('tituloCarrinho').textContent="Pedido em Andamento"; document.getElementById('btnLancar').textContent="Lançar para Produção"; atualizarCarrinho(); }
 
         // --- F. GESTÃO DE PEDIDOS E PAGAMENTOS ---
+        // Criação e edição do objeto de Pedido para enviar para a Cozinha/Backend
         function lancarPedido() {
             if (carrinho.length === 0) return alert("Carrinho vazio!");
             
@@ -867,6 +884,7 @@
         }
 
         // --- SOLUÇÃO DE CÁLCULO DE TROCO BLINDADO ---
+        // Calcula o troco de forma precisa evitando bugs de formatação
         function calcularTroco() { 
             const p = historicoNuvem.find(x => x.numero == pedidoAguardandoPagamento); 
             if(!p) return; 
@@ -1014,6 +1032,7 @@
             document.getElementById('modalRelatorio').style.display='flex'; 
         }
 
+        // Salvar Print do Fechamento
         function baixarPrintFechamento() { 
             const botoes = document.getElementById('botoesRelatorio');
             botoes.style.display = 'none'; 
@@ -1025,6 +1044,7 @@
             }, 100);
         }
 
+        // Salvar Fechamento Oficial no Banco de Dados
         function registrarFechamentoDia() { 
             let q=parseInt(document.getElementById('relQtdTapiocas').textContent)||0; 
             let res={data:new Date().toLocaleDateString('pt-BR'), total:document.getElementById('relFaturamento').textContent, dinheiro:document.getElementById('relDin').textContent, pix:document.getElementById('relPix').textContent, credito:document.getElementById('relCred').textContent, debito:document.getElementById('relDeb').textContent, vr:document.getElementById('relVR').textContent, qtdTapiocas:q}; 
@@ -1045,6 +1065,8 @@
         }
 
         let fatMesG = 0, combMesG = 0;
+        
+        // Calcular Resumo de Liquidez
         function abrirModalLiquidez() { 
             const h=new Date(); const m=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"]; 
             document.getElementById('mesReferenciaPDF').textContent=`${m[h.getMonth()]} ${h.getFullYear()}`; 
@@ -1086,6 +1108,7 @@
             }); 
         }
 
+        // Abrir modal de cálculo
         function abrirModalEstimativa() { 
             document.getElementById('modalEstimativa').style.display='flex'; document.getElementById('conteudoEstimativa').style.display='none'; 
             showLoading("Gerando Projeção...");
@@ -1128,6 +1151,7 @@
             }
         }
 
+        // Puxar relatórios do backend
         function buscarHistoricoFolgas() { 
             document.getElementById('resultadoFolgas').innerHTML=''; 
             showLoading("Buscando Folgas..."); 
@@ -1198,6 +1222,7 @@
         }
 
         // --- I. SINCRONIZAÇÃO INTELIGENTE (FIM DOS FANTASMAS) ---
+        // Funções para manter múltiplos dispositivos alinhados no servidor
         function sincronizarContadorGlobal() { let max = 0; historicoNuvem.forEach(p => { if(p.numero > max && (ehHoje(p.timestamp) || ehHoje(p.timestampCriacao))) max = parseInt(p.numero); }); if (max >= contadorPedidos) contadorPedidos = max + 1; }
         
         function iniciarSyncEmTempoReal() { 
@@ -1232,6 +1257,7 @@
             }, 3000); 
         }
         
+        // Atualiza elementos visuais numéricos e contadores de header
         function atualizarTudo() { 
             let qtd=0, pc=0, px=0; 
             historicoNuvem.forEach(v => { 
@@ -1249,6 +1275,7 @@
         }
 
         // --- J. INICIALIZAÇÃO DO SISTEMA ---
+        // Setup inicial da página quando carrega
         window.onload = function() {
             try {
                 let h=new Date(); let yr=h.getFullYear();
