@@ -1,4 +1,58 @@
 <!DOCTYPE html>
+<!--
+====================================================================================
+  🌮 EXPRESSO TAPIOCARIA - PDV (Ponto de Venda)
+====================================================================================
+
+  O QUE É ESTE ARQUIVO?
+  ---------------------
+  Este é o frontend completo do PDV usado no carro de tapiocas.
+  Ele roda no navegador (hospedado no GitHub Pages) e conversa com o Google
+  Apps Script (backend) via uma API HTTP, usando uma planilha Google como
+  banco de dados.
+
+  PARA QUE SERVE?
+  ---------------
+  - Registrar pedidos no catálogo (Salgadas, Especiais, Doces, Monte a Sua, Bebidas)
+  - Enviar pedidos para a Cozinha (tela Produção)
+  - Cobrar pagamentos (PIX, Dinheiro, Crédito, Débito, VR)
+  - Ver o histórico de vendas do dia
+  - Gerar relatórios: Fechamento do dia, Liquidez do mês, Projeção de salário,
+    Rankings (Top Tapiocas / Rotas), Controle de Combustível e Folgas
+  - Fechar o mês e salvar histórico no Drive
+
+  ARQUITETURA (como as peças se conectam)
+  ----------------------------------------
+     [ index.html (GitHub) ]  --- HTTP POST --->  [ codigo.gs (Apps Script) ]
+                |                                          |
+                |                                          v
+                +-------- carrega/salva ---------->  [ Planilha Google ]
+
+  COMO O CÓDIGO ESTÁ ORGANIZADO (marcadores de seção mais abaixo)
+  --------------------------------------------------------------------
+    A. PONTE DE API             — polyfill do google.script.run via fetch
+    B. VARIÁVEIS GLOBAIS        — estado do PDV e catálogo de produtos
+    C. FUNÇÕES ÚTEIS            — máscaras, formatação, loading, modais
+    D. NAVEGAÇÃO                — troca de telas e menu lateral
+    E. CATÁLOGO E CARRINHO      — exibir produtos e montar pedido
+    F. PEDIDOS E PAGAMENTOS     — lançar, editar, cancelar, cobrar
+    G. RENDERIZAÇÃO DAS TELAS   — Produção, Painel Caixa, Histórico
+    H. RELATÓRIOS E FECHAMENTOS — Dia, Liquidez, Projeção, Rankings
+    I. SINCRONIZAÇÃO            — sync a cada 3s com a nuvem
+    J. INICIALIZAÇÃO            — window.onload
+
+  HISTÓRICO DE CORREÇÕES
+  ----------------------
+  [Bloco 1]
+    - Fix 1: bug do botão Dinheiro (não habilitava "Finalizar")
+    - Fix 2: pedido não finalizava ao lançar (carrinho não limpava)
+    - Fix 4: após pagamento, ir automaticamente para "Vendas Hoje"
+  [Bloco 2]
+    - Fix 3: item na tela PROD. nunca sumia ao clicar em "Concluir"
+             (race condition entre click e sync automático de 3s)
+
+====================================================================================
+-->
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -466,8 +520,24 @@
     </div>
 
     <script>
+        // ============================================================
         // --- A. A PONTE DE API (POLYFILL BLINDADO E ISOLADO) ---
-        // Configuração da URL da API de backend
+        // ============================================================
+        // Como este arquivo roda no GitHub Pages (e NÃO dentro do Apps
+        // Script), o objeto nativo "google.script.run" não existe.
+        // Este bloco cria um SUBSTITUTO (polyfill) com o mesmo formato,
+        // mas que por baixo dos panos faz um fetch() HTTP para o endpoint
+        // do Apps Script publicado como Web App.
+        //
+        // Uso no restante do código:
+        //   google.script.run
+        //     .withSuccessHandler(resp => { ... })
+        //     .withFailureHandler(erro => { ... })
+        //     .nomeDaFuncao(arg1, arg2);
+        //
+        // ⚠️ IMPORTANTE: sempre que o codigo.gs mudar, é preciso
+        // republicar como Web App e atualizar a URL abaixo se ela mudar.
+        // ============================================================
         const API_URL = "https://script.google.com/macros/s/AKfycbx3q16Olv5NBBGSnyTvEFB8PC8e8H8CkWXpiLOLb7Q8IJ7TjEQDoqYQG-yW_HBZIHl0eA/exec"; 
 
         // Função de Proteção: Injetamos o polyfill APENAS se o ambiente Google nativo não existir
@@ -533,14 +603,30 @@
             };
         }
 
+        // ============================================================
         // --- B. VARIÁVEIS GLOBAIS E BANCO DE DADOS ---
-        // Variáveis de estado global para controlar o ciclo de vida do PDV
-        let historicoNuvem = []; let carrinho = []; let contadorPedidos = 1; let pedidoEmEdicao = null; let pedidoAguardandoPagamento = null; 
-        let abaAtivaCatalogo = null; let baseSelecionadaMonte = null; let syncAtivo = null; 
-        let termoPesquisa = ""; let pausarSync = false; let timestampUltimaAcao = 0;
+        // ============================================================
+        // Estado global que controla todo o ciclo de vida do PDV.
+        // ------------------------------------------------------------
+        let historicoNuvem = [];        // Todos os pedidos ativos (abertos e pagos hoje)
+        let carrinho = [];              // Itens sendo montados agora, antes de virar pedido
+        let contadorPedidos = 1;        // Próximo número de pedido (auto-incrementa)
+        let pedidoEmEdicao = null;      // Se estiver editando um pedido, guarda o número dele
+        let pedidoAguardandoPagamento = null; // Pedido aberto no modal de pagamento
+        let abaAtivaCatalogo = null;    // Aba do catálogo ativa (salgadas/doces/etc)
+        let baseSelecionadaMonte = null;// Passo 1 do "Monte a Sua" (carne escolhida)
+        let syncAtivo = null;           // Handle do setInterval de sincronização
+        let termoPesquisa = "";         // Texto digitado na barra de busca
+        let pausarSync = false;         // Se true, o sync para temporariamente
+        let timestampUltimaAcao = 0;    // Marca a última ação do usuário
         
-        let abaAtivaRanking = 'top'; 
-        let operacoesPendentes = new Set(); // Trava mágica que impede o fantasma do "concluir"
+        let abaAtivaRanking = 'top';    // Aba ativa em Rankings (top produtos ou rotas)
+        
+        // "Trava mágica" que impede o fantasma do concluir/pagar:
+        // Quando fazemos uma alteração local (ex: marcar item pronto), o número
+        // do pedido entra aqui. O sync sabe que precisa preservar os dados
+        // locais até o servidor confirmar a alteração.
+        let operacoesPendentes = new Set();
 
         // Banco de dados local para exibir os produtos de forma rápida e offline
         const bdCatalogo = {
@@ -612,9 +698,15 @@
             'Peito de Peru': { 'Catupiry (Orig.)': 16.00, 'Cheddar': 15.00, 'Cream Cheese': 15.00, 'Muçarela': 15.00, 'Queijo Branco': 16.00 }
         };
 
+        // ============================================================
         // --- C. FUNÇÕES DE PROTEÇÃO E ÚTEIS ---
+        // ============================================================
+        // Utilitários usados por várias telas: parse seguro, formatação
+        // de moeda, checagem de "é hoje?", loading, toasts e modais.
+        // ============================================================
         
-        // Função para realizar conversão segura de JSON, evitando travamentos do app
+        // Converte JSON com segurança. Se falhar, devolve o valor original
+        // ao invés de quebrar o app inteiro.
         function parseSafe(data) { 
             if (typeof data !== 'string') return data;
             try { return JSON.parse(data); } catch(e) { return data; } 
@@ -678,7 +770,12 @@
         function mostrarAlerta(m, cb) { document.getElementById('textoAlerta').innerHTML=m; document.getElementById('modalAlerta').style.display='flex'; document.getElementById('btnOkAlerta').onclick = function(){ document.getElementById('modalAlerta').style.display='none'; if(cb) cb();}; }
         function mostrarConfirmacao(m, cbSim) { document.getElementById('textoConfirm').innerHTML=m; document.getElementById('modalConfirm').style.display='flex'; document.getElementById('btnCancelarConfirm').onclick=()=>document.getElementById('modalConfirm').style.display='none'; document.getElementById('btnOkConfirm').onclick=()=>{ document.getElementById('modalConfirm').style.display='none'; if(cbSim) cbSim(); }; }
 
+        // ============================================================
         // --- D. NAVEGAÇÃO E ACESSO RÁPIDO ---
+        // ============================================================
+        // Controla a troca de telas (view-catalogo, view-producao, etc.)
+        // e a abertura/fechamento do menu lateral.
+        // ============================================================
         function abrirMenuLateral() { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebarOverlay').style.display='block'; }
         function fecharMenuLateral() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').style.display='none'; }
         function toggleSubmenu(id) { const s = document.getElementById(id); s.style.display = s.style.display === "flex" ? "none" : "flex"; }
@@ -710,8 +807,13 @@
             if(idTela === 'view-rankings') { gerarRankingAtual(); }
         }
 
+        // ============================================================
         // --- E. CATÁLOGO E CARRINHO ---
-        // Funções para controle visual do catálogo
+        // ============================================================
+        // Renderização do catálogo de produtos (Salgadas/Especiais/Doces/
+        // Monte a Sua/Bebidas), busca, adicionais, avulsos e gerenciamento
+        // do array "carrinho" (adicionar, remover, mudar quantidade).
+        // ============================================================
         function trocarAba(cat, btn) { document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); if(btn) btn.classList.add('active'); abaAtivaCatalogo = cat; baseSelecionadaMonte = null; limparPesquisaVisual(); renderizarCatalogo(cat); }
         function limparPesquisaVisual() { let i=document.getElementById('inputPesquisa'); if(i.value!=='') { i.value=''; termoPesquisa=''; document.getElementById('containerAbas').style.display='flex'; document.getElementById('btnLimparPesquisa').style.display='none'; } }
         function limparPesquisa() { limparPesquisaVisual(); renderizarCatalogo(abaAtivaCatalogo); }
@@ -798,32 +900,87 @@
         }
         function limparCarrinho() { carrinho = []; pedidoEmEdicao=null; document.getElementById('tituloCarrinho').textContent="Pedido em Andamento"; document.getElementById('btnLancar').textContent="Lançar para Produção"; atualizarCarrinho(); }
 
+        // ============================================================
         // --- F. GESTÃO DE PEDIDOS E PAGAMENTOS ---
-        // Criação e edição do objeto de Pedido para enviar para a Cozinha/Backend
+        // Coração do PDV: cria/edita pedidos e cobra pagamentos.
+        // ============================================================
+
+        /**
+         * lancarPedido()
+         * Lança um pedido novo OU salva a edição de um pedido existente.
+         *
+         * ⚠️ Fix 2 aplicado:
+         * Antes, limparCarrinho() e atualizarTudo() ficavam DENTRO do
+         * withSuccessHandler do salvarVendaRealTime. Como a chamada ao
+         * servidor pode demorar (ou falhar silenciosamente), o carrinho
+         * ficava travado na tela dando a impressão de que "não finalizou".
+         * Agora, atualizamos a UI IMEDIATAMENTE (otimista) e apenas a
+         * limpeza do operacoesPendentes fica no handler.
+         */
         function lancarPedido() {
             if (carrinho.length === 0) return alert("Carrinho vazio!");
             
+            // Toast visual "Lançando Cozinha..."
             document.getElementById('toast-lancamento').style.display = 'block';
             setTimeout(() => { document.getElementById('toast-lancamento').style.display = 'none'; }, 2500);
 
             const total = carrinho.reduce((acc, item) => acc + (item.preco * item.quantidade), 0);
             const isPronto = carrinho.every(item => item.pronto === true);
 
+            // -------- CASO 1: EDITANDO UM PEDIDO EXISTENTE --------
             if (pedidoEmEdicao !== null) {
                 const i = historicoNuvem.findIndex(p => p.numero == pedidoEmEdicao);
                 if (i !== -1) {
-                    operacoesPendentes.add(historicoNuvem[i].numero); // Trava contra lentidão do Google
-                    historicoNuvem[i].itens = JSON.parse(JSON.stringify(carrinho)); historicoNuvem[i].total = total; historicoNuvem[i].produzido = isPronto;
-                    if(typeof google !== 'undefined') google.script.run.withSuccessHandler(()=>{ operacoesPendentes.delete(historicoNuvem[i].numero); limparCarrinho(); atualizarTudo(); }).atualizarVendaRealTime(JSON.stringify(historicoNuvem[i]));
+                    // Guardo o número em variável local ANTES de limpar carrinho
+                    // (limparCarrinho zera pedidoEmEdicao, mas historicoNuvem[i] segue válido)
+                    const numRef = historicoNuvem[i].numero;
+                    
+                    operacoesPendentes.add(numRef); // Trava contra sync sobrescrever
+                    historicoNuvem[i].itens = JSON.parse(JSON.stringify(carrinho));
+                    historicoNuvem[i].total = total;
+                    historicoNuvem[i].produzido = isPronto;
+                    
+                    // 🔧 Fix 2: UI otimista - atualiza AGORA, servidor sincroniza depois
+                    limparCarrinho();
+                    atualizarTudo();
+                    
+                    if(typeof google !== 'undefined') {
+                        google.script.run.withSuccessHandler(()=>{ 
+                            operacoesPendentes.delete(numRef); 
+                        }).atualizarVendaRealTime(JSON.stringify(historicoNuvem[i]));
+                    } else {
+                        operacoesPendentes.delete(numRef);
+                    }
                 }
+            
+            // -------- CASO 2: CRIANDO PEDIDO NOVO --------
             } else {
-                let novo = { numero: contadorPedidos++, origem: "PDV", itens: JSON.parse(JSON.stringify(carrinho)), total: total, hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), produzido: isPronto, timestampCriacao: new Date().getTime() };
-                operacoesPendentes.add(novo.numero); // Trava
+                let novo = { 
+                    numero: contadorPedidos++, 
+                    origem: "PDV", 
+                    itens: JSON.parse(JSON.stringify(carrinho)), 
+                    total: total, 
+                    hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), 
+                    produzido: isPronto, 
+                    timestampCriacao: new Date().getTime() 
+                };
+                operacoesPendentes.add(novo.numero); // Trava contra sync
                 historicoNuvem.push(novo);
+                
+                // 🔧 Fix 2: UI otimista - libera o usuário para o próximo pedido na hora
+                limparCarrinho();
+                atualizarTudo();
+                
                 if(typeof google !== 'undefined') {
+                    // Envia para a planilha "Base de Vendas" (para a Cozinha ver)
                     google.script.run.lancarPedidoPlanilha(JSON.stringify(novo));
-                    google.script.run.withSuccessHandler(()=>{ operacoesPendentes.delete(novo.numero); limparCarrinho(); atualizarTudo(); }).salvarVendaRealTime(JSON.stringify(novo));
-                } else { limparCarrinho(); atualizarTudo(); }
+                    // Envia para o cache da nuvem (para outros dispositivos verem)
+                    google.script.run.withSuccessHandler(()=>{ 
+                        operacoesPendentes.delete(novo.numero); 
+                    }).salvarVendaRealTime(JSON.stringify(novo));
+                } else {
+                    operacoesPendentes.delete(novo.numero);
+                }
             }
         }
 
@@ -860,19 +1017,52 @@
             }); 
         }
 
-        function abrirModalPagamento(num) { pedidoAguardandoPagamento = num; document.getElementById('numeroPedidoPagamento').textContent = num; document.getElementById('modalPagamento').style.display = 'flex'; }
+        /**
+         * abrirModalPagamento(num)
+         * Abre a caixa com as formas de pagamento (PIX/Dinheiro/Crédito/etc).
+         * Armazena o número do pedido em pedidoAguardandoPagamento para as
+         * próximas funções saberem em qual pedido estão operando.
+         */
+        function abrirModalPagamento(num) { 
+            pedidoAguardandoPagamento = num; 
+            document.getElementById('numeroPedidoPagamento').textContent = num; 
+            document.getElementById('modalPagamento').style.display = 'flex'; 
+        }
         
+        /**
+         * processarPagamento(formaPagamento)
+         * Roteia o clique da forma de pagamento:
+         *   - "Dinheiro" → abre modal de troco (precisa calcular)
+         *   - Qualquer outra → finaliza a venda direto
+         *
+         * ⚠️ Fix 1 aplicado:
+         * Antes, aqui chamávamos fecharModais(), que ZERAVA a variável global
+         * pedidoAguardandoPagamento. Isso quebrava o Dinheiro porque:
+         *   - calcularTroco() procurava o pedido por ID null → não achava
+         *     → o botão "Finalizar" nunca era habilitado
+         *   - finalizarVenda('Dinheiro') também procurava null → falhava
+         *     silenciosamente e a tela não saía
+         * Agora fechamos APENAS o modalPagamento e a variável fica preservada
+         * até o pagamento realmente terminar dentro de finalizarVenda().
+         */
         function processarPagamento(f) { 
             const p = historicoNuvem.find(x => x.numero == pedidoAguardandoPagamento); 
             if(!p) return; 
+            
             if(f === 'Dinheiro') { 
-                fecharModais(); 
+                // 🔧 Fix 1: fechar SÓ este modal, não usar fecharModais()
+                document.getElementById('modalPagamento').style.display = 'none';
+                
+                // Prepara o modal de troco
                 document.getElementById('trocoTotalPedido').textContent = formatarMoeda(p.total); 
                 document.getElementById('inputValorRecebido').value=''; 
                 document.getElementById('valorDoTroco').textContent='R$ 0,00'; 
                 document.getElementById('btnConfirmarDinheiro').disabled=true; 
                 document.getElementById('modalTroco').style.display='flex'; 
-            } else { finalizarVenda(f); } 
+            } else { 
+                // PIX, Crédito, Débito, VR → finaliza direto
+                finalizarVenda(f); 
+            } 
         }
 
         function preencherValorExato() { 
@@ -916,19 +1106,37 @@
             } 
         }
         
+        /**
+         * finalizarVenda(formaPagamento)
+         * Fecha o ciclo do pedido: marca como pago, envia para o histórico
+         * da planilha e remove da base de vendas ativas.
+         *
+         * ⚠️ Fix 4 aplicado:
+         * Depois do aviso verde de "Pagamento Realizado", o app agora
+         * redireciona automaticamente para a tela "Vendas Hoje" (view-historico),
+         * mostrando a venda recém-registrada no topo da lista.
+         */
         function finalizarVenda(f) {
             const i = historicoNuvem.findIndex(p => p.numero == pedidoAguardandoPagamento); 
             if (i === -1) return;
             
             const p = historicoNuvem[i]; 
             
-            operacoesPendentes.add(p.numero); // Trava o pedido para não ser reescrito na tela pela sincronização
+            // Trava o pedido para o sync não sobrescrever com dados antigos
+            operacoesPendentes.add(p.numero);
             
-            p.formaPagamento = f; p.timestamp = new Date().getTime(); p.dataExibicao = new Date().toLocaleString('pt-BR');
+            // Marca os dados do pagamento no pedido
+            p.formaPagamento = f; 
+            p.timestamp = new Date().getTime(); 
+            p.dataExibicao = new Date().toLocaleString('pt-BR');
+            
+            // Fecha modais e atualiza contadores da tela
             fecharModais(); 
             atualizarTudo(); 
             
+            // Sincroniza com o backend (3 chamadas separadas)
             if(typeof google !== 'undefined') { 
+                // 1. Move da "Base de Vendas" para "Historico_Diario" na planilha
                 google.script.run.withSuccessHandler(()=>{
                     operacoesPendentes.delete(p.numero); 
                 }).withFailureHandler(e => {
@@ -936,24 +1144,46 @@
                     mostrarErroCritico("Aviso: Falha ao salvar no histórico. "+e.message);
                 }).moverParaHistorico(JSON.stringify(p)); 
                 
+                // 2. Atualiza o cache da nuvem (para outros dispositivos)
                 google.script.run.atualizarVendaRealTime(JSON.stringify(p)); 
+                // 3. Remove da aba "Base de Vendas" (pedido não está mais aberto)
                 google.script.run.removerDaBaseDeVendasBackend(p.numero); 
             } else {
                 operacoesPendentes.delete(p.numero);
             }
             
+            // Aviso verde animado "Pagamento Realizado" com barra de 2,5s
             document.getElementById('avisoPagamento').style.display = 'flex'; 
             let bar = document.getElementById('avisoPagamentoBar');
             bar.style.transition = 'none'; 
             bar.style.width = '0%';
-            void bar.offsetWidth; 
+            void bar.offsetWidth; // força reflow para reiniciar a animação
             bar.style.transition = 'width 2.5s linear'; 
             bar.style.width = '100%';
             
-            setTimeout(() => { document.getElementById('avisoPagamento').style.display = 'none'; bar.style.width = '0%'; }, 2500);
+            // Após o aviso, fecha o overlay E vai para "Vendas Hoje"
+            setTimeout(() => { 
+                document.getElementById('avisoPagamento').style.display = 'none'; 
+                bar.style.width = '0%'; 
+                // 🔧 Fix 4: leva o usuário direto para ver a venda registrada
+                mudarTela('view-historico');
+            }, 2500);
         }
 
+        // ============================================================
         // --- G. RENDERIZAÇÃO DAS TELAS ---
+        // ============================================================
+        // Cada uma das três telas principais tem sua função:
+        //   - renderizarProducao   → fila da cozinha (itens não prontos)
+        //   - renderizarPainelPedidos → caixa (pedidos aguardando pagamento)
+        //   - renderizarHistorico  → vendas já pagas hoje
+        // ============================================================
+
+        /**
+         * renderizarProducao()
+         * Mostra a fila da cozinha: itens de tapioca não marcados como prontos.
+         * Bebidas não aparecem aqui (não precisam preparar).
+         */
         function renderizarProducao() { 
             const lista = document.getElementById('listaProducao'); lista.innerHTML = ''; 
             let fila = historicoNuvem.filter(p => !p.produzido && (ehHoje(p.timestamp) || ehHoje(p.timestampCriacao))); 
@@ -974,22 +1204,73 @@
             }); 
         }
 
+        /**
+         * marcarItemPronto(num, idxOriginal)
+         * Marca um item específico do pedido como pronto (feito pela cozinha).
+         *
+         * ⚠️ Fix 3 aplicado:
+         * Antes, o item "nunca sumia" da tela. A causa era uma race condition:
+         *   1. Você clicava em Concluir
+         *   2. O sync (rodando a cada 3s) ou já estava no meio de uma busca
+         *      com dados antigos da nuvem
+         *   3. Quando a resposta do sync chegava, sobrescrevia o item local
+         *      justo depois do delete de operacoesPendentes
+         *   4. Resultado: o "pronto=true" era desfeito e o item voltava
+         *
+         * A correção tem 3 camadas de proteção:
+         *   a) operacoesPendentes marca o pedido como "em edição"
+         *   b) pausarSync=true bloqueia novos ciclos de sync durante a operação
+         *   c) o release do lock só acontece 4s depois do success (mais tempo
+         *      que 1 ciclo de sync), garantindo que a nuvem já tem o dado novo
+         *      quando o próximo sync buscar
+         */
         function marcarItemPronto(num, idxOriginal) { 
             let p = historicoNuvem.find(x => x.numero == num); 
-            if(p && p.itens[idxOriginal]) { 
-                operacoesPendentes.add(p.numero); // Trava o pedido para evitar o "fantasma" que apagava e aparecia de novo
-                p.itens[idxOriginal].pronto = true; 
-                p.produzido = p.itens.filter(i => i.tipo !== 'bebida').every(i => i.pronto === true); 
-                
-                if(typeof google !== 'undefined') {
-                    google.script.run.withSuccessHandler(()=>{
-                        operacoesPendentes.delete(p.numero); 
-                    }).atualizarVendaRealTime(JSON.stringify(p)); 
-                } else {
-                    operacoesPendentes.delete(p.numero); 
-                }
-                atualizarTudo(); 
-            } 
+            if(!p || !p.itens[idxOriginal]) return;
+            
+            // Guarda a referência do número (garante tipo consistente com Set)
+            const numPedido = p.numero;
+            
+            // === CAMADA 1: TRAVA anti-fantasma ===
+            operacoesPendentes.add(numPedido); 
+            pausarSync = true; // Camada extra: barra o sync inteiro por segurança
+            
+            // === CAMADA 2: mutação local ===
+            p.itens[idxOriginal].pronto = true; 
+            // Recalcula se o pedido inteiro está pronto (ignorando bebidas)
+            p.produzido = p.itens
+                .filter(i => i.tipo !== 'bebida')
+                .every(i => i.pronto === true); 
+            
+            // === CAMADA 3: feedback visual IMEDIATO ===
+            atualizarTudo();
+            
+            // Log de debug — abra o console (F12) para acompanhar
+            console.log(`[PROD] ✅ Item ${idxOriginal} do pedido #${numPedido} → pronto. Pedido completo? ${p.produzido}`);
+            
+            // === CAMADA 4: envio ao servidor + release atrasado do lock ===
+            if(typeof google !== 'undefined') {
+                google.script.run.withSuccessHandler(()=>{
+                    console.log(`[PROD] 💾 Servidor confirmou pedido #${numPedido}. Liberando em 4s.`);
+                    // Espera 4s (>1 ciclo de sync) antes de liberar.
+                    // Isso garante que quando o próximo sync buscar, a nuvem
+                    // já vai devolver o dado atualizado.
+                    setTimeout(() => {
+                        operacoesPendentes.delete(numPedido);
+                        pausarSync = false;
+                        console.log(`[PROD] 🔓 Lock do pedido #${numPedido} liberado.`);
+                    }, 4000);
+                }).withFailureHandler(err => {
+                    // Se falhar, libera na hora para não travar o sync eternamente
+                    console.error(`[PROD] ❌ Erro ao salvar item pronto:`, err);
+                    operacoesPendentes.delete(numPedido);
+                    pausarSync = false;
+                }).atualizarVendaRealTime(JSON.stringify(p)); 
+            } else {
+                // Modo offline (sem Apps Script): libera na hora
+                operacoesPendentes.delete(numPedido);
+                pausarSync = false;
+            }
         }
         
         function renderizarPainelPedidos() { 
@@ -1221,19 +1502,46 @@
             } 
         }
 
+        // ============================================================
         // --- I. SINCRONIZAÇÃO INTELIGENTE (FIM DOS FANTASMAS) ---
-        // Funções para manter múltiplos dispositivos alinhados no servidor
+        // ============================================================
+        // A cada 3 segundos, o app baixa a lista de pedidos da nuvem.
+        // Isso mantém múltiplos dispositivos (celular do carro + do dono)
+        // alinhados. A "trava mágica" (operacoesPendentes) impede que
+        // dados antigos da nuvem sobrescrevam alterações locais que ainda
+        // não foram salvas — evitando o famoso "fantasma" do pedido que
+        // voltava depois de concluído.
+        // ============================================================
+
+        // Ajusta o contador de pedidos com base no maior número já usado hoje
         function sincronizarContadorGlobal() { let max = 0; historicoNuvem.forEach(p => { if(p.numero > max && (ehHoje(p.timestamp) || ehHoje(p.timestampCriacao))) max = parseInt(p.numero); }); if (max >= contadorPedidos) contadorPedidos = max + 1; }
         
+        /**
+         * iniciarSyncEmTempoReal()
+         * Roda a cada 3 segundos e traz a lista de pedidos ativos da nuvem.
+         *
+         * Duas travas de proteção contra o "fantasma":
+         *   1. pausarSync (global): se true, o sync inteiro é ignorado neste ciclo
+         *      → usado pelo Fix 3 (marcarItemPronto) para janela crítica
+         *   2. operacoesPendentes.has(numero): pedido a pedido, preserva a versão
+         *      local quando ela é mais nova que a da nuvem
+         */
         function iniciarSyncEmTempoReal() { 
             if(syncAtivo) clearInterval(syncAtivo); 
             syncAtivo = setInterval(()=>{ 
+                // 🔧 Fix 3 (parte 2): se pausarSync está ativo, pula este ciclo
+                if(pausarSync) {
+                    console.log('[SYNC] ⏸️ Pausado — aguardando operação crítica.');
+                    return;
+                }
+                
                 if(typeof google!=='undefined') google.script.run.withSuccessHandler(r=>{ 
                     try {
                         let nova = parseSafe(r) || []; 
                         if(!Array.isArray(nova)) nova = [];
                         
-                        // Mescla Inteligente: Se você acabou de pagar ou concluir o pedido, ignora a nuvem desatualizada
+                        // Mescla Inteligente: se um pedido está em operacoesPendentes
+                        // (você acabou de mexer nele), preserva os dados locais
                         nova.forEach(cloudItem => {
                             if (operacoesPendentes.has(cloudItem.numero)) {
                                 let localItem = historicoNuvem.find(x => x.numero === cloudItem.numero);
@@ -1247,6 +1555,7 @@
                             }
                         });
 
+                        // Só re-renderiza se algo mudou de verdade (evita flicker)
                         if(JSON.stringify(historicoNuvem) !== JSON.stringify(nova)) { 
                             historicoNuvem = nova; 
                             sincronizarContadorGlobal(); 
@@ -1274,8 +1583,14 @@
             if(document.getElementById('view-producao').classList.contains('active')) renderizarProducao(); 
         }
 
+        // ============================================================
         // --- J. INICIALIZAÇÃO DO SISTEMA ---
-        // Setup inicial da página quando carrega
+        // ============================================================
+        // Quando a página termina de carregar:
+        //   1. Prepara filtros de mês/ano (Rankings e Folgas)
+        //   2. Se estiver online, baixa os pedidos ativos da nuvem
+        //   3. Inicia o sync automático a cada 3 segundos
+        // ============================================================
         window.onload = function() {
             try {
                 let h=new Date(); let yr=h.getFullYear();
