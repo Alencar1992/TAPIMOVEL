@@ -1,0 +1,46 @@
+<div id="modalErroSistema" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; z-index: 99999; font-family: sans-serif;">
+    <div style="background: #1e1e1e; padding: 20px; border-radius: 8px; width: 95%; max-width: 450px; border-top: 5px solid #dc3545; box-shadow: 0 10px 30px rgba(0,0,0,0.5); box-sizing: border-box;">
+        <div style="font-size: 3rem; text-align: center; margin-bottom: 10px;">🐞</div>
+        <h3 style="color: #dc3545; margin-top: 0; text-align: center;">Ops! Bug Detectado</h3>
+        <p style="color: #aaaaaa; font-size: 0.95rem; text-align: center;">O Investigador encontrou uma falha no código:</p>
+        
+        <div id="textoErroSistema" style="background: #2a1010; padding: 15px; border-radius: 6px; font-family: monospace; color: #ff6b6b; margin-bottom: 15px; word-wrap: break-word; font-size: 0.9rem; border: 1px solid #dc3545;">
+            </div>
+        
+        <button style="background: #333333; color: #e0e0e0; border: none; padding: 15px; font-size: 1.1rem; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; transition: 0.2s;" onclick="document.getElementById('modalErroSistema').style.display = 'none';">Fechar e Tentar Arrumar</button>
+    </div>
+</div>
+
+<script>
+    // ==========================================
+    // 🕵️ INVESTIGADOR DE ERROS GLOBAL
+    // ==========================================
+    window.onerror = function(mensagem, url, linha, coluna, erro) {
+        
+        // 👉 A MÁGICA AQUI: Ignora os erros "fantasmas" do Google ou de extensões do navegador
+        if (mensagem === "Script error." || linha === 0 || !url) {
+            return false; // Finge que não viu e segue o jogo
+        }
+
+        let logErro = `<b>Erro:</b> ${mensagem}<br><br><b>Linha do Index:</b> ${linha} (Col ${coluna})`;
+        let divTextoErro = document.getElementById('textoErroSistema');
+        let modalErro = document.getElementById('modalErroSistema');
+        
+        if(divTextoErro && modalErro) {
+            divTextoErro.innerHTML = logErro;
+            modalErro.style.display = 'flex';
+        } else {
+            alert("ERRO CRÍTICO:\n" + mensagem + "\nLinha: " + linha);
+        }
+        return false; 
+    };
+
+    window.addEventListener('unhandledrejection', function(event) {
+        let logErro = `<b>Erro de Comunicação:</b><br>${event.reason}`;
+        let divTextoErro = document.getElementById('textoErroSistema');
+        if(divTextoErro) {
+            divTextoErro.innerHTML = logErro;
+            document.getElementById('modalErroSistema').style.display = 'flex';
+        }
+    });
+</script>
